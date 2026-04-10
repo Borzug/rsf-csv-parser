@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rally Race Chart</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div id="app">
+
+    <header class="app-header">
+        <span class="header-logo">🏁</span>
+        <h1 id="header-event-name">Rally Race Chart</h1>
+        <span id="header-stats" class="header-stats"></span>
+    </header>
+
+    <!-- ═══ WELCOME ═══ -->
+    <section id="screen-welcome">
+        <div class="welcome-card">
+            <div class="welcome-icon">📊</div>
+            <h2>Загрузка данных ралли</h2>
+            <p class="welcome-desc">Выберите CSV-файл с результатами гонки.</p>
+            <div class="form-group">
+                <label for="inp-event-name">Название события <span class="optional">(необязательно)</span></label>
+                <input type="text" id="inp-event-name" placeholder="Rally Championship 2024" autocomplete="off">
+            </div>
+            <input type="file" id="file-input" accept=".csv,.txt" style="display:none">
+            <button class="btn btn-primary" id="btn-choose-file">📂 Выбрать CSV-файл</button>
+            <div id="file-info" class="file-info"></div>
+        </div>
+    </section>
+
+    <!-- ═══ ANALYSIS ═══ -->
+    <section id="screen-chart" style="display:none">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <span>Фильтры</span>
+                <button class="btn btn-ghost btn-sm" id="btn-back">← Назад</button>
+            </div>
+            <div class="sidebar-body">
+                <div id="sidebar-chart-filters">
+                    <div id="filter-stages"></div>
+                    <div id="filter-drivers-wrap"></div>
+                    <div id="filter-groups"></div>
+                    <div id="filter-cars"></div>
+                </div>
+                <div id="sidebar-results-filters" style="display:none">
+                    <div id="filter-results-groups"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="chart-main">
+
+            <!-- Tab bar -->
+            <div class="main-toolbar">
+                <div class="tab-switcher">
+                    <button class="tab-btn active" id="tab-chart">📈 График</button>
+                    <button class="tab-btn"         id="tab-results">🏆 Результаты</button>
+                </div>
+            </div>
+
+            <!-- Content row (chart + legend, or results) -->
+            <div class="content-row">
+
+                <!-- ── CHART VIEW ── -->
+                <div id="view-chart" class="view">
+                    <div id="pinned-bar" class="pinned-bar" style="display:none">
+                        <span class="pinned-dot" id="pinned-dot"></span>
+                        <span class="pinned-name" id="pinned-name"></span>
+                        <button class="pinned-close" id="pinned-close" title="Снять выделение (Esc)">×</button>
+                    </div>
+                    <div id="chart-area" class="chart-area">
+                        <canvas id="race-chart"></canvas>
+                        <div class="chart-type-legend">
+                            <span class="ctl-item"><span class="ctl-line ctl-solid"></span>Успешный проезд</span>
+                            <span class="ctl-item"><span class="ctl-line ctl-dashed"></span>Super Rally</span>
+                            <span class="ctl-item"><span class="ctl-diamond">◆</span>Комментарий</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── LEGEND PANEL ── -->
+                <div id="legend-panel" class="legend-panel" style="display:none">
+                    <button id="legend-expand-btn" class="legend-expand-btn" style="display:none" title="Развернуть">‹</button>
+                    <div class="legend-inner" id="legend-inner">
+                        <div class="legend-items" id="legend-items"></div>
+                    </div>
+                </div>
+
+                <!-- ── RESULTS VIEW ── -->
+                <div id="view-results" class="view" style="display:none">
+                    <div class="results-wrap">
+                        <table class="results-table" id="results-table">
+                            <thead id="results-thead"></thead>
+                            <tbody id="results-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div id="apply-filter-bar" class="apply-filter-bar">
+                        <span id="apply-filter-count"></span>
+                        <button id="btn-apply-filter">Применить фильтр по участникам</button>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </section>
+
+    <div id="chart-tooltip"  class="chart-tooltip"></div>
+    <div id="cell-tooltip"   class="cell-tooltip"></div>
+
+</div>
+<script type="module" src="dist/renderer/index.js"></script>
+</body>
+</html>
