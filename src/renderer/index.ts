@@ -7,6 +7,7 @@ import {
 } from "./chart/legendPanel";
 import { buildRallyLookups } from "./chart/lookups";
 import { updatePinnedBar } from "./chart/pinnedBar";
+import { renderCommentsView } from "./comments/index";
 import { qs } from "./dom";
 import {
     buildChartFilterPanel,
@@ -27,6 +28,8 @@ import {
 declare const window: Window & {
     __onStageBandClick?: (stageNum: number) => void;
 };
+
+type TTab = 'chart' | 'results' | 'comments';
 
 // ── App state ─────────────────────────────────────────────────────────────────
 
@@ -64,6 +67,7 @@ window.addEventListener('DOMContentLoaded', () => {
     qs<HTMLButtonElement>('#pinned-close').addEventListener('click', unpinDriver);
     qs<HTMLButtonElement>('#tab-chart').addEventListener('click', () => switchTab('chart'));
     qs<HTMLButtonElement>('#tab-results').addEventListener('click', () => switchTab('results'));
+    qs<HTMLButtonElement>('#tab-comments').addEventListener('click', () => switchTab('comments'));
     qs<HTMLButtonElement>('#legend-expand-btn').addEventListener('click', toggleLegendExpand);
 
     document.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -167,17 +171,25 @@ function updateHeaderStats(): void {
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
 
-function switchTab(tab: 'chart' | 'results'): void {
-    qs<HTMLButtonElement>('#tab-chart').classList.toggle('active', tab === 'chart');
-    qs<HTMLButtonElement>('#tab-results').classList.toggle('active', tab === 'results');
-    document.getElementById('view-chart')!.style.display       = tab === 'chart'   ? 'flex' : 'none';
-    document.getElementById('view-results')!.style.display     = tab === 'results' ? 'flex' : 'none';
+function switchTab(tab: TTab): void {
+    qs<HTMLButtonElement>('#tab-chart').classList.toggle('active',    tab === 'chart');
+    qs<HTMLButtonElement>('#tab-results').classList.toggle('active',  tab === 'results');
+    qs<HTMLButtonElement>('#tab-comments').classList.toggle('active', tab === 'comments');
+
+    document.getElementById('view-chart')!.style.display    = tab === 'chart'    ? 'flex' : 'none';
+    document.getElementById('view-results')!.style.display  = tab === 'results'  ? 'flex' : 'none';
+    document.getElementById('view-comments')!.style.display = tab === 'comments' ? 'flex' : 'none';
+
     document.getElementById('sidebar-chart-filters')!.style.display   = tab === 'chart'   ? '' : 'none';
     document.getElementById('sidebar-results-filters')!.style.display = tab === 'results' ? '' : 'none';
-    document.getElementById('legend-panel')!.style.display = tab === 'results' ? 'none' : '';
+    document.getElementById('sidebar-comments-filters')!.style.display = tab === 'comments' ? '' : 'none';
+
+    document.getElementById('legend-panel')!.style.display = tab === 'chart' ? '' : 'none';
+
     if (tab === 'chart' && !chartCtrl.getChart()) rebuildChart();
     if (tab === 'chart' && chartCtrl.getChart())  refreshLegend();
-    if (tab === 'results') renderResultsTable();
+    if (tab === 'results')  renderResultsTable();
+    if (tab === 'comments') renderCommentsView(data!);
 }
 
 // ── Filter callbacks ──────────────────────────────────────────────────────────
