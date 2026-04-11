@@ -28,20 +28,17 @@ jobs:
           cache: npm
 
       - run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Verify build output
-        run: |
-          ls -la dist/renderer/index.js || (echo "ERROR: dist/renderer/index.js not found" && exit 1)
+      - run: npm run build
 
       - name: Assemble site
         run: |
-          mkdir _site
-          cp index.html style.css _site/
           mkdir -p _site/dist/renderer
+          cp index.html style.css _site/
           cp dist/renderer/index.js _site/dist/renderer/index.js
+          touch _site/.nojekyll
+
+      - name: Verify
+        run: ls -la _site/dist/renderer/index.js
 
       - uses: actions/configure-pages@v4
         with:
