@@ -33,7 +33,7 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site/dist/renderer
-          cp index.html style.css _site/
+          cp index.html style.css favicon.svg _site/
           cp dist/renderer/index.js _site/dist/renderer/index.js
           touch _site/.nojekyll
 
