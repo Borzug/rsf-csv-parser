@@ -1,6 +1,7 @@
 # Rally Race Chart
 
-Electron-приложение для визуализации и анализа результатов ралли из CSV-файла (экспорт rallysimfans.hu).
+https://borzug.github.io/rsf-csv-parser/
+Приложение для визуализации и анализа результатов ралли из CSV-файла (экспорт rallysimfans.hu).
 Приложение полностью сгенерено через Claude.ai (даже это readme).
 
 ## Установка и запуск
