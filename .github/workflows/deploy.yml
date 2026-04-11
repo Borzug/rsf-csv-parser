@@ -2,51 +2,38 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: read
-  pages:    write
+  pages: write
   id-token: write
 
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url:  ${{ steps.deployment.outputs.page_url }}
+  build_site:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload Artifacts
+        uses: actions/upload-pages-artifact@v3
         with:
-          node-version: 20
-          cache: npm
-
-      - run: npm ci
-      - run: npm run build
-
-      - name: Assemble site
-        run: |
-          mkdir -p _site/dist/renderer
-          cp index.html style.css _site/
-          cp dist/renderer/index.js _site/dist/renderer/index.js
-          touch _site/.nojekyll
-
-      - name: Verify
-        run: ls -la _site/dist/renderer/index.js
-
-      - uses: actions/configure-pages@v4
-        with:
-          enablement: true
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-      - uses: actions/deploy-pages@v4
+          path: 'dist/'
+  deploy:
+    needs: build_site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
         id: deployment
+        uses: actions/deploy-pages@v4
