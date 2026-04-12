@@ -1,6 +1,7 @@
 import type { IParsedRallyData, ILapRecord } from '../../shared/types';
 import type { ICommentEntry, IDriverComments } from './types';
 import { i18n } from "../../i18n/index";
+import { nullableCompare } from "../utils";
 
 const STYLES_ID    = 'comments-module-styles';
 const CARD_WIDTH   = 220;
@@ -100,8 +101,10 @@ function scrollToDriverMatch(query: string): void {
 // ── Data building ─────────────────────────────────────────────────────────────
 
 function buildCommentsData(data: IParsedRallyData): IDriverComments[] {
+    const recordMap   = buildRecordMap(data.records);
     const leaderTimes = buildLeaderTimes(data.records);
-    const totalTimes  = buildTotalTimes(data.records);
+    const totalTimes  = buildTotalTimes(data, recordMap);
+    const positions   = buildPositions(data, recordMap);
     const result: IDriverComments[] = [];
 
     for (const driver of data.drivers) {
@@ -127,14 +130,62 @@ function buildCommentsData(data: IParsedRallyData): IDriverComments[] {
                 realName:  driver.realName,
                 car:       driver.car,
                 group:     driver.group,
-                totalTime: totalTimes.get(driver.username) ?? Infinity,
+                position:  positions.get(driver.username) ?? 0,
+                totalTime: totalTimes.get(driver.username) ?? null,
                 entries,
             });
         }
     }
 
-    result.sort((a, b) => a.totalTime - b.totalTime);
+    result.sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
     return result;
+}
+
+function buildRecordMap(records: ILapRecord[]): Map<string, Map<number, ILapRecord>> {
+    const map = new Map<string, Map<number, ILapRecord>>();
+    for (const r of records) {
+        if (!map.has(r.username)) map.set(r.username, new Map());
+        map.get(r.username)!.set(r.stageNum, r);
+    }
+    return map;
+}
+
+function buildPositions(
+    data:      IParsedRallyData,
+    recordMap: Map<string, Map<number, ILapRecord>>,
+): Map<string, number> {
+    const stageNums = [...data.stages].sort((a, b) => a.num - b.num).map(s => s.num);
+    const totals = data.drivers.map(drv => {
+        let total: number | null = 0;
+        for (const sn of stageNums) {
+            const t3 = recordMap.get(drv.username)?.get(sn)?.time3 ?? null;
+            if (t3 === null) { total = null; break; }
+            else total += t3;
+        }
+        return { username: drv.username, total };
+    });
+    totals.sort((a, b) => nullableCompare(a.total, b.total));
+    const map = new Map<string, number>();
+    totals.forEach((d, i) => map.set(d.username, i + 1));
+    return map;
+}
+
+function buildTotalTimes(
+    data:      IParsedRallyData,
+    recordMap: Map<string, Map<number, ILapRecord>>,
+): Map<string, number | null> {
+    const stageNums = [...data.stages].sort((a, b) => a.num - b.num).map(s => s.num);
+    const map = new Map<string, number | null>();
+    for (const drv of data.drivers) {
+        let total: number | null = 0;
+        for (const sn of stageNums) {
+            const t3 = recordMap.get(drv.username)?.get(sn)?.time3 ?? null;
+            if (t3 === null) { total = null; break; }
+            else total += t3;
+        }
+        map.set(drv.username, total);
+    }
+    return map;
 }
 
 function buildLeaderTimes(records: ILapRecord[]): Map<number, number> {
@@ -147,15 +198,6 @@ function buildLeaderTimes(records: ILapRecord[]): Map<number, number> {
     return map;
 }
 
-function buildTotalTimes(records: ILapRecord[]): Map<string, number> {
-    const map = new Map<string, number>();
-    for (const r of records) {
-        if (r.time3 === null) continue;
-        map.set(r.username, (map.get(r.username) ?? 0) + r.time3 + r.penalty + r.servicePenalty);
-    }
-    return map;
-}
-
 // ── DOM builders ──────────────────────────────────────────────────────────────
 
 function buildDriverRow(driver: IDriverComments): HTMLElement {
@@ -164,10 +206,25 @@ function buildDriverRow(driver: IDriverComments): HTMLElement {
     row.dataset['username'] = driver.username;
     row.dataset['realname'] = driver.realName ?? '';
 
+    row.appendChild(buildPositionBlock(driver.position));
     row.appendChild(buildDriverCol(driver));
     row.appendChild(buildCardsCol(driver.entries));
 
     return row;
+}
+
+function buildPositionBlock(position: number): HTMLElement {
+    const el = document.createElement('div');
+    el.className  = resolvePositionClass(position);
+    el.textContent = String(position);
+    return el;
+}
+
+function resolvePositionClass(position: number): string {
+    if (position === 1) return 'cmt-pos cmt-pos--gold';
+    if (position === 2) return 'cmt-pos cmt-pos--silver';
+    if (position === 3) return 'cmt-pos cmt-pos--bronze';
+    return 'cmt-pos';
 }
 
 function buildDriverCol(driver: IDriverComments): HTMLElement {
@@ -346,7 +403,25 @@ function injectStyles(): void {
             transition: background 0.15s;
         }
         .cmt-row:last-child { border-bottom: none; }
-        .cmt-row--highlighted { background: rgba(204,34,34,0.06); border-radius: 6px; }
+        .cmt-row--highlighted {
+            background: rgba(46,204,113,0.12);
+            outline: 1px solid rgba(46,204,113,0.4);
+            border-radius: 6px;
+        }
+        .cmt-pos {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--color-text-tertiary);
+            width: 28px;
+            min-width: 28px;
+            text-align: right;
+            padding-top: 2px;
+            flex-shrink: 0;
+        }
+        .cmt-pos--gold   { color: #f1c40f; }
+        .cmt-pos--silver { color: #bdc3c7; }
+        .cmt-pos--bronze { color: #e67e22; }
         .cmt-driver {
             width: ${DRIVER_COL_W}px;
             min-width: ${DRIVER_COL_W}px;
@@ -464,7 +539,7 @@ function injectStyles(): void {
             margin-top: 2px;
         }
         .cmt-search-wrap {
-            padding: 8px 0 12px;
+            padding: 8px 12px 12px;
             border-bottom: 1px solid var(--color-border-tertiary);
             margin-bottom: 4px;
         }

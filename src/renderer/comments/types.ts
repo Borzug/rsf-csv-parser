@@ -14,6 +14,7 @@ export interface IDriverComments {
     realName:  string;
     car:       string;
     group:     string;
-    totalTime: number;
+    position:  number;
+    totalTime: number | null;
     entries:   ICommentEntry[];
 }

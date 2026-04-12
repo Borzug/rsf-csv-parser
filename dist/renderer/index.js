@@ -1541,8 +1541,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
   }
   function buildCommentsData(data2) {
+    const recordMap = buildRecordMap(data2.records);
     const leaderTimes = buildLeaderTimes(data2.records);
-    const totalTimes = buildTotalTimes(data2.records);
+    const totalTimes = buildTotalTimes(data2, recordMap);
+    const positions = buildPositions(data2, recordMap);
     const result = [];
     for (const driver of data2.drivers) {
       const entries = data2.records.filter((r) => r.username === driver.username && r.comment.trim()).sort((a, b) => a.stageNum - b.stageNum).map((r) => ({
@@ -1561,13 +1563,56 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           realName: driver.realName,
           car: driver.car,
           group: driver.group,
-          totalTime: totalTimes.get(driver.username) ?? Infinity,
+          position: positions.get(driver.username) ?? 0,
+          totalTime: totalTimes.get(driver.username) ?? null,
           entries
         });
       }
     }
-    result.sort((a, b) => a.totalTime - b.totalTime);
+    result.sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
     return result;
+  }
+  function buildRecordMap(records) {
+    const map = /* @__PURE__ */ new Map();
+    for (const r of records) {
+      if (!map.has(r.username)) map.set(r.username, /* @__PURE__ */ new Map());
+      map.get(r.username).set(r.stageNum, r);
+    }
+    return map;
+  }
+  function buildPositions(data2, recordMap) {
+    const stageNums = [...data2.stages].sort((a, b) => a.num - b.num).map((s) => s.num);
+    const totals = data2.drivers.map((drv) => {
+      let total = 0;
+      for (const sn of stageNums) {
+        const t3 = recordMap.get(drv.username)?.get(sn)?.time3 ?? null;
+        if (t3 === null) {
+          total = null;
+          break;
+        } else total += t3;
+      }
+      return { username: drv.username, total };
+    });
+    totals.sort((a, b) => nullableCompare(a.total, b.total));
+    const map = /* @__PURE__ */ new Map();
+    totals.forEach((d, i) => map.set(d.username, i + 1));
+    return map;
+  }
+  function buildTotalTimes(data2, recordMap) {
+    const stageNums = [...data2.stages].sort((a, b) => a.num - b.num).map((s) => s.num);
+    const map = /* @__PURE__ */ new Map();
+    for (const drv of data2.drivers) {
+      let total = 0;
+      for (const sn of stageNums) {
+        const t3 = recordMap.get(drv.username)?.get(sn)?.time3 ?? null;
+        if (t3 === null) {
+          total = null;
+          break;
+        } else total += t3;
+      }
+      map.set(drv.username, total);
+    }
+    return map;
   }
   function buildLeaderTimes(records) {
     const map = /* @__PURE__ */ new Map();
@@ -1578,22 +1623,27 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     return map;
   }
-  function buildTotalTimes(records) {
-    const map = /* @__PURE__ */ new Map();
-    for (const r of records) {
-      if (r.time3 === null) continue;
-      map.set(r.username, (map.get(r.username) ?? 0) + r.time3 + r.penalty + r.servicePenalty);
-    }
-    return map;
-  }
   function buildDriverRow(driver) {
     const row = document.createElement("div");
     row.className = "cmt-row";
     row.dataset["username"] = driver.username;
     row.dataset["realname"] = driver.realName ?? "";
+    row.appendChild(buildPositionBlock(driver.position));
     row.appendChild(buildDriverCol(driver));
     row.appendChild(buildCardsCol(driver.entries));
     return row;
+  }
+  function buildPositionBlock(position) {
+    const el = document.createElement("div");
+    el.className = resolvePositionClass(position);
+    el.textContent = String(position);
+    return el;
+  }
+  function resolvePositionClass(position) {
+    if (position === 1) return "cmt-pos cmt-pos--gold";
+    if (position === 2) return "cmt-pos cmt-pos--silver";
+    if (position === 3) return "cmt-pos cmt-pos--bronze";
+    return "cmt-pos";
   }
   function buildDriverCol(driver) {
     const col = document.createElement("div");
@@ -1739,7 +1789,25 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             transition: background 0.15s;
         }
         .cmt-row:last-child { border-bottom: none; }
-        .cmt-row--highlighted { background: rgba(204,34,34,0.06); border-radius: 6px; }
+        .cmt-row--highlighted {
+            background: rgba(46,204,113,0.12);
+            outline: 1px solid rgba(46,204,113,0.4);
+            border-radius: 6px;
+        }
+        .cmt-pos {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--color-text-tertiary);
+            width: 28px;
+            min-width: 28px;
+            text-align: right;
+            padding-top: 2px;
+            flex-shrink: 0;
+        }
+        .cmt-pos--gold   { color: #f1c40f; }
+        .cmt-pos--silver { color: #bdc3c7; }
+        .cmt-pos--bronze { color: #e67e22; }
         .cmt-driver {
             width: ${DRIVER_COL_W}px;
             min-width: ${DRIVER_COL_W}px;
@@ -1857,7 +1925,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             margin-top: 2px;
         }
         .cmt-search-wrap {
-            padding: 8px 0 12px;
+            padding: 8px 12px 12px;
             border-bottom: 1px solid var(--color-border-tertiary);
             margin-bottom: 4px;
         }
