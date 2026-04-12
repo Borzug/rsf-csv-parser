@@ -1,8 +1,9 @@
-import type { IStageInfo } from '../../shared/types';
+import type { IStageInfo } from '../../shared/types.js';
+import { i18n } from "../../i18n/index.js";
 import {
     escapeHtml,
     formatTime
-} from "../utils";
+} from "../utils.js";
 
 const TOOLTIP_MARGIN_PX = 16;
 const TOOLTIP_OFFSET_Y  = 12;
@@ -71,6 +72,8 @@ function buildTooltipHtml(
     xIdx:      number,
     stageInfo: { label: string } | null,
 ): string {
+    const t = i18n.t();
+
     return matches.map(({ ds, y, isDnf }, mi) => {
         const divider = mi > 0 ? '<div class="tt-divider"></div>' : '';
         const name    = escapeHtml((ds._displayName as string) || (ds.driverKey as string));
@@ -90,9 +93,9 @@ function buildTooltipHtml(
             : y !== null
                 ? `<span class="tt-row">⏱ ${formatTime(y)}</span>`
                 : `<span class="tt-red">DNF</span>`;
-        if (pen > 0) html += `<span class="tt-red">Штраф: +${formatTime(pen)}</span>`;
-        if (sp  > 0) html += `<span class="tt-red">Service Penalty: +${formatTime(sp)}</span>`;
-        if (sr  > 0) html += `<span class="tt-red">Super Rally: ${sr}×</span>`;
+        if (pen > 0) html += `<span class="tt-red">${t.tooltipPenalty}: +${formatTime(pen)}</span>`;
+        if (sp  > 0) html += `<span class="tt-red">${t.tooltipServicePenalty}: +${formatTime(sp)}</span>`;
+        if (sr  > 0) html += `<span class="tt-red">${t.tooltipSuperRally}: ${sr}×</span>`;
         if (cmt)     html += `<span class="tt-sep"></span><span class="tt-cmt">💬 ${escapeHtml(cmt)}</span>`;
         html += '</div>';
         return html;

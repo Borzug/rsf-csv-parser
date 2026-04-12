@@ -1,4 +1,5 @@
-import { createElement } from '../dom';
+import { i18n } from "../../i18n/index.js";
+import { createElement } from "../dom.js";
 
 export interface IFilterGroupRefs {
     group:   HTMLElement;
@@ -8,9 +9,11 @@ export interface IFilterGroupRefs {
 }
 
 export function buildCollapsibleFilterGroup(
-    title: string,
+    title:     string,
     counterId: string,
 ): IFilterGroupRefs {
+    const t = i18n.t();
+
     const group = createElement('div', 'filter-group collapsed');
 
     const hdr  = createElement('div', 'filter-header');
@@ -20,8 +23,8 @@ export function buildCollapsibleFilterGroup(
         + `<span class="filter-counter" id="${counterId}"></span>`;
 
     const right   = createElement('div', 'filter-header-right');
-    const btnAll  = createElement('button', 'btn-fa', 'Все');
-    const btnNone = createElement('button', 'btn-fa', 'Никого');
+    const btnAll  = createElement('button', 'btn-fa', t.filterAll);
+    const btnNone = createElement('button', 'btn-fa', t.filterNone);
     right.appendChild(btnAll);
     right.appendChild(btnNone);
 

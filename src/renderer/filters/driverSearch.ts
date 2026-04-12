@@ -1,12 +1,13 @@
-import type { IParsedRallyData } from '../../shared/types';
-import { qsa } from '../dom';
+import type { IParsedRallyData } from '../../shared/types.js';
+import { i18n } from "../../i18n/index.js";
+import { qsa } from "../dom.js";
 import {
-    type IChartFilterState,
-    refreshVisibleDriverKeys,
-} from './filterState';
+    IChartFilterState,
+    refreshVisibleDriverKeys
+} from "./filterState";
 
-const DEBOUNCE_MS  = 200;
-const MIN_CHARS    = 2;
+const DEBOUNCE_MS = 200;
+const MIN_CHARS   = 2;
 
 let _searchTimer: number | null = null;
 
@@ -52,10 +53,10 @@ export function buildSearchBox(
     si.className   = 'filter-search';
     si.type        = 'text';
     si.id          = 'driver-search-input';
-    si.placeholder = 'Поиск…';
+    si.placeholder = i18n.t().filterSearch;
 
     const sc = document.createElement('button');
-    sc.className = 'filter-search-clear hidden';
+    sc.className   = 'filter-search-clear hidden';
     sc.textContent = '×';
 
     sw.appendChild(si);

@@ -1,41 +1,52 @@
-import type { IDriverResult } from './types';
-import { formatTime, formatTimeSigned } from '../utils';
-import { createTd, createElement } from '../dom';
+import type { IDriverResult } from './types.js';
+import { i18n } from "../../i18n/index.js";
+import {
+    createElement,
+    createTd
+} from "../dom.js";
+import {
+    formatTime,
+    formatTimeSigned
+} from "../utils.js";
 
-const COLUMNS = [
-    { key: 'pos',          label: '#',                   title: '' },
-    { key: 'name',         label: 'Участник',             title: '',     special: 'search' },
-    { key: 'group',        label: 'Класс',                title: '' },
-    { key: 'car',          label: 'Автомобиль',           title: '' },
-    { key: 'totalTime',    label: 'Общее время',          title: '' },
-    { key: 'totalPenalty', label: 'Штрафы',               title: '' },
-    { key: 'avgGapLeader', label: 'Ср. отст. лидер',
-      title: 'Среднее отставание от лидера за участок с учётом SR' },
-    { key: 'avgGapPrev',   label: 'Ср. отст. пред.',
-      title: 'Среднее отставание от предыдущего места за участок с учётом SR' },
-    { key: 'cleanLeader',  label: 'Чист. отст. лидер',
-      title: 'Среднее чистое отставание от лидера\nУчитываются только участки без SR для обоих участников' },
-    { key: 'cleanPrev',    label: 'Чист. отст. пред.',
-      title: 'Среднее чистое отставание от предыдущего\nУчитываются только участки без SR для обоих участников' },
-    { key: 'totalGap',     label: 'Общее отст.',          title: '' },
-    { key: 'sr',           label: 'SR',                   title: '' },
-] as const;
+interface IColumnDef {
+    key:      string;
+    label:    () => string;
+    title:    () => string;
+    special?: string;
+}
+
+const COLUMNS: IColumnDef[] = [
+    { key: 'pos',          label: () => i18n.t().colPosition,       title: () => '' },
+    { key: 'name',         label: () => i18n.t().colParticipant,    title: () => '', special: 'search' },
+    { key: 'group',        label: () => i18n.t().colClass,          title: () => '' },
+    { key: 'car',          label: () => i18n.t().colCar,            title: () => '' },
+    { key: 'totalTime',    label: () => i18n.t().colTotalTime,      title: () => '' },
+    { key: 'totalPenalty', label: () => i18n.t().colPenalties,      title: () => '' },
+    { key: 'avgGapLeader', label: () => i18n.t().colAvgGapLeader,   title: () => i18n.t().colAvgGapLeaderTitle },
+    { key: 'avgGapPrev',   label: () => i18n.t().colAvgGapPrev,     title: () => i18n.t().colAvgGapPrevTitle },
+    { key: 'cleanLeader',  label: () => i18n.t().colCleanGapLeader, title: () => i18n.t().colCleanGapLeaderTitle },
+    { key: 'cleanPrev',    label: () => i18n.t().colCleanGapPrev,   title: () => i18n.t().colCleanGapPrevTitle },
+    { key: 'totalGap',     label: () => i18n.t().colTotalGap,       title: () => '' },
+    { key: 'sr',           label: () => i18n.t().colSuperRally,     title: () => '' },
+];
 
 export function buildResultsTableHeader(
-    thead:       HTMLElement,
+    thead:         HTMLElement,
     onSearchClick: (th: HTMLElement) => void,
 ): void {
     thead.innerHTML = '';
     const tr = document.createElement('tr');
     COLUMNS.forEach(col => {
         const th = document.createElement('th');
-        if (col.title) th.title = col.title;
-        if ((col as any).special === 'search') {
+        const titleText = col.title();
+        if (titleText) th.title = titleText;
+        if (col.special === 'search') {
             th.className = 'th-participant';
-            th.innerHTML = col.label;
+            th.innerHTML = col.label();
             th.addEventListener('click', () => onSearchClick(th));
         } else {
-            th.textContent = col.label;
+            th.textContent = col.label();
         }
         tr.appendChild(th);
     });
@@ -61,6 +72,8 @@ function buildResultRow(r: IDriverResult, selectedRows: Set<string>): HTMLTableR
     row.dataset['username'] = r.stats.username;
     if (selectedRows.has(r.stats.username)) row.classList.add('row-selected');
 
+    const t = i18n.t();
+
     row.appendChild(buildPositionCell(r.position));
     row.appendChild(buildNameCell(r.stats));
     row.appendChild(buildGroupCell(r.stats.group));
@@ -70,12 +83,12 @@ function buildResultRow(r: IDriverResult, selectedRows: Set<string>): HTMLTableR
     row.appendChild(buildPenaltyCell(r.stats.totalPenalty));
     row.appendChild(buildGapWithTooltip(
         r.position === 1 ? '—' : formatTimeSigned(r.avgGapFromLeader),
-        'Среднее отставание от лидера за участок с учётом SR',
+        t.colAvgGapLeaderTitle,
         r.avgGapFromLeader,
     ));
     row.appendChild(buildGapWithTooltip(
         r.position === 1 ? '—' : formatTimeSigned(r.avgGapFromPrev),
-        'Среднее отставание от предыдущего места за участок с учётом SR',
+        t.colAvgGapPrevTitle,
         r.avgGapFromPrev,
     ));
     row.appendChild(buildCleanGapCell(
@@ -104,8 +117,8 @@ function buildPositionCell(pos: number): HTMLTableCellElement {
 }
 
 function buildNameCell(stats: any): HTMLTableCellElement {
-    const td    = createTd('td-name');
-    const user  = createElement('span', 'td-name-user', stats.username);
+    const td   = createTd('td-name');
+    const user = createElement('span', 'td-name-user', stats.username);
     td.appendChild(user);
     if (stats.realName && stats.realName !== stats.username) {
         const real = createElement('span', 'td-name-real', ` | ${stats.realName}`);
@@ -131,9 +144,9 @@ function buildPenaltyCell(penalty: number): HTMLTableCellElement {
 }
 
 function buildGapWithTooltip(
-    text:  string,
-    tip:   string,
-    val:   number | null,
+    text: string,
+    tip:  string,
+    val:  number | null,
 ): HTMLTableCellElement {
     const td    = createTd();
     const inner = createElement('span', 'td-clean', text);
@@ -144,7 +157,7 @@ function buildGapWithTooltip(
 }
 
 function buildCleanGapCell(
-    val:       number | null,
+    val:        number | null,
     cleanCount: number,
     totalCount: number,
 ): HTMLTableCellElement {
@@ -155,9 +168,7 @@ function buildCleanGapCell(
     }
     const inner = createElement('span', 'td-clean',
         val !== null ? formatTimeSigned(val) : '—');
-    inner.dataset['tooltip'] =
-        `Рассчитано на основании прохождения ${cleanCount}/${totalCount} этапов\n`
-        + 'Учитываются только участки без SR для обоих участников';
+    inner.dataset['tooltip'] = i18n.t().cleanGapCellTooltip(cleanCount, totalCount);
     if (val !== null) inner.style.color = gapColor(val);
     td.appendChild(inner);
     return td;

@@ -426,3 +426,37 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #303030; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #404040; }
+
+/* ── Language Switcher ── добавить в style.css ─────────────────────── */
+.lang-switcher {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.lang-btn {
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+    font-family: 'Fira Code', monospace;
+    font-size: 11px;
+    padding: 3px 7px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+}
+
+.lang-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+}
+
+.lang-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}

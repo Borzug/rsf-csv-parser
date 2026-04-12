@@ -152,6 +152,252 @@
     return { records, stages, drivers, groups };
   }
 
+  // src/i18n/translations.ts
+  var ru = {
+    welcomeTitle: "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0434\u0430\u043D\u043D\u044B\u0445 \u0440\u0430\u043B\u043B\u0438",
+    welcomeDesc: "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 CSV-\u0444\u0430\u0439\u043B \u0441 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u0430\u043C\u0438 \u0433\u043E\u043D\u043A\u0438.",
+    eventNameLabel: "\u041D\u0430\u0437\u0432\u0430\u043D\u0438\u0435 \u0441\u043E\u0431\u044B\u0442\u0438\u044F",
+    eventNameOptional: "(\u043D\u0435\u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u043E)",
+    selectFileButton: "\u{1F4C2} \u0412\u044B\u0431\u0440\u0430\u0442\u044C CSV-\u0444\u0430\u0439\u043B",
+    fileReading: "\u0427\u0442\u0435\u043D\u0438\u0435 \u0444\u0430\u0439\u043B\u0430\u2026",
+    fileLoaded: (stages, drivers) => `\u2713 \u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E: ${stages} \u0443\u0447\u0430\u0441\u0442\u043A\u043E\u0432, ${drivers} \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`,
+    fileError: "\u2717 \u041E\u0448\u0438\u0431\u043A\u0430",
+    fileReadError: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0444\u0430\u0439\u043B",
+    defaultTitle: "Rally Race Chart",
+    filtersLabel: "\u0424\u0438\u043B\u044C\u0442\u0440\u044B",
+    backButton: "\u2190 \u041D\u0430\u0437\u0430\u0434",
+    headerStats: (finished, total, stages) => `| \u{1F464} ${finished}/${total}  |  SS ${stages}`,
+    tabChart: "\u{1F4C8} \u0413\u0440\u0430\u0444\u0438\u043A",
+    tabResults: "\u{1F3C6} \u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B",
+    tabComments: "\u{1F4AC} \u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438",
+    chartLegendSuccess: "\u0423\u0441\u043F\u0435\u0448\u043D\u044B\u0439 \u043F\u0440\u043E\u0435\u0437\u0434",
+    chartLegendSuperRally: "Super Rally",
+    chartLegendComment: "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439",
+    pinnedCloseTitle: "\u0421\u043D\u044F\u0442\u044C \u0432\u044B\u0434\u0435\u043B\u0435\u043D\u0438\u0435 (Esc)",
+    legendExpandTitle: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044C",
+    filterChartStages: "\u0421\u043F\u0435\u0446\u0443\u0447\u0430\u0441\u0442\u043A\u0438",
+    filterParticipants: "\u0423\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438",
+    filterGroupClass: "\u0413\u0440\u0443\u043F\u043F\u0430 / \u041A\u043B\u0430\u0441\u0441",
+    filterCar: "\u0410\u0432\u0442\u043E\u043C\u043E\u0431\u0438\u043B\u044C",
+    filterResultsStages: "\u042D\u0442\u0430\u043F\u044B",
+    filterResultsClass: "\u041A\u043B\u0430\u0441\u0441",
+    filterAll: "\u0412\u0441\u0435",
+    filterNone: "\u041D\u0438\u043A\u043E\u0433\u043E",
+    filterSearch: "\u041F\u043E\u0438\u0441\u043A\u2026",
+    colPosition: "#",
+    colParticipant: "\u0423\u0447\u0430\u0441\u0442\u043D\u0438\u043A",
+    colClass: "\u041A\u043B\u0430\u0441\u0441",
+    colCar: "\u0410\u0432\u0442\u043E\u043C\u043E\u0431\u0438\u043B\u044C",
+    colTotalTime: "\u041E\u0431\u0449\u0435\u0435 \u0432\u0440\u0435\u043C\u044F",
+    colPenalties: "\u0428\u0442\u0440\u0430\u0444\u044B",
+    colAvgGapLeader: "\u0421\u0440. \u043E\u0442\u0441\u0442. \u043B\u0438\u0434\u0435\u0440",
+    colAvgGapPrev: "\u0421\u0440. \u043E\u0442\u0441\u0442. \u043F\u0440\u0435\u0434.",
+    colCleanGapLeader: "\u0427\u0438\u0441\u0442. \u043E\u0442\u0441\u0442. \u043B\u0438\u0434\u0435\u0440",
+    colCleanGapPrev: "\u0427\u0438\u0441\u0442. \u043E\u0442\u0441\u0442. \u043F\u0440\u0435\u0434.",
+    colTotalGap: "\u041E\u0431\u0449\u0435\u0435 \u043E\u0442\u0441\u0442.",
+    colSuperRally: "SR",
+    colAvgGapLeaderTitle: "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR",
+    colAvgGapPrevTitle: "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E \u043C\u0435\u0441\u0442\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR",
+    colCleanGapLeaderTitle: "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u0447\u0438\u0441\u0442\u043E\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430\n\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432",
+    colCleanGapPrevTitle: "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u0447\u0438\u0441\u0442\u043E\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E\n\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432",
+    cleanGapCellTooltip: (used, total) => `\u0420\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u043D\u043E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0430\u043D\u0438\u0438 \u043F\u0440\u043E\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u044F ${used}/${total} \u044D\u0442\u0430\u043F\u043E\u0432
+\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`,
+    applyFilterButton: "\u041F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C \u0444\u0438\u043B\u044C\u0442\u0440 \u043F\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430\u043C",
+    tooltipPenalty: "\u0428\u0442\u0440\u0430\u0444",
+    tooltipServicePenalty: "Service Penalty",
+    tooltipSuperRally: "Super Rally",
+    commentsEmpty: "\u041D\u0435\u0442 \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0435\u0432 \u0432 \u044D\u0442\u043E\u0439 \u0433\u043E\u043D\u043A\u0435",
+    commentsSearchLabel: "\u041F\u043E\u0438\u0441\u043A \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430",
+    commentsSearchPlaceholder: "\u0418\u043C\u044F \u0438\u043B\u0438 \u043D\u0438\u043A\u043D\u0435\u0439\u043C\u2026",
+    commentsLeader: "\u{1F947} \u043B\u0438\u0434\u0435\u0440",
+    commentsGap: (time) => `\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435: +${time}`,
+    commentsPenalty: (time) => `+${time} \u0448\u0442\u0440\u0430\u0444`,
+    commentsServicePenalty: (time) => `+${time} \u0441\u0435\u0440\u0432\u0438\u0441`,
+    commentsCount: (n) => {
+      if (n % 10 === 1 && n % 100 !== 11) return `${n} \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439`;
+      if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return `${n} \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u044F`;
+      return `${n} \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0435\u0432`;
+    }
+  };
+  var en = {
+    welcomeTitle: "Load Rally Data",
+    welcomeDesc: "Select a CSV file with race results.",
+    eventNameLabel: "Event Name",
+    eventNameOptional: "(optional)",
+    selectFileButton: "\u{1F4C2} Select CSV File",
+    fileReading: "Reading file\u2026",
+    fileLoaded: (stages, drivers) => `\u2713 Loaded: ${stages} stages, ${drivers} participants`,
+    fileError: "\u2717 Error",
+    fileReadError: "Failed to read file",
+    defaultTitle: "Rally Race Chart",
+    filtersLabel: "Filters",
+    backButton: "\u2190 Back",
+    headerStats: (finished, total, stages) => `| \u{1F464} ${finished}/${total}  |  SS ${stages}`,
+    tabChart: "\u{1F4C8} Chart",
+    tabResults: "\u{1F3C6} Results",
+    tabComments: "\u{1F4AC} Comments",
+    chartLegendSuccess: "Completed stage",
+    chartLegendSuperRally: "Super Rally",
+    chartLegendComment: "Comment",
+    pinnedCloseTitle: "Unpin (Esc)",
+    legendExpandTitle: "Expand",
+    filterChartStages: "Stages",
+    filterParticipants: "Participants",
+    filterGroupClass: "Group / Class",
+    filterCar: "Car",
+    filterResultsStages: "Stages",
+    filterResultsClass: "Class",
+    filterAll: "All",
+    filterNone: "None",
+    filterSearch: "Search\u2026",
+    colPosition: "#",
+    colParticipant: "Participant",
+    colClass: "Class",
+    colCar: "Car",
+    colTotalTime: "Total Time",
+    colPenalties: "Penalties",
+    colAvgGapLeader: "Avg Gap Leader",
+    colAvgGapPrev: "Avg Gap Prev",
+    colCleanGapLeader: "Clean Gap Leader",
+    colCleanGapPrev: "Clean Gap Prev",
+    colTotalGap: "Total Gap",
+    colSuperRally: "SR",
+    colAvgGapLeaderTitle: "Average gap to leader per stage (SR included)",
+    colAvgGapPrevTitle: "Average gap to previous position per stage (SR included)",
+    colCleanGapLeaderTitle: "Average clean gap to leader\nOnly stages without SR for both drivers",
+    colCleanGapPrevTitle: "Average clean gap to previous\nOnly stages without SR for both drivers",
+    cleanGapCellTooltip: (used, total) => `Calculated from ${used}/${total} stages
+Only stages without SR for both drivers`,
+    applyFilterButton: "Apply Participant Filter",
+    tooltipPenalty: "Penalty",
+    tooltipServicePenalty: "Service Penalty",
+    tooltipSuperRally: "Super Rally",
+    commentsEmpty: "No comments in this race",
+    commentsSearchLabel: "Search participant",
+    commentsSearchPlaceholder: "Name or username\u2026",
+    commentsLeader: "\u{1F947} leader",
+    commentsGap: (time) => `Gap: +${time}`,
+    commentsPenalty: (time) => `+${time} penalty`,
+    commentsServicePenalty: (time) => `+${time} service`,
+    commentsCount: (n) => `${n} comment${n !== 1 ? "s" : ""}`
+  };
+  var hu = {
+    welcomeTitle: "Rally adatok bet\xF6lt\xE9se",
+    welcomeDesc: "V\xE1lassz egy CSV f\xE1jlt a versenyeredm\xE9nyekkel.",
+    eventNameLabel: "Esem\xE9ny neve",
+    eventNameOptional: "(opcion\xE1lis)",
+    selectFileButton: "\u{1F4C2} CSV f\xE1jl kiv\xE1laszt\xE1sa",
+    fileReading: "F\xE1jl olvas\xE1sa\u2026",
+    fileLoaded: (stages, drivers) => `\u2713 Bet\xF6ltve: ${stages} szakasz, ${drivers} r\xE9sztvev\u0151`,
+    fileError: "\u2717 Hiba",
+    fileReadError: "A f\xE1jl olvas\xE1sa sikertelen",
+    defaultTitle: "Rally Race Chart",
+    filtersLabel: "Sz\u0171r\u0151k",
+    backButton: "\u2190 Vissza",
+    headerStats: (finished, total, stages) => `| \u{1F464} ${finished}/${total}  |  SS ${stages}`,
+    tabChart: "\u{1F4C8} Grafikon",
+    tabResults: "\u{1F3C6} Eredm\xE9nyek",
+    tabComments: "\u{1F4AC} Megjegyz\xE9sek",
+    chartLegendSuccess: "Teljes\xEDtett szakasz",
+    chartLegendSuperRally: "Super Rally",
+    chartLegendComment: "Megjegyz\xE9s",
+    pinnedCloseTitle: "R\xF6gz\xEDt\xE9s felold\xE1sa (Esc)",
+    legendExpandTitle: "Kibont\xE1s",
+    filterChartStages: "Szakaszok",
+    filterParticipants: "R\xE9sztvev\u0151k",
+    filterGroupClass: "Csoport / Oszt\xE1ly",
+    filterCar: "Aut\xF3",
+    filterResultsStages: "Szakaszok",
+    filterResultsClass: "Oszt\xE1ly",
+    filterAll: "Mind",
+    filterNone: "Senki",
+    filterSearch: "Keres\xE9s\u2026",
+    colPosition: "#",
+    colParticipant: "R\xE9sztvev\u0151",
+    colClass: "Oszt\xE1ly",
+    colCar: "Aut\xF3",
+    colTotalTime: "\xD6sszes id\u0151",
+    colPenalties: "B\xFCntet\xE9sek",
+    colAvgGapLeader: "\xC1tl. h\xE1tr\xE1ny vez.",
+    colAvgGapPrev: "\xC1tl. h\xE1tr\xE1ny el\u0151z\u0151",
+    colCleanGapLeader: "Tiszta h\xE1tr\xE1ny vez.",
+    colCleanGapPrev: "Tiszta h\xE1tr\xE1ny el\u0151z\u0151",
+    colTotalGap: "\xD6sszes h\xE1tr\xE1ny",
+    colSuperRally: "SR",
+    colAvgGapLeaderTitle: "\xC1tlagos h\xE1tr\xE1ny a vez\xE9rt\u0151l szakaszonk\xE9nt (SR-rel)",
+    colAvgGapPrevTitle: "\xC1tlagos h\xE1tr\xE1ny az el\u0151z\u0151 helyezett\u0151l szakaszonk\xE9nt (SR-rel)",
+    colCleanGapLeaderTitle: "\xC1tlagos tiszta h\xE1tr\xE1ny a vez\xE9rt\u0151l\nCsak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l",
+    colCleanGapPrevTitle: "\xC1tlagos tiszta h\xE1tr\xE1ny az el\u0151z\u0151t\u0151l\nCsak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l",
+    cleanGapCellTooltip: (used, total) => `Sz\xE1m\xEDtva: ${used}/${total} szakasz alapj\xE1n
+Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
+    applyFilterButton: "R\xE9sztvev\u0151 sz\u0171r\u0151 alkalmaz\xE1sa",
+    tooltipPenalty: "B\xFCntet\xE9s",
+    tooltipServicePenalty: "Szerviz b\xFCntet\xE9s",
+    tooltipSuperRally: "Super Rally",
+    commentsEmpty: "Nincsenek megjegyz\xE9sek ebben a versenyen",
+    commentsSearchLabel: "R\xE9sztvev\u0151 keres\xE9se",
+    commentsSearchPlaceholder: "N\xE9v vagy felhaszn\xE1l\xF3n\xE9v\u2026",
+    commentsLeader: "\u{1F947} vezet\u0151",
+    commentsGap: (time) => `H\xE1tr\xE1ny: +${time}`,
+    commentsPenalty: (time) => `+${time} b\xFCntet\xE9s`,
+    commentsServicePenalty: (time) => `+${time} szerviz`,
+    commentsCount: (n) => `${n} megjegyz\xE9s`
+  };
+
+  // src/i18n/i18n.ts
+  var STORAGE_KEY = "rsf-language";
+  var TRANSLATIONS = { ru, en, hu };
+  var I18nService = class {
+    constructor() {
+      this.callbacks = [];
+      const stored = localStorage.getItem(STORAGE_KEY);
+      this.currentLanguage = stored && stored in TRANSLATIONS ? stored : this.detectLanguage();
+    }
+    detectLanguage() {
+      const locale = navigator.language?.toLowerCase() ?? "";
+      if (locale.startsWith("ru")) return "ru";
+      if (locale.startsWith("hu")) return "hu";
+      return "en";
+    }
+    t() {
+      return TRANSLATIONS[this.currentLanguage];
+    }
+    getLanguage() {
+      return this.currentLanguage;
+    }
+    setLanguage(lang) {
+      if (lang === this.currentLanguage) return;
+      this.currentLanguage = lang;
+      localStorage.setItem(STORAGE_KEY, lang);
+      this.callbacks.forEach((cb) => cb(lang));
+    }
+    onLanguageChange(cb) {
+      this.callbacks.push(cb);
+    }
+  };
+  var i18n = new I18nService();
+
+  // src/lang-switcher.ts
+  function initLangSwitcher(onChanged) {
+    const switcher = document.getElementById("lang-switcher");
+    if (!switcher) return;
+    updateActiveLangButton(switcher, i18n.getLanguage());
+    switcher.addEventListener("click", (e) => {
+      const btn = e.target.closest(".lang-btn");
+      if (!btn) return;
+      const lang = btn.dataset["lang"];
+      if (!lang) return;
+      i18n.setLanguage(lang);
+      updateActiveLangButton(switcher, lang);
+      onChanged();
+    });
+  }
+  function updateActiveLangButton(switcher, lang) {
+    switcher.querySelectorAll(".lang-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset["lang"] === lang);
+    });
+  }
+
   // src/renderer/utils.ts
   function formatTime(sec) {
     if (sec === null || isNaN(sec)) return "DNF";
@@ -741,6 +987,7 @@
     return matches;
   }
   function buildTooltipHtml(matches, xIdx, stageInfo) {
+    const t = i18n.t();
     return matches.map(({ ds, y, isDnf }, mi) => {
       const divider = mi > 0 ? '<div class="tt-divider"></div>' : "";
       const name = escapeHtml(ds._displayName || ds.driverKey);
@@ -755,9 +1002,9 @@
       if (car) html += `<span class="tt-car">\u{1F697} ${car}</span>`;
       html += `<span class="tt-sep"></span>`;
       html += isDnf ? `<span class="tt-red">DNF</span>` : y !== null ? `<span class="tt-row">\u23F1 ${formatTime(y)}</span>` : `<span class="tt-red">DNF</span>`;
-      if (pen > 0) html += `<span class="tt-red">\u0428\u0442\u0440\u0430\u0444: +${formatTime(pen)}</span>`;
-      if (sp > 0) html += `<span class="tt-red">Service Penalty: +${formatTime(sp)}</span>`;
-      if (sr > 0) html += `<span class="tt-red">Super Rally: ${sr}\xD7</span>`;
+      if (pen > 0) html += `<span class="tt-red">${t.tooltipPenalty}: +${formatTime(pen)}</span>`;
+      if (sp > 0) html += `<span class="tt-red">${t.tooltipServicePenalty}: +${formatTime(sp)}</span>`;
+      if (sr > 0) html += `<span class="tt-red">${t.tooltipSuperRally}: ${sr}\xD7</span>`;
       if (cmt) html += `<span class="tt-sep"></span><span class="tt-cmt">\u{1F4AC} ${escapeHtml(cmt)}</span>`;
       html += "</div>";
       return html;
@@ -1232,7 +1479,7 @@
     if (drivers.length === 0) {
       const empty = document.createElement("div");
       empty.className = "cmt-empty";
-      empty.textContent = "\u041D\u0435\u0442 \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0435\u0432 \u0432 \u044D\u0442\u043E\u0439 \u0433\u043E\u043D\u043A\u0435";
+      empty.textContent = i18n.t().commentsEmpty;
       container.appendChild(empty);
       return;
     }
@@ -1247,22 +1494,33 @@
   function renderSidebarSearch() {
     const target = document.getElementById("filter-comments-search");
     if (!target) return;
-    if (document.getElementById("cmt-search-wrap")) return;
+    const existing = document.getElementById("cmt-search-wrap");
+    if (existing) {
+      updateSidebarSearchLabels(existing);
+      return;
+    }
     const wrap = document.createElement("div");
     wrap.id = "cmt-search-wrap";
     wrap.className = "cmt-search-wrap";
     const label = document.createElement("div");
+    label.id = "cmt-search-label";
     label.className = "filter-group-title";
-    label.textContent = "\u041F\u043E\u0438\u0441\u043A \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430";
+    label.textContent = i18n.t().commentsSearchLabel;
     const input = document.createElement("input");
     input.id = "cmt-search-input";
     input.type = "text";
     input.className = "cmt-search-input";
-    input.placeholder = "\u0418\u043C\u044F \u0438\u043B\u0438 \u043D\u0438\u043A\u043D\u0435\u0439\u043C\u2026";
+    input.placeholder = i18n.t().commentsSearchPlaceholder;
     input.addEventListener("input", () => scrollToDriverMatch(input.value.trim()));
     wrap.appendChild(label);
     wrap.appendChild(input);
     target.appendChild(wrap);
+  }
+  function updateSidebarSearchLabels(wrap) {
+    const label = wrap.querySelector("#cmt-search-label");
+    const input = wrap.querySelector("#cmt-search-input");
+    if (label) label.textContent = i18n.t().commentsSearchLabel;
+    if (input) input.placeholder = i18n.t().commentsSearchPlaceholder;
   }
   function scrollToDriverMatch(query) {
     const list = document.getElementById("cmt-list");
@@ -1358,7 +1616,7 @@
     }
     const count = document.createElement("div");
     count.className = "cmt-drv-count";
-    count.textContent = `${driver.entries.length} ${pluralizeComments(driver.entries.length)}`;
+    count.textContent = i18n.t().commentsCount(driver.entries.length);
     col.appendChild(count);
     return col;
   }
@@ -1410,12 +1668,12 @@
     if (entry.gapToLeader === 0) {
       const gap = document.createElement("span");
       gap.className = "cmt-gap cmt-gap--leader";
-      gap.textContent = "\u{1F947} \u043B\u0438\u0434\u0435\u0440";
+      gap.textContent = i18n.t().commentsLeader;
       meta.appendChild(gap);
     } else if (entry.gapToLeader !== null && entry.gapToLeader > 0) {
       const gap = document.createElement("span");
       gap.className = "cmt-gap";
-      gap.textContent = `\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435: +${formatTime2(entry.gapToLeader)}`;
+      gap.textContent = i18n.t().commentsGap(formatTime2(entry.gapToLeader));
       meta.appendChild(gap);
     }
     return meta;
@@ -1432,13 +1690,13 @@
     if (entry.penalty > 0) {
       const pen = document.createElement("span");
       pen.className = "cmt-badge-penalty";
-      pen.textContent = `+${formatTime2(entry.penalty)} \u0448\u0442\u0440\u0430\u0444`;
+      pen.textContent = i18n.t().commentsPenalty(formatTime2(entry.penalty));
       badges.appendChild(pen);
     }
     if (entry.servicePenalty > 0) {
       const sp = document.createElement("span");
       sp.className = "cmt-badge-penalty";
-      sp.textContent = `+${formatTime2(entry.servicePenalty)} \u0441\u0435\u0440\u0432\u0438\u0441`;
+      sp.textContent = i18n.t().commentsServicePenalty(formatTime2(entry.servicePenalty));
       badges.appendChild(sp);
     }
     return badges;
@@ -1453,11 +1711,6 @@
     const sign = seconds < 0 ? "-" : "";
     if (h > 0) return `${sign}${h}:${m.toString().padStart(2, "0")}:${ss}.${dec}`;
     return `${sign}${m}:${ss}.${dec}`;
-  }
-  function pluralizeComments(n) {
-    if (n % 10 === 1 && n % 100 !== 11) return "\u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439";
-    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return "\u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u044F";
-    return "\u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0435\u0432";
   }
   function injectStyles() {
     if (document.getElementById(STYLES_ID)) return;
@@ -1734,7 +1987,7 @@
     si.className = "filter-search";
     si.type = "text";
     si.id = "driver-search-input";
-    si.placeholder = "\u041F\u043E\u0438\u0441\u043A\u2026";
+    si.placeholder = i18n.t().filterSearch;
     const sc = document.createElement("button");
     sc.className = "filter-search-clear hidden";
     sc.textContent = "\xD7";
@@ -1758,13 +2011,14 @@
 
   // src/renderer/filters/filterGroup.ts
   function buildCollapsibleFilterGroup(title, counterId) {
+    const t = i18n.t();
     const group = createElement("div", "filter-group collapsed");
     const hdr = createElement("div", "filter-header");
     const left = createElement("div", "filter-header-left");
     left.innerHTML = `<span class="collapse-icon">\u25B6</span><span class="filter-title">${title}</span><span class="filter-counter" id="${counterId}"></span>`;
     const right = createElement("div", "filter-header-right");
-    const btnAll = createElement("button", "btn-fa", "\u0412\u0441\u0435");
-    const btnNone = createElement("button", "btn-fa", "\u041D\u0438\u043A\u043E\u0433\u043E");
+    const btnAll = createElement("button", "btn-fa", t.filterAll);
+    const btnNone = createElement("button", "btn-fa", t.filterNone);
     right.appendChild(btnAll);
     right.appendChild(btnNone);
     hdr.appendChild(left);
@@ -1782,7 +2036,7 @@
   function buildStageFilterUI(stages, state, callbacks) {
     const cont = document.getElementById("filter-stages");
     cont.innerHTML = "";
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup("\u0421\u043F\u0435\u0446\u0443\u0447\u0430\u0441\u0442\u043A\u0438", "counter-stages");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterChartStages, "counter-stages");
     btnAll.addEventListener("click", () => {
       stages.forEach((s) => state.activeStageNums.add(s.num));
       setAllCheckboxes(body, true);
@@ -1813,7 +2067,7 @@
   function buildDriverFilterUI(drivers, data2, state, callbacks) {
     const wrap = document.getElementById("filter-drivers-wrap");
     wrap.innerHTML = "";
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup("\u0423\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438", "counter-drivers");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterParticipants, "counter-drivers");
     btnAll.addEventListener("click", () => {
       drivers.filter((d) => state.visibleDriverKeys.has(d.username)).forEach((d) => state.activeDriverKeys.add(d.username));
       syncVisibleCheckboxes(body, true);
@@ -1869,7 +2123,7 @@
       cont.style.display = "none";
       return;
     }
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup("\u0413\u0440\u0443\u043F\u043F\u0430 / \u041A\u043B\u0430\u0441\u0441", "counter-groups");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterGroupClass, "counter-groups");
     btnAll.addEventListener("click", () => {
       groups.forEach((g) => state.activeGroups.add(g));
       setAllCheckboxes(body, true);
@@ -1906,7 +2160,7 @@
       cont.style.display = "none";
       return;
     }
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup("\u0410\u0432\u0442\u043E\u043C\u043E\u0431\u0438\u043B\u044C", "counter-cars");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterCar, "counter-cars");
     btnAll.addEventListener("click", () => {
       cars.forEach((c) => state.activeCars.add(c));
       setAllCheckboxes(body, true);
@@ -1982,6 +2236,44 @@
       callbacks,
       () => applyGroupOrCarFilterToDriverList(data2, state)
     );
+  }
+
+  // src/renderer/i18n-dom.ts
+  function applyDomTranslations() {
+    const t = i18n.t();
+    setTextById("welcome-title", t.welcomeTitle);
+    setTextById("welcome-desc", t.welcomeDesc);
+    setTextById("btn-choose-file", t.selectFileButton);
+    setTextById("sidebar-filters-label", t.filtersLabel);
+    setTextById("btn-back", t.backButton);
+    setTextById("tab-chart", t.tabChart);
+    setTextById("tab-results", t.tabResults);
+    setTextById("tab-comments", t.tabComments);
+    setTextById("btn-apply-filter", t.applyFilterButton);
+    setTextById("chart-legend-success", t.chartLegendSuccess);
+    setTextById("chart-legend-sr", t.chartLegendSuperRally);
+    setTextById("chart-legend-comment", t.chartLegendComment);
+    setTitleById("pinned-close", t.pinnedCloseTitle);
+    setTitleById("legend-expand-btn", t.legendExpandTitle);
+    applyEventNameLabel(t.eventNameLabel, t.eventNameOptional);
+  }
+  function setTextById(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
+  }
+  function setTitleById(id, title) {
+    const el = document.getElementById(id);
+    if (el) el.title = title;
+  }
+  function applyEventNameLabel(label, optional) {
+    const el = document.getElementById("label-event-name");
+    if (!el) return;
+    const span = el.querySelector(".optional");
+    const textNode = el.childNodes[0];
+    if (textNode?.nodeType === Node.TEXT_NODE) {
+      textNode.textContent = `${label} `;
+    }
+    if (span) span.textContent = optional;
   }
 
   // src/renderer/results/compute.ts
@@ -2098,7 +2390,9 @@
     setCounter("counter-res-drivers", active, data2.drivers.length);
   }
   function syncResultsDriverCheckboxes(data2, state) {
-    const body = document.querySelector('#sidebar-results-filters .filter-body[data-filter="drivers"]');
+    const body = document.querySelector(
+      '#sidebar-results-filters .filter-body[data-filter="drivers"]'
+    );
     if (!body) return;
     const applied = state.driverFilter;
     state.activeDriverKeys.clear();
@@ -2119,7 +2413,7 @@
   }
   function buildResultsStageFilter(data2, state, onChange, cont) {
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-      "\u042D\u0442\u0430\u043F\u044B",
+      i18n.t().filterResultsStages,
       "counter-res-stages"
     );
     btnAll.addEventListener("click", () => {
@@ -2145,18 +2439,16 @@
         updateResultsFilterCounters(data2, state);
         onChange();
       });
-      const ss = createElement("span", "filter-ss", `SS${st.num}`);
-      const nm = createElement("span", "filter-name", st.name);
       lbl.appendChild(cb);
-      lbl.appendChild(ss);
-      lbl.appendChild(nm);
+      lbl.appendChild(createElement("span", "filter-ss", `SS${st.num}`));
+      lbl.appendChild(createElement("span", "filter-name", st.name));
       body.appendChild(lbl);
     }
     cont.appendChild(group);
   }
   function buildResultsDriverFilter(data2, state, onChange, cont) {
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-      "\u0423\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438",
+      i18n.t().filterParticipants,
       "counter-res-drivers"
     );
     body.dataset["filter"] = "drivers";
@@ -2197,10 +2489,7 @@
         drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
       );
       content.appendChild(nm);
-      if (drv.car) {
-        const cs = createElement("span", "filter-driver-car", drv.car);
-        content.appendChild(cs);
-      }
+      if (drv.car) content.appendChild(createElement("span", "filter-driver-car", drv.car));
       lbl.appendChild(cb);
       lbl.appendChild(content);
       body.appendChild(lbl);
@@ -2209,7 +2498,7 @@
   }
   function buildResultsGroupFilter(data2, state, onChange, cont) {
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-      "\u041A\u043B\u0430\u0441\u0441",
+      i18n.t().filterResultsClass,
       "counter-res-groups"
     );
     btnAll.addEventListener("click", () => {
@@ -2234,9 +2523,8 @@
         updateResultsFilterCounters(data2, state);
         onChange();
       });
-      const span = createElement("span", "filter-group-label", grp);
       lbl.appendChild(cb);
-      lbl.appendChild(span);
+      lbl.appendChild(createElement("span", "filter-group-label", grp));
       body.appendChild(lbl);
     }
     cont.appendChild(group);
@@ -2265,47 +2553,32 @@
 
   // src/renderer/results/tableRenderer.ts
   var COLUMNS = [
-    { key: "pos", label: "#", title: "" },
-    { key: "name", label: "\u0423\u0447\u0430\u0441\u0442\u043D\u0438\u043A", title: "", special: "search" },
-    { key: "group", label: "\u041A\u043B\u0430\u0441\u0441", title: "" },
-    { key: "car", label: "\u0410\u0432\u0442\u043E\u043C\u043E\u0431\u0438\u043B\u044C", title: "" },
-    { key: "totalTime", label: "\u041E\u0431\u0449\u0435\u0435 \u0432\u0440\u0435\u043C\u044F", title: "" },
-    { key: "totalPenalty", label: "\u0428\u0442\u0440\u0430\u0444\u044B", title: "" },
-    {
-      key: "avgGapLeader",
-      label: "\u0421\u0440. \u043E\u0442\u0441\u0442. \u043B\u0438\u0434\u0435\u0440",
-      title: "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR"
-    },
-    {
-      key: "avgGapPrev",
-      label: "\u0421\u0440. \u043E\u0442\u0441\u0442. \u043F\u0440\u0435\u0434.",
-      title: "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E \u043C\u0435\u0441\u0442\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR"
-    },
-    {
-      key: "cleanLeader",
-      label: "\u0427\u0438\u0441\u0442. \u043E\u0442\u0441\u0442. \u043B\u0438\u0434\u0435\u0440",
-      title: "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u0447\u0438\u0441\u0442\u043E\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430\n\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432"
-    },
-    {
-      key: "cleanPrev",
-      label: "\u0427\u0438\u0441\u0442. \u043E\u0442\u0441\u0442. \u043F\u0440\u0435\u0434.",
-      title: "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u0447\u0438\u0441\u0442\u043E\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E\n\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432"
-    },
-    { key: "totalGap", label: "\u041E\u0431\u0449\u0435\u0435 \u043E\u0442\u0441\u0442.", title: "" },
-    { key: "sr", label: "SR", title: "" }
+    { key: "pos", label: () => i18n.t().colPosition, title: () => "" },
+    { key: "name", label: () => i18n.t().colParticipant, title: () => "", special: "search" },
+    { key: "group", label: () => i18n.t().colClass, title: () => "" },
+    { key: "car", label: () => i18n.t().colCar, title: () => "" },
+    { key: "totalTime", label: () => i18n.t().colTotalTime, title: () => "" },
+    { key: "totalPenalty", label: () => i18n.t().colPenalties, title: () => "" },
+    { key: "avgGapLeader", label: () => i18n.t().colAvgGapLeader, title: () => i18n.t().colAvgGapLeaderTitle },
+    { key: "avgGapPrev", label: () => i18n.t().colAvgGapPrev, title: () => i18n.t().colAvgGapPrevTitle },
+    { key: "cleanLeader", label: () => i18n.t().colCleanGapLeader, title: () => i18n.t().colCleanGapLeaderTitle },
+    { key: "cleanPrev", label: () => i18n.t().colCleanGapPrev, title: () => i18n.t().colCleanGapPrevTitle },
+    { key: "totalGap", label: () => i18n.t().colTotalGap, title: () => "" },
+    { key: "sr", label: () => i18n.t().colSuperRally, title: () => "" }
   ];
   function buildResultsTableHeader(thead, onSearchClick) {
     thead.innerHTML = "";
     const tr = document.createElement("tr");
     COLUMNS.forEach((col) => {
       const th = document.createElement("th");
-      if (col.title) th.title = col.title;
+      const titleText = col.title();
+      if (titleText) th.title = titleText;
       if (col.special === "search") {
         th.className = "th-participant";
-        th.innerHTML = col.label;
+        th.innerHTML = col.label();
         th.addEventListener("click", () => onSearchClick(th));
       } else {
-        th.textContent = col.label;
+        th.textContent = col.label();
       }
       tr.appendChild(th);
     });
@@ -2323,6 +2596,7 @@
     const row = document.createElement("tr");
     row.dataset["username"] = r.stats.username;
     if (selectedRows.has(r.stats.username)) row.classList.add("row-selected");
+    const t = i18n.t();
     row.appendChild(buildPositionCell(r.position));
     row.appendChild(buildNameCell(r.stats));
     row.appendChild(buildGroupCell(r.stats.group));
@@ -2334,12 +2608,12 @@
     row.appendChild(buildPenaltyCell(r.stats.totalPenalty));
     row.appendChild(buildGapWithTooltip(
       r.position === 1 ? "\u2014" : formatTimeSigned(r.avgGapFromLeader),
-      "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR",
+      t.colAvgGapLeaderTitle,
       r.avgGapFromLeader
     ));
     row.appendChild(buildGapWithTooltip(
       r.position === 1 ? "\u2014" : formatTimeSigned(r.avgGapFromPrev),
-      "\u0421\u0440\u0435\u0434\u043D\u0435\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E \u043C\u0435\u0441\u0442\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR",
+      t.colAvgGapPrevTitle,
       r.avgGapFromPrev
     ));
     row.appendChild(buildCleanGapCell(
@@ -2409,8 +2683,7 @@
       "td-clean",
       val !== null ? formatTimeSigned(val) : "\u2014"
     );
-    inner.dataset["tooltip"] = `\u0420\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u043D\u043E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0430\u043D\u0438\u0438 \u043F\u0440\u043E\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u044F ${cleanCount}/${totalCount} \u044D\u0442\u0430\u043F\u043E\u0432
-\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`;
+    inner.dataset["tooltip"] = i18n.t().cleanGapCellTooltip(cleanCount, totalCount);
     if (val !== null) inner.style.color = gapColor(val);
     td.appendChild(inner);
     return td;
@@ -2579,6 +2852,18 @@
   };
   var chartCtrl = createChartController();
   window.addEventListener("DOMContentLoaded", () => {
+    applyDomTranslations();
+    initLangSwitcher(() => {
+      applyDomTranslations();
+      if (data) {
+        buildChartFilterPanel(data, chartState, makeFilterCallbacks());
+        buildResultsFilters(() => {
+        });
+        updateHeaderStats();
+        renderResultsTable();
+        renderCommentsView(data);
+      }
+    });
     qs("#btn-choose-file").addEventListener("click", () => {
       qs("#file-input").click();
     });
@@ -2586,7 +2871,7 @@
     qs("#inp-event-name").addEventListener("input", (e) => {
       eventName = e.target.value.trim();
       const el = document.getElementById("header-event-name");
-      if (el) el.textContent = eventName || "Rally Race Chart";
+      if (el) el.textContent = eventName || i18n.t().defaultTitle;
     });
     qs("#btn-back").addEventListener("click", showWelcome);
     qs("#pinned-close").addEventListener("click", unpinDriver);
@@ -2606,7 +2891,7 @@
     const btn = qs("#btn-choose-file");
     const info = qs("#file-info");
     btn.disabled = true;
-    info.textContent = "\u0427\u0442\u0435\u043D\u0438\u0435 \u0444\u0430\u0439\u043B\u0430\u2026";
+    info.textContent = i18n.t().fileReading;
     info.className = "file-info loading";
     chartCtrl.destroy();
     try {
@@ -2616,11 +2901,12 @@
       const allStats = computeAllDriverStats(data, lookups.recordMap);
       initResultsModule(data, lookups.recordMap, allStats);
       eventName = qs("#inp-event-name").value.trim();
-      info.textContent = `\u2713 \u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E: ${data.stages.length} \u0443\u0447\u0430\u0441\u0442\u043A\u043E\u0432, ${data.drivers.length} \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`;
+      info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
       info.className = "file-info ok";
       showChart();
     } catch (err) {
-      info.textContent = `\u2717 \u041E\u0448\u0438\u0431\u043A\u0430: ${err instanceof Error ? err.message : String(err)}`;
+      const msg = err instanceof Error ? err.message : String(err);
+      info.textContent = `${i18n.t().fileError}: ${msg}`;
       info.className = "file-info error";
     } finally {
       btn.disabled = false;
@@ -2631,7 +2917,7 @@
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0444\u0430\u0439\u043B"));
+      reader.onerror = () => reject(new Error(i18n.t().fileReadError));
       reader.readAsText(file, "utf-8");
     });
   }
@@ -2658,7 +2944,8 @@
     legendExpanded = false;
     document.getElementById("screen-welcome").style.display = "none";
     document.getElementById("screen-chart").style.display = "flex";
-    document.getElementById("header-event-name").textContent = eventName || "Rally Race Chart";
+    document.getElementById("header-event-name").textContent = eventName || i18n.t().defaultTitle;
+    applyDomTranslations();
     buildChartFilterPanel(data, chartState, makeFilterCallbacks());
     buildResultsFilters(() => {
     });
@@ -2671,7 +2958,7 @@
     const finished = data.drivers.filter(
       (d) => lookups.recordMap.get(d.username)?.get(lastStage)?.time3 != null
     ).length;
-    document.getElementById("header-stats").textContent = `| \u{1F464} ${finished}/${data.drivers.length}  |  SS ${data.stages.length}`;
+    document.getElementById("header-stats").textContent = i18n.t().headerStats(finished, data.drivers.length, data.stages.length);
   }
   function switchTab(tab) {
     qs("#tab-chart").classList.toggle("active", tab === "chart");

@@ -1,5 +1,7 @@
 import type { IParsedRallyData } from '../shared/types';
 import { parseCsvText } from "../csvParser";
+import { i18n } from "../i18n/index";
+import { initLangSwitcher } from "../lang-switcher";
 import { createChartController } from "./chart/controller";
 import {
     ILegendPanelCallbacks,
@@ -18,6 +20,7 @@ import {
     updateFilterCounters,
     updateToggleButtonStates
 } from "./filters/chartFilters";
+import { applyDomTranslations } from "./i18n-dom";
 import {
     buildResultsFilters,
     computeAllDriverStats,
@@ -33,9 +36,9 @@ type TTab = 'chart' | 'results' | 'comments';
 
 // ── App state ─────────────────────────────────────────────────────────────────
 
-let data:           IParsedRallyData | null = null;
-let eventName       = '';
-let legendExpanded  = false;
+let data:          IParsedRallyData | null = null;
+let eventName      = '';
+let legendExpanded = false;
 let prevStageFilter: Set<number> | null = null;
 
 let lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [] });
@@ -53,6 +56,19 @@ const chartCtrl = createChartController();
 // ── Boot ──────────────────────────────────────────────────────────────────────
 
 window.addEventListener('DOMContentLoaded', () => {
+    applyDomTranslations();
+
+    initLangSwitcher(() => {
+        applyDomTranslations();
+        if (data) {
+            buildChartFilterPanel(data, chartState, makeFilterCallbacks());
+            buildResultsFilters(() => {});
+            updateHeaderStats();
+            renderResultsTable();
+            renderCommentsView(data);
+        }
+    });
+
     qs<HTMLButtonElement>('#btn-choose-file').addEventListener('click', () => {
         qs<HTMLInputElement>('#file-input').click();
     });
@@ -61,7 +77,7 @@ window.addEventListener('DOMContentLoaded', () => {
     qs<HTMLInputElement>('#inp-event-name').addEventListener('input', e => {
         eventName = (e.target as HTMLInputElement).value.trim();
         const el = document.getElementById('header-event-name');
-        if (el) el.textContent = eventName || 'Rally Race Chart';
+        if (el) el.textContent = eventName || i18n.t().defaultTitle;
     });
     qs<HTMLButtonElement>('#btn-back').addEventListener('click', showWelcome);
     qs<HTMLButtonElement>('#pinned-close').addEventListener('click', unpinDriver);
@@ -87,7 +103,7 @@ async function onFileInputChange(e: Event): Promise<void> {
     const btn  = qs<HTMLButtonElement>('#btn-choose-file');
     const info = qs<HTMLElement>('#file-info');
     btn.disabled     = true;
-    info.textContent = 'Чтение файла…';
+    info.textContent = i18n.t().fileReading;
     info.className   = 'file-info loading';
 
     chartCtrl.destroy();
@@ -101,15 +117,15 @@ async function onFileInputChange(e: Event): Promise<void> {
         initResultsModule(data, lookups.recordMap, allStats);
 
         eventName        = qs<HTMLInputElement>('#inp-event-name').value.trim();
-        info.textContent = `✓ Загружено: ${data.stages.length} участков, ${data.drivers.length} участников`;
+        info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
         info.className   = 'file-info ok';
         showChart();
     } catch (err: unknown) {
-        info.textContent = `✗ Ошибка: ${err instanceof Error ? err.message : String(err)}`;
+        const msg = err instanceof Error ? err.message : String(err);
+        info.textContent = `${i18n.t().fileError}: ${msg}`;
         info.className   = 'file-info error';
     } finally {
         btn.disabled = false;
-        // сброс input чтобы можно было выбрать тот же файл повторно
         (e.target as HTMLInputElement).value = '';
     }
 }
@@ -118,7 +134,7 @@ function readFileAsText(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload  = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+        reader.onerror = () => reject(new Error(i18n.t().fileReadError));
         reader.readAsText(file, 'utf-8');
     });
 }
@@ -151,8 +167,9 @@ function showChart(): void {
 
     document.getElementById('screen-welcome')!.style.display  = 'none';
     document.getElementById('screen-chart')!.style.display    = 'flex';
-    document.getElementById('header-event-name')!.textContent = eventName || 'Rally Race Chart';
+    document.getElementById('header-event-name')!.textContent = eventName || i18n.t().defaultTitle;
 
+    applyDomTranslations();
     buildChartFilterPanel(data, chartState, makeFilterCallbacks());
     buildResultsFilters(() => {});
     switchTab('chart');
@@ -166,7 +183,7 @@ function updateHeaderStats(): void {
         d => lookups.recordMap.get(d.username)?.get(lastStage)?.time3 != null,
     ).length;
     document.getElementById('header-stats')!.textContent =
-        `| 👤 ${finished}/${data.drivers.length}  |  SS ${data.stages.length}`;
+        i18n.t().headerStats(finished, data.drivers.length, data.stages.length);
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
@@ -180,8 +197,8 @@ function switchTab(tab: TTab): void {
     document.getElementById('view-results')!.style.display  = tab === 'results'  ? 'flex' : 'none';
     document.getElementById('view-comments')!.style.display = tab === 'comments' ? 'flex' : 'none';
 
-    document.getElementById('sidebar-chart-filters')!.style.display   = tab === 'chart'   ? '' : 'none';
-    document.getElementById('sidebar-results-filters')!.style.display = tab === 'results' ? '' : 'none';
+    document.getElementById('sidebar-chart-filters')!.style.display    = tab === 'chart'    ? '' : 'none';
+    document.getElementById('sidebar-results-filters')!.style.display  = tab === 'results'  ? '' : 'none';
     document.getElementById('sidebar-comments-filters')!.style.display = tab === 'comments' ? '' : 'none';
 
     document.getElementById('legend-panel')!.style.display = tab === 'chart' ? '' : 'none';

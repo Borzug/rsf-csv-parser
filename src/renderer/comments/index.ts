@@ -1,5 +1,6 @@
 import type { IParsedRallyData, ILapRecord } from '../../shared/types';
 import type { ICommentEntry, IDriverComments } from './types';
+import { i18n } from "../../i18n/index";
 
 const STYLES_ID    = 'comments-module-styles';
 const CARD_WIDTH   = 220;
@@ -16,8 +17,8 @@ export function renderCommentsView(data: IParsedRallyData): void {
 
     if (drivers.length === 0) {
         const empty = document.createElement('div');
-        empty.className  = 'cmt-empty';
-        empty.textContent = 'Нет комментариев в этой гонке';
+        empty.className   = 'cmt-empty';
+        empty.textContent = i18n.t().commentsEmpty;
         container.appendChild(empty);
         return;
     }
@@ -39,27 +40,39 @@ function renderSidebarSearch(): void {
     const target = document.getElementById('filter-comments-search');
     if (!target) return;
 
-    if (document.getElementById('cmt-search-wrap')) return;
+    const existing = document.getElementById('cmt-search-wrap');
+    if (existing) {
+        updateSidebarSearchLabels(existing);
+        return;
+    }
 
     const wrap = document.createElement('div');
     wrap.id        = 'cmt-search-wrap';
     wrap.className = 'cmt-search-wrap';
 
     const label = document.createElement('div');
-    label.className  = 'filter-group-title';
-    label.textContent = 'Поиск участника';
+    label.id          = 'cmt-search-label';
+    label.className   = 'filter-group-title';
+    label.textContent = i18n.t().commentsSearchLabel;
 
     const input = document.createElement('input');
     input.id          = 'cmt-search-input';
     input.type        = 'text';
     input.className   = 'cmt-search-input';
-    input.placeholder = 'Имя или никнейм…';
+    input.placeholder = i18n.t().commentsSearchPlaceholder;
 
     input.addEventListener('input', () => scrollToDriverMatch(input.value.trim()));
 
     wrap.appendChild(label);
     wrap.appendChild(input);
     target.appendChild(wrap);
+}
+
+function updateSidebarSearchLabels(wrap: HTMLElement): void {
+    const label = wrap.querySelector<HTMLElement>('#cmt-search-label');
+    const input = wrap.querySelector<HTMLInputElement>('#cmt-search-input');
+    if (label) label.textContent = i18n.t().commentsSearchLabel;
+    if (input) input.placeholder = i18n.t().commentsSearchPlaceholder;
 }
 
 function scrollToDriverMatch(query: string): void {
@@ -162,27 +175,27 @@ function buildDriverCol(driver: IDriverComments): HTMLElement {
     col.className = 'cmt-driver';
 
     const username = document.createElement('div');
-    username.className  = 'cmt-drv-username';
+    username.className   = 'cmt-drv-username';
     username.textContent = driver.username;
     col.appendChild(username);
 
     if (driver.realName && driver.realName !== driver.username) {
         const realName = document.createElement('div');
-        realName.className  = 'cmt-drv-realname';
+        realName.className   = 'cmt-drv-realname';
         realName.textContent = driver.realName;
         col.appendChild(realName);
     }
 
     if (driver.car) {
         const car = document.createElement('div');
-        car.className  = 'cmt-drv-car';
+        car.className   = 'cmt-drv-car';
         car.textContent = driver.car;
         col.appendChild(car);
     }
 
     const count = document.createElement('div');
-    count.className  = 'cmt-drv-count';
-    count.textContent = `${driver.entries.length} ${pluralizeComments(driver.entries.length)}`;
+    count.className   = 'cmt-drv-count';
+    count.textContent = i18n.t().commentsCount(driver.entries.length);
     col.appendChild(count);
 
     return col;
@@ -211,7 +224,7 @@ function buildCommentCard(entry: ICommentEntry): HTMLElement {
     }
 
     const text = document.createElement('div');
-    text.className  = 'cmt-card-text';
+    text.className   = 'cmt-card-text';
     text.textContent = entry.comment;
     card.appendChild(text);
 
@@ -223,11 +236,11 @@ function buildCardHeader(entry: ICommentEntry): HTMLElement {
     header.className = 'cmt-card-header';
 
     const badge = document.createElement('span');
-    badge.className  = 'cmt-badge';
+    badge.className   = 'cmt-badge';
     badge.textContent = `SS${entry.stageNum}`;
 
     const stageName = document.createElement('span');
-    stageName.className  = 'cmt-stage-name';
+    stageName.className   = 'cmt-stage-name';
     stageName.textContent = entry.stageName;
     stageName.title       = entry.stageName;
 
@@ -242,20 +255,20 @@ function buildCardMeta(entry: ICommentEntry): HTMLElement {
 
     if (entry.time3 !== null) {
         const time = document.createElement('span');
-        time.className  = 'cmt-time';
+        time.className   = 'cmt-time';
         time.textContent = formatTime(entry.time3);
         meta.appendChild(time);
     }
 
     if (entry.gapToLeader === 0) {
         const gap = document.createElement('span');
-        gap.className  = 'cmt-gap cmt-gap--leader';
-        gap.textContent = '🥇 лидер';
+        gap.className   = 'cmt-gap cmt-gap--leader';
+        gap.textContent = i18n.t().commentsLeader;
         meta.appendChild(gap);
     } else if (entry.gapToLeader !== null && entry.gapToLeader > 0) {
         const gap = document.createElement('span');
-        gap.className  = 'cmt-gap';
-        gap.textContent = `Отставание: +${formatTime(entry.gapToLeader)}`;
+        gap.className   = 'cmt-gap';
+        gap.textContent = i18n.t().commentsGap(formatTime(entry.gapToLeader));
         meta.appendChild(gap);
     }
 
@@ -268,22 +281,22 @@ function buildCardBadges(entry: ICommentEntry): HTMLElement {
 
     if (entry.superRally) {
         const sr = document.createElement('span');
-        sr.className  = 'cmt-badge-sr';
+        sr.className   = 'cmt-badge-sr';
         sr.textContent = 'Super Rally';
         badges.appendChild(sr);
     }
 
     if (entry.penalty > 0) {
         const pen = document.createElement('span');
-        pen.className  = 'cmt-badge-penalty';
-        pen.textContent = `+${formatTime(entry.penalty)} штраф`;
+        pen.className   = 'cmt-badge-penalty';
+        pen.textContent = i18n.t().commentsPenalty(formatTime(entry.penalty));
         badges.appendChild(pen);
     }
 
     if (entry.servicePenalty > 0) {
         const sp = document.createElement('span');
-        sp.className  = 'cmt-badge-penalty';
-        sp.textContent = `+${formatTime(entry.servicePenalty)} сервис`;
+        sp.className   = 'cmt-badge-penalty';
+        sp.textContent = i18n.t().commentsServicePenalty(formatTime(entry.servicePenalty));
         badges.appendChild(sp);
     }
 
@@ -302,12 +315,6 @@ function formatTime(seconds: number): string {
     const sign = seconds < 0 ? '-' : '';
     if (h > 0) return `${sign}${h}:${m.toString().padStart(2, '0')}:${ss}.${dec}`;
     return `${sign}${m}:${ss}.${dec}`;
-}
-
-function pluralizeComments(n: number): string {
-    if (n % 10 === 1 && n % 100 !== 11) return 'комментарий';
-    if (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) return 'комментария';
-    return 'комментариев';
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────

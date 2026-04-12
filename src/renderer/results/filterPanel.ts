@@ -1,22 +1,23 @@
-import type { IParsedRallyData } from '../../shared/types';
+import type { IParsedRallyData } from '../../shared/types.js';
+import { i18n } from "../../i18n/index.js";
 import {
     createElement,
     qsa
-} from "../dom";
-import { buildCollapsibleFilterGroup } from "../filters/filterGroup";
+} from "../dom.js";
+import { buildCollapsibleFilterGroup } from "../filters/filterGroup.js";
 
 export interface IResultsFilterState {
     stageFilter:      Set<number>;
     groupFilter:      Set<string>;
     driverFilter:     Set<string>;
-    activeDriverKeys: Set<string>; // чекбоксы в панели, для синхронизации
+    activeDriverKeys: Set<string>;
 }
 
 export function buildResultsFilterPanel(
-    data:      IParsedRallyData,
-    state:     IResultsFilterState,
-    onChange:  () => void,
-    onApply:   (selected: Set<string>) => void,
+    data:     IParsedRallyData,
+    state:    IResultsFilterState,
+    onChange: () => void,
+    onApply:  (selected: Set<string>) => void,
 ): void {
     const cont = document.getElementById('sidebar-results-filters')!;
     cont.innerHTML = '';
@@ -41,10 +42,12 @@ export function updateResultsFilterCounters(
 }
 
 export function syncResultsDriverCheckboxes(
-    data:    IParsedRallyData,
-    state:   IResultsFilterState,
+    data:  IParsedRallyData,
+    state: IResultsFilterState,
 ): void {
-    const body = document.querySelector<HTMLElement>('#sidebar-results-filters .filter-body[data-filter="drivers"]');
+    const body = document.querySelector<HTMLElement>(
+        '#sidebar-results-filters .filter-body[data-filter="drivers"]',
+    );
     if (!body) return;
 
     const applied = state.driverFilter;
@@ -76,7 +79,7 @@ function buildResultsStageFilter(
     cont:    HTMLElement,
 ): void {
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-        'Этапы', 'counter-res-stages',
+        i18n.t().filterResultsStages, 'counter-res-stages',
     );
 
     btnAll.addEventListener('click', () => {
@@ -102,9 +105,9 @@ function buildResultsStageFilter(
             updateResultsFilterCounters(data, state);
             onChange();
         });
-        const ss = createElement('span', 'filter-ss',   `SS${st.num}`);
-        const nm = createElement('span', 'filter-name', st.name);
-        lbl.appendChild(cb); lbl.appendChild(ss); lbl.appendChild(nm);
+        lbl.appendChild(cb);
+        lbl.appendChild(createElement('span', 'filter-ss',   `SS${st.num}`));
+        lbl.appendChild(createElement('span', 'filter-name', st.name));
         body.appendChild(lbl);
     }
     cont.appendChild(group);
@@ -117,11 +120,10 @@ function buildResultsDriverFilter(
     cont:    HTMLElement,
 ): void {
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-        'Участники', 'counter-res-drivers',
+        i18n.t().filterParticipants, 'counter-res-drivers',
     );
     body.dataset['filter'] = 'drivers';
 
-    // Инициализируем через state, чтоб внешняя синхронизация работала
     if (state.activeDriverKeys.size === 0)
         data.drivers.forEach(d => state.activeDriverKeys.add(d.username));
 
@@ -164,10 +166,7 @@ function buildResultsDriverFilter(
                 ? `${drv.username} (${drv.realName})` : drv.username,
         );
         content.appendChild(nm);
-        if (drv.car) {
-            const cs = createElement('span', 'filter-driver-car', drv.car);
-            content.appendChild(cs);
-        }
+        if (drv.car) content.appendChild(createElement('span', 'filter-driver-car', drv.car));
         lbl.appendChild(cb); lbl.appendChild(content);
         body.appendChild(lbl);
     }
@@ -181,7 +180,7 @@ function buildResultsGroupFilter(
     cont:    HTMLElement,
 ): void {
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-        'Класс', 'counter-res-groups',
+        i18n.t().filterResultsClass, 'counter-res-groups',
     );
 
     btnAll.addEventListener('click', () => {
@@ -206,8 +205,8 @@ function buildResultsGroupFilter(
             updateResultsFilterCounters(data, state);
             onChange();
         });
-        const span = createElement('span', 'filter-group-label', grp);
-        lbl.appendChild(cb); lbl.appendChild(span);
+        lbl.appendChild(cb);
+        lbl.appendChild(createElement('span', 'filter-group-label', grp));
         body.appendChild(lbl);
     }
     cont.appendChild(group);

@@ -1,21 +1,22 @@
-import type { IParsedRallyData, IStageInfo, IDriverInfo } from '../../shared/types';
+import type { IParsedRallyData, IStageInfo, IDriverInfo } from '../../shared/types.js';
+import { i18n } from "../../i18n/index.js";
 import {
     createElement,
     qsa
-} from "../dom";
+} from "../dom.js";
 import {
     applyDriverSearch,
     buildSearchBox,
     reapplyDriverSearch
-} from "./driverSearch";
-import { buildCollapsibleFilterGroup } from "./filterGroup";
+} from "./driverSearch.js";
+import { buildCollapsibleFilterGroup } from "./filterGroup.js";
 import {
     IChartFilterCallbacks,
     IChartFilterState,
     refreshVisibleDriverKeys,
     setAllCheckboxes,
     syncVisibleCheckboxes
-} from "./filterState";
+} from "./filterState.js";
 
 export function buildStageFilterUI(
     stages:    IStageInfo[],
@@ -25,7 +26,7 @@ export function buildStageFilterUI(
     const cont = document.getElementById('filter-stages')!;
     cont.innerHTML = '';
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup('Спецучастки', 'counter-stages');
+        buildCollapsibleFilterGroup(i18n.t().filterChartStages, 'counter-stages');
 
     btnAll.addEventListener('click', () => {
         stages.forEach(s => state.activeStageNums.add(s.num));
@@ -66,7 +67,7 @@ export function buildDriverFilterUI(
     const wrap = document.getElementById('filter-drivers-wrap')!;
     wrap.innerHTML = '';
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup('Участники', 'counter-drivers');
+        buildCollapsibleFilterGroup(i18n.t().filterParticipants, 'counter-drivers');
 
     btnAll.addEventListener('click', () => {
         drivers.filter(d => state.visibleDriverKeys.has(d.username))
@@ -138,7 +139,7 @@ export function buildGroupFilterUI(
     if (!groups.length) { cont.style.display = 'none'; return; }
 
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup('Группа / Класс', 'counter-groups');
+        buildCollapsibleFilterGroup(i18n.t().filterGroupClass, 'counter-groups');
 
     btnAll.addEventListener('click', () => {
         groups.forEach(g => state.activeGroups.add(g));
@@ -181,7 +182,7 @@ export function buildCarFilterUI(
     if (!cars.length) { cont.style.display = 'none'; return; }
 
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup('Автомобиль', 'counter-cars');
+        buildCollapsibleFilterGroup(i18n.t().filterCar, 'counter-cars');
 
     btnAll.addEventListener('click', () => {
         cars.forEach(c => state.activeCars.add(c));

@@ -17,16 +17,21 @@
         <span class="header-logo">🏁</span>
         <h1 id="header-event-name">Rally Race Chart</h1>
         <span id="header-stats" class="header-stats"></span>
+        <div class="lang-switcher" id="lang-switcher">
+            <button class="lang-btn active" data-lang="ru">RU</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+            <button class="lang-btn" data-lang="hu">HU</button>
+        </div>
     </header>
 
     <!-- ═══ WELCOME ═══ -->
     <section id="screen-welcome">
         <div class="welcome-card">
             <div class="welcome-icon">📊</div>
-            <h2>Загрузка данных ралли</h2>
-            <p class="welcome-desc">Выберите CSV-файл с результатами гонки.</p>
+            <h2 id="welcome-title">Загрузка данных ралли</h2>
+            <p class="welcome-desc" id="welcome-desc">Выберите CSV-файл с результатами гонки.</p>
             <div class="form-group">
-                <label for="inp-event-name">Название события <span class="optional">(необязательно)</span></label>
+                <label for="inp-event-name" id="label-event-name">Название события <span class="optional">(необязательно)</span></label>
                 <input type="text" id="inp-event-name" placeholder="Rally Championship 2024" autocomplete="off">
             </div>
             <input type="file" id="file-input" accept=".csv,.txt" style="display:none">
@@ -41,7 +46,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <span>Фильтры</span>
+                <span id="sidebar-filters-label">Фильтры</span>
                 <button class="btn btn-ghost btn-sm" id="btn-back">← Назад</button>
             </div>
             <div class="sidebar-body">
@@ -85,9 +90,9 @@
                     <div id="chart-area" class="chart-area">
                         <canvas id="race-chart"></canvas>
                         <div class="chart-type-legend">
-                            <span class="ctl-item"><span class="ctl-line ctl-solid"></span>Успешный проезд</span>
-                            <span class="ctl-item"><span class="ctl-line ctl-dashed"></span>Super Rally</span>
-                            <span class="ctl-item"><span class="ctl-diamond">◆</span>Комментарий</span>
+                            <span class="ctl-item"><span class="ctl-line ctl-solid"></span><span id="chart-legend-success">Успешный проезд</span></span>
+                            <span class="ctl-item"><span class="ctl-line ctl-dashed"></span><span id="chart-legend-sr">Super Rally</span></span>
+                            <span class="ctl-item"><span class="ctl-diamond">◆</span><span id="chart-legend-comment">Комментарий</span></span>
                         </div>
                     </div>
                 </div>
