@@ -37,7 +37,7 @@ export const ru: ITranslations = {
     filterResultsClass:     'Класс',
 
     filterAll:              'Все',
-    filterNone:             'Никого',
+    filterNone:             'Ничего',
     filterSearch:           'Поиск…',
 
     colPosition:            '#',
@@ -46,19 +46,19 @@ export const ru: ITranslations = {
     colCar:                 'Автомобиль',
     colTotalTime:           'Общее время',
     colPenalties:           'Штрафы',
-    colAvgGapLeader:        'Ср. отст. лидер',
-    colAvgGapPrev:          'Ср. отст. пред.',
-    colCleanGapLeader:      'Чист. отст. лидер',
-    colCleanGapPrev:        'Чист. отст. пред.',
-    colTotalGap:            'Общее отст.',
+    colAvgGapLeader:        'Темп за участок к лидеру',
+    colAvgGapPrev:          'Темп за участок к пред.',
+    colCleanGapLeader:      'Чист. темп за участок к лидеру',
+    colCleanGapPrev:        'Чист. темп за участок к пред.',
+    colTotalGap:            'Общее отставание',
     colSuperRally:          'SR',
 
-    colAvgGapLeaderTitle:   'Среднее отставание от лидера за участок с учётом SR',
-    colAvgGapPrevTitle:     'Среднее отставание от предыдущего места за участок с учётом SR',
-    colCleanGapLeaderTitle: 'Среднее чистое отставание от лидера\nУчитываются только участки без SR для обоих участников',
-    colCleanGapPrevTitle:   'Среднее чистое отставание от предыдущего\nУчитываются только участки без SR для обоих участников',
+    colAvgGapLeaderTitle:   'Отставание по темпу от лидера за участок с учётом SR',
+    colAvgGapPrevTitle:     'Отставание по темпу от предыдущего места за участок с учётом SR',
+    colCleanGapLeaderTitle: 'Чистое отставание по темпу от лидера за участок\nУчитываются только участки без SR для обоих участников',
+    colCleanGapPrevTitle:   'Чистое отставание по темпу от предыдущего за участок\nУчитываются только участки без SR для обоих участников',
     cleanGapCellTooltip:    (used, total) =>
-        `Рассчитано на основании прохождения ${used}/${total} этапов\n`
+        `Отставание по темпу за участок\nРассчитано на основании прохождения ${used}/${total} этапов\n`
         + 'Учитываются только участки без SR для обоих участников',
 
     applyFilterButton:      'Применить фильтр по участникам',
@@ -127,19 +127,19 @@ export const en: ITranslations = {
     colCar:                 'Car',
     colTotalTime:           'Total Time',
     colPenalties:           'Penalties',
-    colAvgGapLeader:        'Avg Gap Leader',
-    colAvgGapPrev:          'Avg Gap Prev',
-    colCleanGapLeader:      'Clean Gap Leader',
-    colCleanGapPrev:        'Clean Gap Prev',
+    colAvgGapLeader:        'Pace Diff. per stage Leader',
+    colAvgGapPrev:          'Pace Diff. per stage Prev',
+    colCleanGapLeader:      'Clean Pace Diff. per stage Leader',
+    colCleanGapPrev:        'Clean Pace Diff per stage Prev',
     colTotalGap:            'Total Gap',
     colSuperRally:          'SR',
 
-    colAvgGapLeaderTitle:   'Average gap to leader per stage (SR included)',
-    colAvgGapPrevTitle:     'Average gap to previous position per stage (SR included)',
-    colCleanGapLeaderTitle: 'Average clean gap to leader\nOnly stages without SR for both drivers',
-    colCleanGapPrevTitle:   'Average clean gap to previous\nOnly stages without SR for both drivers',
+    colAvgGapLeaderTitle:   'Pace difference to leader per stage (SR included)',
+    colAvgGapPrevTitle:     'Pace difference to previous position per stage (SR included)',
+    colCleanGapLeaderTitle: 'Clean pace difference to leader\nOnly stages without SR for both drivers',
+    colCleanGapPrevTitle:   'Clean pace difference to previous\nOnly stages without SR for both drivers',
     cleanGapCellTooltip:    (used, total) =>
-        `Calculated from ${used}/${total} stages\n`
+        `Pace difference per stage\nCalculated from ${used}/${total} stages\n`
         + 'Only stages without SR for both drivers',
 
     applyFilterButton:      'Apply Participant Filter',
