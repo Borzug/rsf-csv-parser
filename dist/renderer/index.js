@@ -1170,7 +1170,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
                 )
               }
             },
-            scales: buildScales(yStep)
+            scales: buildScales(yStep, maxCum)
           },
           plugins: [
             buildHoverDimPlugin(
@@ -1256,7 +1256,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     return max;
   }
-  function buildScales(yStep) {
+  function buildScales(yStep, maxCum) {
+    const yMax = Math.ceil(maxCum / yStep) * yStep;
+    const yTickConfig = {
+      color: "#555",
+      font: { size: 11, family: "'Fira Code', monospace" },
+      stepSize: yStep,
+      callback: (v) => formatYAxisTick(v)
+    };
     return {
       x: {
         type: "category",
@@ -1270,14 +1277,26 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       },
       y: {
         type: "linear",
+        position: "left",
         min: 0,
-        ticks: {
-          color: "#555",
-          font: { size: 11, family: "'Fira Code', monospace" },
-          stepSize: yStep,
-          callback: (v) => formatYAxisTick(v)
-        },
+        max: yMax,
+        ticks: yTickConfig,
         grid: { color: "#1c1c1c", lineWidth: 1 },
+        border: { color: "#3a3a3a" },
+        title: {
+          display: true,
+          text: "\u0412\u0440\u0435\u043C\u044F",
+          color: "#3c3c3c",
+          font: { size: 11, family: "'Fira Code', monospace" }
+        }
+      },
+      y2: {
+        type: "linear",
+        position: "right",
+        min: 0,
+        max: yMax,
+        ticks: yTickConfig,
+        grid: { drawOnChartArea: false },
         border: { color: "#3a3a3a" },
         title: {
           display: true,

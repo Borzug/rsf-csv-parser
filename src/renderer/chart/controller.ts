@@ -165,7 +165,7 @@ export function createChartController(): IChartController {
                             ),
                         },
                     },
-                    scales: buildScales(yStep),
+                    scales: buildScales(yStep, maxCum),
                 },
                 plugins: [
                     buildHoverDimPlugin(
@@ -264,7 +264,16 @@ function computeMaxCumulative(
     return max;
 }
 
-function buildScales(yStep: number): object {
+function buildScales(yStep: number, maxCum: number): object {
+    const yMax = Math.ceil(maxCum / yStep) * yStep;
+
+    const yTickConfig = {
+        color:    '#555',
+        font:     { size: 11, family: "'Fira Code', monospace" },
+        stepSize: yStep,
+        callback: (v: any) => formatYAxisTick(v as number),
+    };
+
     return {
         x: {
             type: 'category',
@@ -277,16 +286,28 @@ function buildScales(yStep: number): object {
             border: { color: '#3a3a3a' },
         },
         y: {
-            type: 'linear',
-            min:  0,
-            ticks: {
-                color:    '#555',
-                font:     { size: 11, family: "'Fira Code', monospace" },
-                stepSize: yStep,
-                callback: (v: any) => formatYAxisTick(v as number),
+            type:     'linear',
+            position: 'left',
+            min:      0,
+            max:      yMax,
+            ticks:    yTickConfig,
+            grid:     { color: '#1c1c1c', lineWidth: 1 },
+            border:   { color: '#3a3a3a' },
+            title: {
+                display: true,
+                text:    'Время',
+                color:   '#3c3c3c',
+                font:    { size: 11, family: "'Fira Code', monospace" },
             },
-            grid:  { color: '#1c1c1c', lineWidth: 1 },
-            border:{ color: '#3a3a3a' },
+        },
+        y2: {
+            type:      'linear',
+            position:  'right',
+            min:       0,
+            max:       yMax,
+            ticks:     yTickConfig,
+            grid:      { drawOnChartArea: false },
+            border:    { color: '#3a3a3a' },
             title: {
                 display: true,
                 text:    'Время',
