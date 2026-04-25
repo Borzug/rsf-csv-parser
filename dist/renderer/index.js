@@ -591,7 +591,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const t1 = rec.time1 ?? 0;
       const t2 = rec.time2 ?? 0;
       const t3 = rec.time3 ?? 0;
-      y.push(cum + t1, cum + t1 + t2, cum + t1 + t2 + t3);
+      y.push(cum + t1, cum + t2, cum + t3);
       pointStyles.push("circle", "circle", hasCmt ? "rectRot" : "circle");
       pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, hasCmt ? POINT_RADIUS_COMMENT : POINT_RADIUS_FINAL);
       pointColors.push(color, color, hasCmt ? "#fff" : color);
@@ -601,7 +601,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       hasSR.push(thisSR, thisSR, thisSR);
       cmts.push("", "", rec.comment ?? "");
       stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-      cum += t1 + t2 + t3;
+      cum += t3;
       lastValidPtIdx = y.length - 1;
     }
     return {
@@ -1250,7 +1250,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       for (const st of stages) {
         const r = recordMap.get(drv.username)?.get(st.num);
         if (!r || r.time1 === null) break;
-        cum += (r.time1 ?? 0) + (r.time2 ?? 0) + (r.time3 ?? 0);
+        cum += r.time3 ?? 0;
       }
       if (cum > max) max = cum;
     }
@@ -1387,7 +1387,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           cum = null;
           break;
         }
-        cum += (r.time1 ?? 0) + (r.time2 ?? 0) + (r.time3 ?? 0);
+        cum += r.time3 ?? 0;
       }
       return { drv, cum };
     });

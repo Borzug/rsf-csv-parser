@@ -257,7 +257,7 @@ function computeMaxCumulative(
         for (const st of stages) {
             const r = recordMap.get(drv.username)?.get(st.num);
             if (!r || r.time1 === null) break;
-            cum += (r.time1 ?? 0) + (r.time2 ?? 0) + (r.time3 ?? 0);
+            cum += r.time3 ?? 0;
         }
         if (cum > max) max = cum;
     }

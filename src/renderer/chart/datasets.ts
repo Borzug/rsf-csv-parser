@@ -163,7 +163,7 @@ function buildDriverPoints(
         const t1 = rec.time1 ?? 0;
         const t2 = rec.time2 ?? 0;
         const t3 = rec.time3 ?? 0;
-        y.push(cum + t1, cum + t1 + t2, cum + t1 + t2 + t3);
+        y.push(cum + t1, cum + t2, cum + t3);
         pointStyles.push('circle', 'circle', hasCmt ? 'rectRot' : 'circle');
         pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, hasCmt ? POINT_RADIUS_COMMENT : POINT_RADIUS_FINAL);
         pointColors.push(color, color, hasCmt ? '#fff' : color);
@@ -173,7 +173,7 @@ function buildDriverPoints(
         hasSR.push(thisSR, thisSR, thisSR);
         cmts.push('', '', rec.comment ?? '');
         stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-        cum += t1 + t2 + t3;
+        cum += t3;
         lastValidPtIdx = y.length - 1;
     }
 

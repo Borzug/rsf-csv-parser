@@ -54,7 +54,7 @@ function buildSortedVisibleDrivers(
         for (const st of activeStages) {
             const r = recordMap.get(drv.username)?.get(st.num);
             if (!r || r.time1 === null) { cum = null; break; }
-            cum! += (r.time1 ?? 0) + (r.time2 ?? 0) + (r.time3 ?? 0);
+            cum! += r.time3 ?? 0;
         }
         return { drv, cum };
     });
