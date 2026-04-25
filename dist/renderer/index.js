@@ -908,9 +908,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (!rot45 && !rot90) {
       drawHorizontalLabel(ctx, stage, xL, xR, bot, hovered);
     } else if (rot45) {
-      drawRotatedLabel(ctx, stage, xL, bot, Math.PI / 4, hovered);
+      drawRotatedLabel(ctx, stage, xL, xR, bot, Math.PI / 4, hovered);
     } else {
-      drawRotatedLabel(ctx, stage, xL, bot, Math.PI / 2, hovered);
+      drawRotatedLabel(ctx, stage, xL, xR, bot, Math.PI / 2, hovered);
     }
   }
   function drawHorizontalLabel(ctx, stage, xL, xR, bot, hovered) {
@@ -926,10 +926,12 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY2}`;
     ctx.fillText(name, xMid, bot + 21);
   }
-  function drawRotatedLabel(ctx, stage, xL, bot, angle, hovered) {
+  function drawRotatedLabel(ctx, stage, xL, xR, bot, angle, hovered) {
     const MAX_CHARS = angle === Math.PI / 4 ? 22 : 28;
+    const xMid = (xL + xR) / 2;
+    const translateX = angle === Math.PI / 2 ? xMid + FONT_SIZE_NM / 2 : xMid;
     ctx.save();
-    ctx.translate(xL + 2, bot + 4);
+    ctx.translate(translateX, bot + 4);
     ctx.rotate(angle);
     ctx.textAlign = "left";
     ctx.textBaseline = "top";

@@ -73,9 +73,9 @@ function drawStageBand(
     if (!rot45 && !rot90) {
         drawHorizontalLabel(ctx, stage, xL, xR, bot, hovered);
     } else if (rot45) {
-        drawRotatedLabel(ctx, stage, xL, bot, Math.PI / 4, hovered);
+        drawRotatedLabel(ctx, stage, xL, xR, bot, Math.PI / 4, hovered);
     } else {
-        drawRotatedLabel(ctx, stage, xL, bot, Math.PI / 2, hovered);
+        drawRotatedLabel(ctx, stage, xL, xR, bot, Math.PI / 2, hovered);
     }
 }
 
@@ -107,13 +107,23 @@ function drawRotatedLabel(
     ctx:     CanvasRenderingContext2D,
     stage:   IStageInfo,
     xL:      number,
+    xR:      number,
     bot:     number,
     angle:   number,
     hovered: boolean,
 ): void {
     const MAX_CHARS = angle === Math.PI / 4 ? 22 : 28;
+    const xMid = (xL + xR) / 2;
+
+    // For rot90 (PI/2): rotated text occupies screen X from translateX down to translateX - fontSize.
+    // Center of that range = translateX - fontSize/2. Set equal to xMid → translateX = xMid + fontSize/2.
+    // For rot45 (PI/4): approximate centering by starting at xMid.
+    const translateX = angle === Math.PI / 2
+        ? xMid + FONT_SIZE_NM / 2
+        : xMid;
+
     ctx.save();
-    ctx.translate(xL + 2, bot + 4);
+    ctx.translate(translateX, bot + 4);
     ctx.rotate(angle);
     ctx.textAlign    = 'left';
     ctx.textBaseline = 'top';
