@@ -527,6 +527,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       };
     });
   }
+  function markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx, setDnfIdx, pointStyles, pointRadii, pointColors, cmts, color) {
+    if (!hasCmt || dnfCommentPtIdx !== null || lastValidPtIdx === 0) return;
+    pointStyles[lastValidPtIdx] = "rectRot";
+    pointRadii[lastValidPtIdx] = POINT_RADIUS_COMMENT;
+    pointColors[lastValidPtIdx] = "#fff";
+    cmts[lastValidPtIdx] = rec.comment;
+    setDnfIdx(lastValidPtIdx);
+  }
   function buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color) {
     const y = [0];
     const pointStyles = ["circle"];
@@ -542,13 +550,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     let isDnf = false;
     let lastValidPtIdx = 0;
     let dnfCommentPtIdx = null;
-    const lastDnfCmtStageNum = (() => {
-      for (let i = stages.length - 1; i >= 0; i--) {
-        const rec = recordMap.get(drv.username)?.get(stages[i].num);
-        if (rec?.time1 === null && rec?.comment?.trim()) return stages[i].num;
-      }
-      return null;
-    })();
     for (const st of stages) {
       const rec = recordMap.get(drv.username)?.get(st.num) ?? null;
       const pen = cumPenMap.get(drv.username)?.get(st.num) ?? 0;
@@ -558,50 +559,112 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const thisSR = srThis > 0;
       const hasCmt = !!rec?.comment?.trim();
       const slFull = `SS${st.num} ${st.name}`;
-      if (st.num === lastDnfCmtStageNum && rec?.time1 === null && rec?.comment?.trim()) {
-        const ptIdx = y.length;
-        dnfCommentPtIdx = ptIdx;
-        y.push(cum, null, null);
-        pointStyles.push("rectRot", "circle", "circle");
-        pointRadii.push(POINT_RADIUS_COMMENT, 0, 0);
-        pointColors.push("#fff", color, color);
-        cumPen.push(pen, pen, pen);
-        cumSP.push(sp, sp, sp);
-        cumSR.push(srBase + srThis, srBase + srThis, srBase + srThis);
-        hasSR.push(thisSR, thisSR, thisSR);
-        cmts.push(rec.comment, "", "");
-        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-        isDnf = true;
-        continue;
-      }
-      if (isDnf || !rec || rec.time1 === null) {
+      const pushMeta = (count) => {
+        for (let k = 0; k < count; k++) {
+          cumPen.push(pen);
+          cumSP.push(sp);
+          cumSR.push(srBase + srThis);
+          hasSR.push(thisSR);
+        }
+      };
+      if (isDnf) {
         y.push(null, null, null);
         pointStyles.push("circle", "circle", "circle");
         pointRadii.push(0, 0, 0);
         pointColors.push(color, color, color);
-        cumPen.push(pen, pen, pen);
-        cumSP.push(sp, sp, sp);
-        cumSR.push(srBase + srThis, srBase + srThis, srBase + srThis);
-        hasSR.push(thisSR, thisSR, thisSR);
-        cmts.push("", "", rec?.comment ?? "");
+        pushMeta(3);
+        cmts.push("", "", "");
+        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
+        continue;
+      }
+      if (!rec || rec.time1 === null) {
+        markDnf(
+          hasCmt,
+          rec,
+          lastValidPtIdx,
+          dnfCommentPtIdx,
+          (idx) => {
+            dnfCommentPtIdx = idx;
+          },
+          pointStyles,
+          pointRadii,
+          pointColors,
+          cmts,
+          color
+        );
+        y.push(null, null, null);
+        pointStyles.push("circle", "circle", "circle");
+        pointRadii.push(0, 0, 0);
+        pointColors.push(color, color, color);
+        pushMeta(3);
+        cmts.push("", "", "");
         stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
         isDnf = true;
         continue;
       }
-      const t1 = rec.time1 ?? 0;
-      const t2 = rec.time2 ?? 0;
-      const t3 = rec.time3 ?? 0;
+      const t1 = rec.time1;
+      if (rec.time2 === null) {
+        y.push(cum + t1, null, null);
+        pointStyles.push("circle", "circle", "circle");
+        pointRadii.push(POINT_RADIUS_NORMAL, 0, 0);
+        pointColors.push(color, color, color);
+        pushMeta(3);
+        cmts.push("", "", "");
+        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
+        lastValidPtIdx = y.length - 3;
+        markDnf(
+          hasCmt,
+          rec,
+          lastValidPtIdx,
+          dnfCommentPtIdx,
+          (idx) => {
+            dnfCommentPtIdx = idx;
+          },
+          pointStyles,
+          pointRadii,
+          pointColors,
+          cmts,
+          color
+        );
+        isDnf = true;
+        continue;
+      }
+      const t2 = rec.time2;
+      if (rec.time3 === null) {
+        y.push(cum + t1, cum + t2, null);
+        pointStyles.push("circle", "circle", "circle");
+        pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, 0);
+        pointColors.push(color, color, color);
+        pushMeta(3);
+        cmts.push("", "", "");
+        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
+        lastValidPtIdx = y.length - 2;
+        markDnf(
+          hasCmt,
+          rec,
+          lastValidPtIdx,
+          dnfCommentPtIdx,
+          (idx) => {
+            dnfCommentPtIdx = idx;
+          },
+          pointStyles,
+          pointRadii,
+          pointColors,
+          cmts,
+          color
+        );
+        isDnf = true;
+        continue;
+      }
+      const t3 = rec.time3;
       y.push(cum + t1, cum + t2, cum + t3);
       pointStyles.push("circle", "circle", hasCmt ? "rectRot" : "circle");
       pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, hasCmt ? POINT_RADIUS_COMMENT : POINT_RADIUS_FINAL);
       pointColors.push(color, color, hasCmt ? "#fff" : color);
-      cumPen.push(pen, pen, pen);
-      cumSP.push(sp, sp, sp);
-      cumSR.push(srBase + srThis, srBase + srThis, srBase + srThis);
-      hasSR.push(thisSR, thisSR, thisSR);
+      pushMeta(3);
       cmts.push("", "", rec.comment ?? "");
       stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-      cum += t3;
+      cum = cum + t3;
       lastValidPtIdx = y.length - 1;
     }
     return {

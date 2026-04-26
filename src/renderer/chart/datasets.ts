@@ -85,6 +85,26 @@ export function buildDatasets(
     });
 }
 
+function markDnf(
+    hasCmt:          boolean,
+    rec:             any,
+    lastValidPtIdx:  number,
+    dnfCommentPtIdx: number | null,
+    setDnfIdx:       (idx: number) => void,
+    pointStyles:     string[],
+    pointRadii:      number[],
+    pointColors:     string[],
+    cmts:            string[],
+    color:           string,
+): void {
+    if (!hasCmt || dnfCommentPtIdx !== null || lastValidPtIdx === 0) return;
+    pointStyles[lastValidPtIdx] = 'rectRot';
+    pointRadii[lastValidPtIdx]  = POINT_RADIUS_COMMENT;
+    pointColors[lastValidPtIdx] = '#fff';
+    cmts[lastValidPtIdx]        = rec.comment;
+    setDnfIdx(lastValidPtIdx);
+}
+
 function buildDriverPoints(
     drv:       any,
     stages:    IStageInfo[],
@@ -110,14 +130,6 @@ function buildDriverPoints(
     let lastValidPtIdx                 = 0;
     let dnfCommentPtIdx: number | null = null;
 
-    const lastDnfCmtStageNum: number | null = (() => {
-        for (let i = stages.length - 1; i >= 0; i--) {
-            const rec = recordMap.get(drv.username)?.get(stages[i].num);
-            if (rec?.time1 === null && rec?.comment?.trim()) return stages[i].num;
-        }
-        return null;
-    })();
-
     for (const st of stages) {
         const rec    = recordMap.get(drv.username)?.get(st.num) ?? null;
         const pen    = cumPenMap.get(drv.username)?.get(st.num) ?? 0;
@@ -128,52 +140,92 @@ function buildDriverPoints(
         const hasCmt = !!rec?.comment?.trim();
         const slFull = `SS${st.num} ${st.name}`;
 
-        if (st.num === lastDnfCmtStageNum && rec?.time1 === null && rec?.comment?.trim()) {
-            const ptIdx     = y.length;
-            dnfCommentPtIdx = ptIdx;
-            y.push(cum, null, null);
-            pointStyles.push('rectRot', 'circle', 'circle');
-            pointRadii.push(POINT_RADIUS_COMMENT, 0, 0);
-            pointColors.push('#fff', color, color);
-            cumPen.push(pen, pen, pen);
-            cumSP.push(sp, sp, sp);
-            cumSR.push(srBase + srThis, srBase + srThis, srBase + srThis);
-            hasSR.push(thisSR, thisSR, thisSR);
-            cmts.push(rec.comment, '', '');
-            stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-            isDnf = true;
-            continue;
-        }
+        const pushMeta = (count: 1 | 2 | 3) => {
+            for (let k = 0; k < count; k++) {
+                cumPen.push(pen); cumSP.push(sp);
+                cumSR.push(srBase + srThis); hasSR.push(thisSR);
+            }
+        };
 
-        if (isDnf || !rec || rec.time1 === null) {
+        // Уже DNF — тянем нули до конца
+        if (isDnf) {
             y.push(null, null, null);
             pointStyles.push('circle', 'circle', 'circle');
             pointRadii.push(0, 0, 0);
             pointColors.push(color, color, color);
-            cumPen.push(pen, pen, pen);
-            cumSP.push(sp, sp, sp);
-            cumSR.push(srBase + srThis, srBase + srThis, srBase + srThis);
-            hasSR.push(thisSR, thisSR, thisSR);
-            cmts.push('', '', rec?.comment ?? '');
+            pushMeta(3);
+            cmts.push('', '', '');
+            stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
+            continue;
+        }
+
+        // Нет записи вообще или нет time1 — DNF без продвижения
+        if (!rec || rec.time1 === null) {
+            markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
+                (idx) => { dnfCommentPtIdx = idx; },
+                pointStyles, pointRadii, pointColors, cmts, color,
+            );
+            y.push(null, null, null);
+            pointStyles.push('circle', 'circle', 'circle');
+            pointRadii.push(0, 0, 0);
+            pointColors.push(color, color, color);
+            pushMeta(3);
+            cmts.push('', '', '');
             stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
             isDnf = true;
             continue;
         }
 
-        const t1 = rec.time1 ?? 0;
-        const t2 = rec.time2 ?? 0;
-        const t3 = rec.time3 ?? 0;
+        const t1 = rec.time1;
+
+        // Есть только time1 — DNF после SP1
+        if (rec.time2 === null) {
+            y.push(cum + t1, null, null);
+            pointStyles.push('circle', 'circle', 'circle');
+            pointRadii.push(POINT_RADIUS_NORMAL, 0, 0);
+            pointColors.push(color, color, color);
+            pushMeta(3);
+            cmts.push('', '', '');
+            stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
+            lastValidPtIdx = y.length - 3;
+            markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
+                (idx) => { dnfCommentPtIdx = idx; },
+                pointStyles, pointRadii, pointColors, cmts, color,
+            );
+            isDnf = true;
+            continue;
+        }
+
+        const t2 = rec.time2;
+
+        // Есть time1 и time2, нет time3 — DNF после SP2
+        if (rec.time3 === null) {
+            y.push(cum + t1, cum + t2, null);
+            pointStyles.push('circle', 'circle', 'circle');
+            pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, 0);
+            pointColors.push(color, color, color);
+            pushMeta(3);
+            cmts.push('', '', '');
+            stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
+            lastValidPtIdx = y.length - 2;
+            markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
+                (idx) => { dnfCommentPtIdx = idx; },
+                pointStyles, pointRadii, pointColors, cmts, color,
+            );
+            isDnf = true;
+            continue;
+        }
+
+        // Полный этап
+        const t3 = rec.time3;
         y.push(cum + t1, cum + t2, cum + t3);
         pointStyles.push('circle', 'circle', hasCmt ? 'rectRot' : 'circle');
         pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, hasCmt ? POINT_RADIUS_COMMENT : POINT_RADIUS_FINAL);
         pointColors.push(color, color, hasCmt ? '#fff' : color);
-        cumPen.push(pen, pen, pen);
-        cumSP.push(sp, sp, sp);
-        cumSR.push(srBase + srThis, srBase + srThis, srBase + srThis);
-        hasSR.push(thisSR, thisSR, thisSR);
+        pushMeta(3);
         cmts.push('', '', rec.comment ?? '');
         stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-        cum += t3;
+        cum = cum + t3;
         lastValidPtIdx = y.length - 1;
     }
 
