@@ -991,10 +991,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
   function drawRotatedLabel(ctx, stage, xL, xR, bot, angle, hovered) {
     const MAX_CHARS = angle === Math.PI / 4 ? 22 : 28;
-    const xMid = (xL + xR) / 2;
-    const translateX = angle === Math.PI / 2 ? xMid + FONT_SIZE_NM / 2 : xMid;
+    const PAD = 4;
+    const translateX = angle === Math.PI / 2 ? (xL + xR) / 2 + FONT_SIZE_NM / 2 : xL + PAD;
     ctx.save();
-    ctx.translate(translateX, bot + 4);
+    ctx.translate(translateX, bot + PAD);
     ctx.rotate(angle);
     ctx.textAlign = "left";
     ctx.textBaseline = "top";

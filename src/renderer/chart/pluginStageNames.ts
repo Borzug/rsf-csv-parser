@@ -112,18 +112,17 @@ function drawRotatedLabel(
     angle:   number,
     hovered: boolean,
 ): void {
-    const MAX_CHARS = angle === Math.PI / 4 ? 22 : 28;
-    const xMid = (xL + xR) / 2;
+    const MAX_CHARS  = angle === Math.PI / 4 ? 22 : 28;
+    const PAD        = 4;
 
-    // For rot90 (PI/2): rotated text occupies screen X from translateX down to translateX - fontSize.
-    // Center of that range = translateX - fontSize/2. Set equal to xMid → translateX = xMid + fontSize/2.
-    // For rot45 (PI/4): approximate centering by starting at xMid.
+    // rot90: центрируем по горизонтали полосы — translateX сдвигается на half fontSize
+    // rot45: начало текста в левом верхнем углу полосы с отступом PAD
     const translateX = angle === Math.PI / 2
-        ? xMid + FONT_SIZE_NM / 2
-        : xMid;
+        ? (xL + xR) / 2 + FONT_SIZE_NM / 2
+        : xL + PAD;
 
     ctx.save();
-    ctx.translate(translateX, bot + 4);
+    ctx.translate(translateX, bot + PAD);
     ctx.rotate(angle);
     ctx.textAlign    = 'left';
     ctx.textBaseline = 'top';
