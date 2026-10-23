@@ -25,6 +25,9 @@ export const ru: ITranslations = {
     chartLegendSuperRally:  'Super Rally',
     chartLegendComment:     'Комментарий',
 
+    axisTimeTitle:          'Время',
+    axisTimeUnits:          { h: 'ч', m: 'м', s: 'с' },
+
     pinnedCloseTitle:       'Снять выделение (Esc)',
     legendExpandTitle:      'Развернуть',
 
@@ -106,6 +109,9 @@ export const en: ITranslations = {
     chartLegendSuperRally:  'Super Rally',
     chartLegendComment:     'Comment',
 
+    axisTimeTitle:          'Time',
+    axisTimeUnits:          { h: 'h', m: 'm', s: 's' },
+
     pinnedCloseTitle:       'Unpin (Esc)',
     legendExpandTitle:      'Expand',
 
@@ -182,6 +188,9 @@ export const hu: ITranslations = {
     chartLegendSuccess:     'Teljesített szakasz',
     chartLegendSuperRally:  'Super Rally',
     chartLegendComment:     'Megjegyzés',
+
+    axisTimeTitle:          'Idő',
+    axisTimeUnits:          { h: 'ó', m: 'p', s: 'mp' },
 
     pinnedCloseTitle:       'Rögzítés feloldása (Esc)',
     legendExpandTitle:      'Kibontás',

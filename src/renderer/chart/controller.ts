@@ -1,3 +1,4 @@
+import { i18n } from "../../i18n/index";
 import type { IParsedRallyData, IStageInfo } from '../../shared/types';
 import {
     computeYAxisStep,
@@ -43,6 +44,7 @@ export interface IChartController {
     getPinnedDriverKey(): string | null;
     getActiveStages(): IStageInfo[];
     getChart(): any;
+    refreshLabels(): void;
 }
 
 export function createChartController(): IChartController {
@@ -76,6 +78,14 @@ export function createChartController(): IChartController {
             return chart.data.datasets[pinnedDsIdx]?.driverKey ?? null;
         },
         getActiveStages:    () => activeStages,
+
+        refreshLabels(): void {
+            if (!chart) return;
+            const title = i18n.t().axisTimeTitle;
+            chart.options.scales.y.title.text  = title;
+            chart.options.scales.y2.title.text = title;
+            chart.update('none');
+        },
 
         setHoveredKey(key: string | null): void {
             hoveredDsKey = key;
@@ -271,7 +281,7 @@ function buildScales(yStep: number, maxCum: number): object {
         color:    '#555',
         font:     { size: 11, family: "'Fira Code', monospace" },
         stepSize: yStep,
-        callback: (v: any) => formatYAxisTick(v as number),
+        callback: (v: any) => formatYAxisTick(v as number, i18n.t().axisTimeUnits),
     };
 
     return {
@@ -295,7 +305,7 @@ function buildScales(yStep: number, maxCum: number): object {
             border:   { color: '#3a3a3a' },
             title: {
                 display: true,
-                text:    'Время',
+                text:    i18n.t().axisTimeTitle,
                 color:   '#3c3c3c',
                 font:    { size: 11, family: "'Fira Code', monospace" },
             },
@@ -310,7 +320,7 @@ function buildScales(yStep: number, maxCum: number): object {
             border:    { color: '#3a3a3a' },
             title: {
                 display: true,
-                text:    'Время',
+                text:    i18n.t().axisTimeTitle,
                 color:   '#3c3c3c',
                 font:    { size: 11, family: "'Fira Code', monospace" },
             },

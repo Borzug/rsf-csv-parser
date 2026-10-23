@@ -74,7 +74,7 @@ function buildResultRow(r: IDriverResult, selectedRows: Set<string>): HTMLTableR
 
     const t = i18n.t();
 
-    row.appendChild(buildPositionCell(r.position));
+    row.appendChild(buildPositionCell(r.stats.totalTime !== null ? r.position : null));
     row.appendChild(buildNameCell(r.stats));
     row.appendChild(buildGroupCell(r.stats.group));
     row.appendChild(createTd('td-time', r.stats.car));
@@ -108,8 +108,9 @@ function buildResultRow(r: IDriverResult, selectedRows: Set<string>): HTMLTableR
     return row;
 }
 
-function buildPositionCell(pos: number): HTMLTableCellElement {
-    const td = createTd('td-pos', String(pos));
+function buildPositionCell(pos: number | null): HTMLTableCellElement {
+    const td = createTd('td-pos', pos !== null ? String(pos) : 'DNF');
+    if (pos === null) td.classList.add('pos-dnf');
     if (pos === 1) td.classList.add('pos-gold');
     else if (pos === 2) td.classList.add('pos-silver');
     else if (pos === 3) td.classList.add('pos-bronze');

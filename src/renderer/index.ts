@@ -66,6 +66,7 @@ window.addEventListener('DOMContentLoaded', () => {
             updateHeaderStats();
             renderResultsTable();
             renderCommentsView(data);
+            chartCtrl.refreshLabels();
         }
     });
 

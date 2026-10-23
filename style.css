@@ -267,7 +267,7 @@ body {
 /* Inner scroll area — vertically centered */
 .legend-inner {
     flex: 1; overflow-y: auto; overflow-x: hidden;
-    display: flex; align-items: center; justify-content: flex-start;
+    display: flex; align-items: flex-start; justify-content: flex-start;
     padding: 8px 6px;
     min-height: 0;
 }
@@ -280,6 +280,7 @@ body {
 .legend-items {
     display: flex; flex-direction: column; gap: 3px;
     width: 100%;
+    margin-block: auto;
 }
 .legend-panel.expanded .legend-items {
     flex-direction: row; flex-wrap: wrap; align-content: center;
@@ -320,6 +321,7 @@ body {
 
 .td-pos  { font-weight: 700; font-size: 13px; color: var(--dim); width: 36px; text-align: right; padding-right: 14px; }
 .pos-gold   { color: #f1c40f; }
+.pos-dnf    { font-size: 10px; font-weight: 600; }
 .pos-silver { color: #bdc3c7; }
 .pos-bronze { color: #e67e22; }
 .td-name        { color: var(--text); max-width: 220px; overflow: hidden; text-overflow: ellipsis; }

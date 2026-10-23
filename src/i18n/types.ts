@@ -30,6 +30,10 @@ export interface ITranslations {
     chartLegendSuperRally:  string;
     chartLegendComment:     string;
 
+    // Ось Y графика
+    axisTimeTitle:          string;
+    axisTimeUnits:          { h: string; m: string; s: string };
+
     // Закреплённая строка
     pinnedCloseTitle:       string;
     legendExpandTitle:      string;

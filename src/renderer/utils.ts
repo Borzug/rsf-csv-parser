@@ -1,11 +1,11 @@
 export function formatTime(sec: number | null): string {
     if (sec === null || isNaN(sec)) return 'DNF';
-    const a = Math.abs(sec);
-    const h = Math.floor(a / 3600);
-    const m = Math.floor((a % 3600) / 60);
-    const s = Math.floor(a % 60);
-    const d = Math.round((a % 1) * 10);
-    const sign = sec < 0 ? '-' : '';
+    const tenths = Math.round(Math.abs(sec) * 10);
+    const h = Math.floor(tenths / 36000);
+    const m = Math.floor((tenths % 36000) / 600);
+    const s = Math.floor((tenths % 600) / 10);
+    const d = tenths % 10;
+    const sign = sec < 0 && tenths > 0 ? '-' : '';
     const ss = `${String(s).padStart(2, '0')}.${d}`;
     return h > 0
         ? `${sign}${h}:${String(m).padStart(2, '0')}:${ss}`
@@ -17,15 +17,15 @@ export function formatTimeSigned(sec: number | null): string {
     return (sec >= 0 ? '+' : '') + formatTime(sec);
 }
 
-export function formatYAxisTick(sec: number): string {
+export function formatYAxisTick(sec: number, units: { h: string; m: string; s: string }): string {
     if (sec === 0) return '0';
     const h = Math.floor(sec / 3600);
     const m = Math.floor((sec % 3600) / 60);
     const s = Math.floor(sec % 60);
     const parts: string[] = [];
-    if (h) parts.push(`${h}ч`);
-    if (m) parts.push(`${m}м`);
-    if (s) parts.push(`${s}с`);
+    if (h) parts.push(`${h}${units.h}`);
+    if (m) parts.push(`${m}${units.m}`);
+    if (s) parts.push(`${s}${units.s}`);
     return parts.length ? parts.join(' ') : '0';
 }
 

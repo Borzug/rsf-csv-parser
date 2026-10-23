@@ -173,6 +173,8 @@
     chartLegendSuccess: "\u0423\u0441\u043F\u0435\u0448\u043D\u044B\u0439 \u043F\u0440\u043E\u0435\u0437\u0434",
     chartLegendSuperRally: "Super Rally",
     chartLegendComment: "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439",
+    axisTimeTitle: "\u0412\u0440\u0435\u043C\u044F",
+    axisTimeUnits: { h: "\u0447", m: "\u043C", s: "\u0441" },
     pinnedCloseTitle: "\u0421\u043D\u044F\u0442\u044C \u0432\u044B\u0434\u0435\u043B\u0435\u043D\u0438\u0435 (Esc)",
     legendExpandTitle: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044C",
     filterChartStages: "\u0421\u043F\u0435\u0446\u0443\u0447\u0430\u0441\u0442\u043A\u0438",
@@ -240,6 +242,8 @@
     chartLegendSuccess: "Completed stage",
     chartLegendSuperRally: "Super Rally",
     chartLegendComment: "Comment",
+    axisTimeTitle: "Time",
+    axisTimeUnits: { h: "h", m: "m", s: "s" },
     pinnedCloseTitle: "Unpin (Esc)",
     legendExpandTitle: "Expand",
     filterChartStages: "Stages",
@@ -303,6 +307,8 @@ Only stages without SR for both drivers`,
     chartLegendSuccess: "Teljes\xEDtett szakasz",
     chartLegendSuperRally: "Super Rally",
     chartLegendComment: "Megjegyz\xE9s",
+    axisTimeTitle: "Id\u0151",
+    axisTimeUnits: { h: "\xF3", m: "p", s: "mp" },
     pinnedCloseTitle: "R\xF6gz\xEDt\xE9s felold\xE1sa (Esc)",
     legendExpandTitle: "Kibont\xE1s",
     filterChartStages: "Szakaszok",
@@ -403,12 +409,12 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   // src/renderer/utils.ts
   function formatTime(sec) {
     if (sec === null || isNaN(sec)) return "DNF";
-    const a = Math.abs(sec);
-    const h = Math.floor(a / 3600);
-    const m = Math.floor(a % 3600 / 60);
-    const s = Math.floor(a % 60);
-    const d = Math.round(a % 1 * 10);
-    const sign = sec < 0 ? "-" : "";
+    const tenths = Math.round(Math.abs(sec) * 10);
+    const h = Math.floor(tenths / 36e3);
+    const m = Math.floor(tenths % 36e3 / 600);
+    const s = Math.floor(tenths % 600 / 10);
+    const d = tenths % 10;
+    const sign = sec < 0 && tenths > 0 ? "-" : "";
     const ss = `${String(s).padStart(2, "0")}.${d}`;
     return h > 0 ? `${sign}${h}:${String(m).padStart(2, "0")}:${ss}` : `${sign}${m}:${ss}`;
   }
@@ -416,15 +422,15 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (sec === null) return "\u2014";
     return (sec >= 0 ? "+" : "") + formatTime(sec);
   }
-  function formatYAxisTick(sec) {
+  function formatYAxisTick(sec, units) {
     if (sec === 0) return "0";
     const h = Math.floor(sec / 3600);
     const m = Math.floor(sec % 3600 / 60);
     const s = Math.floor(sec % 60);
     const parts = [];
-    if (h) parts.push(`${h}\u0447`);
-    if (m) parts.push(`${m}\u043C`);
-    if (s) parts.push(`${s}\u0441`);
+    if (h) parts.push(`${h}${units.h}`);
+    if (m) parts.push(`${m}${units.m}`);
+    if (s) parts.push(`${s}${units.s}`);
     return parts.length ? parts.join(" ") : "0";
   }
   function computeYAxisStep(maxSec) {
@@ -1136,6 +1142,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         return chart.data.datasets[pinnedDsIdx]?.driverKey ?? null;
       },
       getActiveStages: () => activeStages,
+      refreshLabels() {
+        if (!chart) return;
+        const title = i18n.t().axisTimeTitle;
+        chart.options.scales.y.title.text = title;
+        chart.options.scales.y2.title.text = title;
+        chart.update("none");
+      },
       setHoveredKey(key) {
         hoveredDsKey = key;
         chart?.update("none");
@@ -1327,7 +1340,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       color: "#555",
       font: { size: 11, family: "'Fira Code', monospace" },
       stepSize: yStep,
-      callback: (v) => formatYAxisTick(v)
+      callback: (v) => formatYAxisTick(v, i18n.t().axisTimeUnits)
     };
     return {
       x: {
@@ -1350,7 +1363,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         border: { color: "#3a3a3a" },
         title: {
           display: true,
-          text: "\u0412\u0440\u0435\u043C\u044F",
+          text: i18n.t().axisTimeTitle,
           color: "#3c3c3c",
           font: { size: 11, family: "'Fira Code', monospace" }
         }
@@ -1365,7 +1378,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         border: { color: "#3a3a3a" },
         title: {
           display: true,
-          text: "\u0412\u0440\u0435\u043C\u044F",
+          text: i18n.t().axisTimeTitle,
           color: "#3c3c3c",
           font: { size: 11, family: "'Fira Code', monospace" }
         }
@@ -2751,7 +2764,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     row.dataset["username"] = r.stats.username;
     if (selectedRows.has(r.stats.username)) row.classList.add("row-selected");
     const t = i18n.t();
-    row.appendChild(buildPositionCell(r.position));
+    row.appendChild(buildPositionCell(r.stats.totalTime !== null ? r.position : null));
     row.appendChild(buildNameCell(r.stats));
     row.appendChild(buildGroupCell(r.stats.group));
     row.appendChild(createTd("td-time", r.stats.car));
@@ -2788,7 +2801,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     return row;
   }
   function buildPositionCell(pos) {
-    const td = createTd("td-pos", String(pos));
+    const td = createTd("td-pos", pos !== null ? String(pos) : "DNF");
+    if (pos === null) td.classList.add("pos-dnf");
     if (pos === 1) td.classList.add("pos-gold");
     else if (pos === 2) td.classList.add("pos-silver");
     else if (pos === 3) td.classList.add("pos-bronze");
@@ -3016,6 +3030,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         updateHeaderStats();
         renderResultsTable();
         renderCommentsView(data);
+        chartCtrl.refreshLabels();
       }
     });
     qs("#btn-choose-file").addEventListener("click", () => {
