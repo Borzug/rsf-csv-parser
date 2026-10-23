@@ -23,5 +23,6 @@ export function initLangSwitcher(onChanged: () => void): void {
 function updateActiveLangButton(switcher: HTMLElement, lang: Language): void {
     switcher.querySelectorAll<HTMLElement>('.lang-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset['lang'] === lang);
+        btn.setAttribute('aria-pressed', String(btn.dataset['lang'] === lang));
     });
 }

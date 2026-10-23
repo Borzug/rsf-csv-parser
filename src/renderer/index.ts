@@ -109,8 +109,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     chartCtrl.setOnPinChange(onPinsChanged);
 
+    qs<HTMLButtonElement>('#btn-filters').addEventListener('click', () => setSidebarOpen(true));
+    qs<HTMLButtonElement>('#btn-sidebar-close').addEventListener('click', () => setSidebarOpen(false));
+    qs<HTMLElement>('#sidebar-backdrop').addEventListener('click', () => setSidebarOpen(false));
+
     document.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
+        if (e.key !== 'Escape') return;
+        if (isSidebarOpen()) setSidebarOpen(false);
+        else if (chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
     });
     document.addEventListener('mousemove', onCellTooltipMove);
 
@@ -176,6 +182,10 @@ async function loadFile(file: File): Promise<void> {
         [...allStats]
             .sort((a, b) => nullableCompare(a.totalTime, b.totalTime))
             .forEach((s, i) => rankMap.set(s.username, s.totalTime !== null ? i + 1 : null));
+        // Цвет линии берётся по индексу участника. Упорядочив участников по итоговому месту,
+        // получаем у соседей по таблице (а значит, и по графику) заведомо разные цвета палитры
+        const order = (k: string) => rankMap.get(k) ?? Number.MAX_SAFE_INTEGER;
+        data.drivers.sort((a, b) => order(a.username) - order(b.username));
 
         eventName        = qs<HTMLInputElement>('#inp-event-name').value.trim();
         info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
@@ -205,6 +215,7 @@ function readFileAsText(file: File): Promise<string> {
 
 /** Стартовый экран. Загруженные данные сохраняются — к ним можно вернуться. */
 function showWelcome(): void {
+    document.getElementById('app')!.classList.remove('sidebar-open');
     document.getElementById('screen-welcome')!.style.display = 'flex';
     document.getElementById('screen-chart')!.style.display   = 'none';
     document.getElementById('chart-tooltip')!.style.display  = 'none';
@@ -273,13 +284,29 @@ function updateHeaderStats(): void {
         i18n.t().headerStats(finished, data.drivers.length, data.stages.length);
 }
 
+// ── Sidebar drawer (narrow screens) ───────────────────────────────────────────
+
+function isSidebarOpen(): boolean {
+    return document.getElementById('app')!.classList.contains('sidebar-open');
+}
+
+function setSidebarOpen(open: boolean): void {
+    document.getElementById('app')!.classList.toggle('sidebar-open', open);
+    const btn = qs<HTMLButtonElement>('#btn-filters');
+    btn.setAttribute('aria-expanded', String(open));
+    if (open) qs<HTMLButtonElement>('#btn-sidebar-close').focus();
+    else btn.focus({ preventScroll: true });
+}
+
 // ── Tab switching ─────────────────────────────────────────────────────────────
 
 function switchTab(tab: TTab): void {
     currentTab = tab;
-    qs<HTMLButtonElement>('#tab-chart').classList.toggle('active',    tab === 'chart');
-    qs<HTMLButtonElement>('#tab-results').classList.toggle('active',  tab === 'results');
-    qs<HTMLButtonElement>('#tab-comments').classList.toggle('active', tab === 'comments');
+    for (const t of ['chart', 'results', 'comments'] as TTab[]) {
+        const btn = qs<HTMLButtonElement>(`#tab-${t}`);
+        btn.classList.toggle('active', tab === t);
+        btn.setAttribute('aria-pressed', String(tab === t));
+    }
 
     document.getElementById('view-chart')!.style.display    = tab === 'chart'    ? 'flex' : 'none';
     document.getElementById('view-results')!.style.display  = tab === 'results'  ? 'flex' : 'none';
@@ -357,6 +384,7 @@ function syncYModeSwitch(): void {
     const hasPinned = chartCtrl.getPinnedKeys().length > 0;
     document.querySelectorAll<HTMLButtonElement>('#ymode-switch .seg-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset['ymode'] === mode);
+        btn.setAttribute('aria-pressed', String(btn.dataset['ymode'] === mode));
     });
     const pinnedBtn = qs<HTMLButtonElement>('#ymode-pinned');
     pinnedBtn.disabled = !hasPinned;

@@ -1,6 +1,7 @@
 import type { IParsedRallyData, IStageInfo } from '../../shared/types';
 import { driverColor } from "../colors";
 import { createElement } from "../dom";
+import { isCoarsePointer } from "../utils";
 
 export interface ILegendPanelCallbacks {
     onDriverHover: (key: string | null) => void;
@@ -77,16 +78,22 @@ function renderLegendItems(
     pinnedKeys:      string[],
     callbacks?:      ILegendPanelCallbacks,
 ): void {
+    // Легенда перерисовывается целиком — возвращаем фокус клавиатуры на тот же пункт
+    const focusedKey = (document.activeElement as HTMLElement | null)
+        ?.closest<HTMLElement>('.legend-item')?.dataset['driverKey'] ?? null;
     container.innerHTML = '';
     items.forEach(({ drv }) => {
         const gi    = data.drivers.indexOf(drv);
         const color = driverColor(gi);
-        const item  = createElement('div', 'legend-item') as HTMLElement;
+        const item  = createElement('button', 'legend-item');
+        item.type = 'button';
         item.dataset['driverKey'] = drv.username;
-        item.style.cursor = 'pointer';
-        if (pinnedKeys.includes(drv.username)) item.classList.add('pinned-highlight');
+        const pinned = pinnedKeys.includes(drv.username);
+        item.setAttribute('aria-pressed', String(pinned));
+        if (pinned) item.classList.add('pinned-highlight');
 
         const dot = createElement('span', 'legend-dot') as HTMLElement;
+        dot.setAttribute('aria-hidden', 'true');
         dot.style.background = color;
         const name = createElement('span', 'legend-name',
             drv.realName && drv.realName !== drv.username
@@ -105,11 +112,16 @@ function renderLegendItems(
                 callbacks.onDriverHover(null);
                 item.classList.remove('legend-item-hover');
             });
+            item.addEventListener('focus', () => callbacks.onDriverHover(drv.username));
+            item.addEventListener('blur',  () => callbacks.onDriverHover(null));
             item.addEventListener('click', (e: MouseEvent) => {
-                callbacks.onDriverClick(drv.username, e.ctrlKey || e.metaKey || e.shiftKey);
+                // На сенсорных экранах нет Ctrl/Shift — там касание в легенде всегда добавляет к сравнению
+                const additive = e.ctrlKey || e.metaKey || e.shiftKey || isCoarsePointer();
+                callbacks.onDriverClick(drv.username, additive);
             });
         }
 
         container.appendChild(item);
+        if (drv.username === focusedKey) item.focus({ preventScroll: true });
     });
 }

@@ -2,6 +2,7 @@ import type { IParsedRallyData } from '../../shared/types';
 import { i18n } from "../../i18n/index";
 import { driverColor } from '../colors';
 import { createElement } from "../dom";
+import { isCoarsePointer } from "../utils";
 
 export function updatePinnedBar(
     data:       IParsedRallyData | null,
@@ -31,6 +32,7 @@ export function updatePinnedBar(
         );
         const x = createElement('button', 'pinned-chip-x', '×');
         x.title = i18n.t().pinnedChipRemove;
+        x.setAttribute('aria-label', `${i18n.t().pinnedChipRemove}: ${drv!.username}`);
         x.addEventListener('click', () => onUnpin(drv!.username));
         chip.appendChild(dot);
         chip.appendChild(name);
@@ -38,6 +40,7 @@ export function updatePinnedBar(
         chips.appendChild(chip);
     }
 
-    document.getElementById('pinned-hint')!.textContent = i18n.t().pinnedHint;
+    document.getElementById('pinned-hint')!.textContent =
+        isCoarsePointer() ? i18n.t().pinnedHintTouch : i18n.t().pinnedHint;
     bar.style.display = 'flex';
 }

@@ -37,6 +37,11 @@ export function computeYAxisStep(maxSec: number): number {
     return steps.find(v => v >= target) ?? 28800;
 }
 
+/** Основное устройство ввода — палец (телефон, планшет): нет наведения и клавиш-модификаторов. */
+export function isCoarsePointer(): boolean {
+    return window.matchMedia?.('(pointer: coarse)').matches ?? false;
+}
+
 export function escapeHtml(s: string): string {
     return s
         .replace(/&/g, '&amp;')

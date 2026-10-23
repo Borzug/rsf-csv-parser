@@ -43,6 +43,9 @@ export const ru: ITranslations = {
     rallyLinkTitle:         'Открыть ралли на rallysimfans.hu',
 
     pinnedHint:             'Ctrl/Shift + клик — добавить к сравнению',
+    pinnedHintTouch:        'Нажмите имя в легенде, чтобы добавить к сравнению',
+    chartAriaLabel:         'График хода гонки: накопленное время участников по сплитам',
+    closeLabel:             'Закрыть',
     pinnedChipRemove:       'Убрать из сравнения',
 
     presetTop:              (n) => `Топ-${n}`,
@@ -151,6 +154,9 @@ export const en: ITranslations = {
     rallyLinkTitle:         'Open the rally on rallysimfans.hu',
 
     pinnedHint:             'Ctrl/Shift + click to add to comparison',
+    pinnedHintTouch:        'Tap a name in the legend to add it to the comparison',
+    chartAriaLabel:         'Race progress chart: cumulative time of each driver by split',
+    closeLabel:             'Close',
     pinnedChipRemove:       'Remove from comparison',
 
     presetTop:              (n) => `Top ${n}`,
@@ -255,6 +261,9 @@ export const hu: ITranslations = {
     rallyLinkTitle:         'Rally megnyitása a rallysimfans.hu oldalon',
 
     pinnedHint:             'Ctrl/Shift + kattintás — hozzáadás az összehasonlításhoz',
+    pinnedHintTouch:        'Koppints egy névre a jelmagyarázatban az összehasonlításhoz',
+    chartAriaLabel:         'A verseny alakulása: a versenyzők összesített ideje részidőnként',
+    closeLabel:             'Bezárás',
     pinnedChipRemove:       'Eltávolítás az összehasonlításból',
 
     presetTop:              (n) => `Top ${n}`,

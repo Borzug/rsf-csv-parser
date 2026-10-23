@@ -19,9 +19,9 @@
         <a id="header-rally-link" class="header-rally-link" target="_blank" rel="noopener" style="display:none">rallysimfans ↗</a>
         <span id="header-stats" class="header-stats"></span>
         <div class="lang-switcher" id="lang-switcher">
-            <button class="lang-btn active" data-lang="ru">RU</button>
-            <button class="lang-btn" data-lang="en">EN</button>
-            <button class="lang-btn" data-lang="hu">HU</button>
+            <button class="lang-btn active" data-lang="ru" lang="ru" aria-label="Русский">RU</button>
+            <button class="lang-btn" data-lang="en" lang="en" aria-label="English">EN</button>
+            <button class="lang-btn" data-lang="hu" lang="hu" aria-label="Magyar">HU</button>
         </div>
     </header>
 
@@ -50,10 +50,11 @@
     <section id="screen-chart" style="display:none">
 
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <span id="sidebar-filters-label">Фильтры</span>
                 <button class="btn btn-ghost btn-sm" id="btn-back">← Назад</button>
+                <button class="sidebar-close" id="btn-sidebar-close" type="button" aria-label="Закрыть">×</button>
             </div>
             <div class="sidebar-body">
                 <div id="sidebar-chart-filters">
@@ -71,11 +72,14 @@
             </div>
         </aside>
 
+        <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
         <!-- Main content -->
         <main class="chart-main">
 
             <!-- Tab bar -->
             <div class="main-toolbar">
+                <button class="btn-filters" id="btn-filters" type="button" aria-controls="sidebar" aria-expanded="false">☰ <span id="btn-filters-label">Фильтры</span></button>
                 <div class="tab-switcher">
                     <button class="tab-btn active" id="tab-chart">📈 График</button>
                     <button class="tab-btn" id="tab-results">🏆 Результаты</button>
@@ -106,7 +110,7 @@
                         <button class="pinned-close" id="pinned-close" title="Снять выделение (Esc)">×</button>
                     </div>
                     <div id="chart-area" class="chart-area">
-                        <canvas id="race-chart"></canvas>
+                        <canvas id="race-chart" role="img" aria-label="График хода гонки"></canvas>
                     </div>
                 </div>
 

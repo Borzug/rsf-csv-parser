@@ -123,6 +123,7 @@ function toggleRowSelection(username: string, row: HTMLElement): void {
         _selectedRows.add(username);
         row.classList.add('row-selected');
     }
+    row.setAttribute('aria-selected', String(_selectedRows.has(username)));
     updateApplyBar();
 }
 

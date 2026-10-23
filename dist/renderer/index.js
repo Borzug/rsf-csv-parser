@@ -188,6 +188,9 @@
     rallyTitle: (id) => `\u0420\u0430\u043B\u043B\u0438 #${id}`,
     rallyLinkTitle: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0440\u0430\u043B\u043B\u0438 \u043D\u0430 rallysimfans.hu",
     pinnedHint: "Ctrl/Shift + \u043A\u043B\u0438\u043A \u2014 \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043A \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044E",
+    pinnedHintTouch: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0438\u043C\u044F \u0432 \u043B\u0435\u0433\u0435\u043D\u0434\u0435, \u0447\u0442\u043E\u0431\u044B \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043A \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044E",
+    chartAriaLabel: "\u0413\u0440\u0430\u0444\u0438\u043A \u0445\u043E\u0434\u0430 \u0433\u043E\u043D\u043A\u0438: \u043D\u0430\u043A\u043E\u043F\u043B\u0435\u043D\u043D\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u043F\u043E \u0441\u043F\u043B\u0438\u0442\u0430\u043C",
+    closeLabel: "\u0417\u0430\u043A\u0440\u044B\u0442\u044C",
     pinnedChipRemove: "\u0423\u0431\u0440\u0430\u0442\u044C \u0438\u0437 \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044F",
     presetTop: (n) => `\u0422\u043E\u043F-${n}`,
     presetTopTitle: (n) => `\u041E\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u043F\u0435\u0440\u0432\u044B\u0435 ${n} \u043C\u0435\u0441\u0442 \u0441\u0440\u0435\u0434\u0438 \u0432\u0438\u0434\u0438\u043C\u044B\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`,
@@ -276,6 +279,9 @@
     rallyTitle: (id) => `Rally #${id}`,
     rallyLinkTitle: "Open the rally on rallysimfans.hu",
     pinnedHint: "Ctrl/Shift + click to add to comparison",
+    pinnedHintTouch: "Tap a name in the legend to add it to the comparison",
+    chartAriaLabel: "Race progress chart: cumulative time of each driver by split",
+    closeLabel: "Close",
     pinnedChipRemove: "Remove from comparison",
     presetTop: (n) => `Top ${n}`,
     presetTopTitle: (n) => `Keep the top ${n} of the visible drivers`,
@@ -360,6 +366,9 @@ Only stages without SR for both drivers`,
     rallyTitle: (id) => `Rally #${id}`,
     rallyLinkTitle: "Rally megnyit\xE1sa a rallysimfans.hu oldalon",
     pinnedHint: "Ctrl/Shift + kattint\xE1s \u2014 hozz\xE1ad\xE1s az \xF6sszehasonl\xEDt\xE1shoz",
+    pinnedHintTouch: "Koppints egy n\xE9vre a jelmagyar\xE1zatban az \xF6sszehasonl\xEDt\xE1shoz",
+    chartAriaLabel: "A verseny alakul\xE1sa: a versenyz\u0151k \xF6sszes\xEDtett ideje r\xE9szid\u0151nk\xE9nt",
+    closeLabel: "Bez\xE1r\xE1s",
     pinnedChipRemove: "Elt\xE1vol\xEDt\xE1s az \xF6sszehasonl\xEDt\xE1sb\xF3l",
     presetTop: (n) => `Top ${n}`,
     presetTopTitle: (n) => `Csak a l\xE1that\xF3 versenyz\u0151k els\u0151 ${n} helyezettje`,
@@ -460,6 +469,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   function updateActiveLangButton(switcher, lang) {
     switcher.querySelectorAll(".lang-btn").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset["lang"] === lang);
+      btn.setAttribute("aria-pressed", String(btn.dataset["lang"] === lang));
     });
   }
 
@@ -497,6 +507,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const steps = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800];
     return steps.find((v) => v >= target) ?? 28800;
   }
+  function isCoarsePointer() {
+    return window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  }
   function escapeHtml(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
@@ -531,14 +544,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     "#00bfa5",
     "#ffab40",
     "#76ff03",
-    "#b71c1c",
-    "#0d47a1",
-    "#1b5e20",
-    "#880e4f",
-    "#e65100",
-    "#33691e",
-    "#006064",
-    "#311b92"
+    "#ef5350",
+    "#42a5f5",
+    "#66bb6a",
+    "#ec407a",
+    "#ffa726",
+    "#9ccc65",
+    "#26c6da",
+    "#9575cd"
   ];
   function driverColor(index) {
     if (index < PALETTE.length) return PALETTE[index];
@@ -1197,6 +1210,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var BOT_PAD_NORMAL = 46;
   var BOT_PAD_45 = 90;
   var BOT_PAD_90 = 110;
+  var NARROW_CHART_PX = 520;
   var DIM_ALPHA = 0.06;
   var DIM_ALPHA_SOFT = 0.35;
   var BORDER_WIDTH2 = 1.8;
@@ -1386,6 +1400,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             normalized: true,
             interaction: { mode: "nearest", axis: "xy", intersect: false },
             layout: { padding: { bottom: currentBotPad } },
+            // На узком экране правая ось-дубликат отнимает место у линий
+            onResize: (c, size) => {
+              c.options.scales.y2.display = size.width >= NARROW_CHART_PX;
+            },
             onHover: (event, elements) => {
               if (pinnedIdxs.length) {
                 hoveredDsIdx = null;
@@ -1432,6 +1450,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         });
         syncPinnedIdxs();
         applyYMode();
+        chart.options.scales.y2.display = chart.width >= NARROW_CHART_PX;
         chart.update("none");
         clickHandler = (e) => {
           const additive = e.ctrlKey || e.metaKey || e.shiftKey;
@@ -1627,15 +1646,19 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     return withTime;
   }
   function renderLegendItems(container, items, data2, pinnedKeys, callbacks) {
+    const focusedKey = document.activeElement?.closest(".legend-item")?.dataset["driverKey"] ?? null;
     container.innerHTML = "";
     items.forEach(({ drv }) => {
       const gi = data2.drivers.indexOf(drv);
       const color = driverColor(gi);
-      const item = createElement("div", "legend-item");
+      const item = createElement("button", "legend-item");
+      item.type = "button";
       item.dataset["driverKey"] = drv.username;
-      item.style.cursor = "pointer";
-      if (pinnedKeys.includes(drv.username)) item.classList.add("pinned-highlight");
+      const pinned = pinnedKeys.includes(drv.username);
+      item.setAttribute("aria-pressed", String(pinned));
+      if (pinned) item.classList.add("pinned-highlight");
       const dot = createElement("span", "legend-dot");
+      dot.setAttribute("aria-hidden", "true");
       dot.style.background = color;
       const name = createElement(
         "span",
@@ -1653,11 +1676,15 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           callbacks.onDriverHover(null);
           item.classList.remove("legend-item-hover");
         });
+        item.addEventListener("focus", () => callbacks.onDriverHover(drv.username));
+        item.addEventListener("blur", () => callbacks.onDriverHover(null));
         item.addEventListener("click", (e) => {
-          callbacks.onDriverClick(drv.username, e.ctrlKey || e.metaKey || e.shiftKey);
+          const additive = e.ctrlKey || e.metaKey || e.shiftKey || isCoarsePointer();
+          callbacks.onDriverClick(drv.username, additive);
         });
       }
       container.appendChild(item);
+      if (drv.username === focusedKey) item.focus({ preventScroll: true });
     });
   }
 
@@ -1716,13 +1743,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       );
       const x = createElement("button", "pinned-chip-x", "\xD7");
       x.title = i18n.t().pinnedChipRemove;
+      x.setAttribute("aria-label", `${i18n.t().pinnedChipRemove}: ${drv.username}`);
       x.addEventListener("click", () => onUnpin(drv.username));
       chip.appendChild(dot);
       chip.appendChild(name);
       chip.appendChild(x);
       chips.appendChild(chip);
     }
-    document.getElementById("pinned-hint").textContent = i18n.t().pinnedHint;
+    document.getElementById("pinned-hint").textContent = isCoarsePointer() ? i18n.t().pinnedHintTouch : i18n.t().pinnedHint;
     bar.style.display = "flex";
   }
 
@@ -2342,8 +2370,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const t = i18n.t();
     const group = createElement("div", "filter-group collapsed");
     const hdr = createElement("div", "filter-header");
-    const left = createElement("div", "filter-header-left");
-    left.innerHTML = `<span class="collapse-icon">\u25B6</span><span class="filter-title">${title}</span><span class="filter-counter" id="${counterId}"></span>`;
+    const left = createElement("button", "filter-header-left");
+    left.type = "button";
+    left.setAttribute("aria-expanded", "false");
+    left.innerHTML = `<span class="collapse-icon" aria-hidden="true">\u25B6</span><span class="filter-title">${title}</span><span class="filter-counter" id="${counterId}"></span>`;
     const right = createElement("div", "filter-header-right");
     const btnAll = createElement("button", "btn-fa", t.filterAll);
     const btnNone = createElement("button", "btn-fa", t.filterNone);
@@ -2352,7 +2382,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     hdr.appendChild(left);
     hdr.appendChild(right);
     const body = createElement("div", "filter-body");
-    left.addEventListener("click", () => group.classList.toggle("collapsed"));
+    left.addEventListener("click", () => {
+      const collapsed = group.classList.toggle("collapsed");
+      left.setAttribute("aria-expanded", String(!collapsed));
+    });
     btnAll.addEventListener("click", (e) => e.stopPropagation());
     btnNone.addEventListener("click", (e) => e.stopPropagation());
     group.appendChild(hdr);
@@ -2627,6 +2660,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     setTextById("drop-hint", t.dropHint);
     setTextById("drop-overlay-text", t.dropOverlay);
     setTextById("welcome-help", t.welcomeHelp);
+    setTextById("btn-filters-label", t.filtersLabel);
+    setAttrById("btn-sidebar-close", "aria-label", t.closeLabel);
+    setAttrById("race-chart", "aria-label", t.chartAriaLabel);
+    document.documentElement.lang = i18n.getLanguage();
     setTitleById("pinned-close", t.pinnedCloseTitle);
     setTitleById("legend-expand-btn", t.legendExpandTitle);
     applyEventNameLabel(t.eventNameLabel, t.eventNameOptional);
@@ -2634,6 +2671,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   function setTextById(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
+  }
+  function setAttrById(id, attr, value) {
+    document.getElementById(id)?.setAttribute(attr, value);
   }
   function setTitleById(id, title) {
     const el = document.getElementById(id);
@@ -2968,7 +3008,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     tbody.innerHTML = "";
     for (const r of results) {
       const row = buildResultRow(r, stageRanks.get(r.stats.username) ?? [], selectedRows);
+      row.tabIndex = 0;
       row.addEventListener("click", () => onRowClick(r.stats.username, row));
+      row.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        onRowClick(r.stats.username, row);
+      });
       tbody.appendChild(row);
     }
   }
@@ -2976,6 +3022,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const row = document.createElement("tr");
     row.dataset["username"] = r.stats.username;
     if (selectedRows.has(r.stats.username)) row.classList.add("row-selected");
+    row.setAttribute("aria-selected", String(selectedRows.has(r.stats.username)));
     const t = i18n.t();
     const noPace = r.position === 1 || r.stats.totalTime === null;
     row.appendChild(buildPositionCell(r.stats.totalTime !== null ? r.position : null));
@@ -3174,6 +3221,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       _selectedRows.add(username);
       row.classList.add("row-selected");
     }
+    row.setAttribute("aria-selected", String(_selectedRows.has(username)));
     updateApplyBar();
   }
   function updateApplyBar() {
@@ -3297,8 +3345,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       btn.addEventListener("click", () => setYMode(btn.dataset["ymode"]));
     });
     chartCtrl.setOnPinChange(onPinsChanged);
+    qs("#btn-filters").addEventListener("click", () => setSidebarOpen(true));
+    qs("#btn-sidebar-close").addEventListener("click", () => setSidebarOpen(false));
+    qs("#sidebar-backdrop").addEventListener("click", () => setSidebarOpen(false));
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
+      if (e.key !== "Escape") return;
+      if (isSidebarOpen()) setSidebarOpen(false);
+      else if (chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
     });
     document.addEventListener("mousemove", onCellTooltipMove);
     window.__onStageBandClick = handleStageBandClick;
@@ -3355,6 +3408,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       initResultsModule(data, lookups.recordMap, allStats);
       rankMap = /* @__PURE__ */ new Map();
       [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime)).forEach((s, i) => rankMap.set(s.username, s.totalTime !== null ? i + 1 : null));
+      const order = (k) => rankMap.get(k) ?? Number.MAX_SAFE_INTEGER;
+      data.drivers.sort((a, b) => order(a.username) - order(b.username));
       eventName = qs("#inp-event-name").value.trim();
       info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
       info.className = "file-info ok";
@@ -3377,6 +3432,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     });
   }
   function showWelcome() {
+    document.getElementById("app").classList.remove("sidebar-open");
     document.getElementById("screen-welcome").style.display = "flex";
     document.getElementById("screen-chart").style.display = "none";
     document.getElementById("chart-tooltip").style.display = "none";
@@ -3434,11 +3490,23 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     ).length;
     document.getElementById("header-stats").textContent = i18n.t().headerStats(finished, data.drivers.length, data.stages.length);
   }
+  function isSidebarOpen() {
+    return document.getElementById("app").classList.contains("sidebar-open");
+  }
+  function setSidebarOpen(open) {
+    document.getElementById("app").classList.toggle("sidebar-open", open);
+    const btn = qs("#btn-filters");
+    btn.setAttribute("aria-expanded", String(open));
+    if (open) qs("#btn-sidebar-close").focus();
+    else btn.focus({ preventScroll: true });
+  }
   function switchTab(tab) {
     currentTab = tab;
-    qs("#tab-chart").classList.toggle("active", tab === "chart");
-    qs("#tab-results").classList.toggle("active", tab === "results");
-    qs("#tab-comments").classList.toggle("active", tab === "comments");
+    for (const t of ["chart", "results", "comments"]) {
+      const btn = qs(`#tab-${t}`);
+      btn.classList.toggle("active", tab === t);
+      btn.setAttribute("aria-pressed", String(tab === t));
+    }
     document.getElementById("view-chart").style.display = tab === "chart" ? "flex" : "none";
     document.getElementById("view-results").style.display = tab === "results" ? "flex" : "none";
     document.getElementById("view-comments").style.display = tab === "comments" ? "flex" : "none";
@@ -3503,6 +3571,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const hasPinned = chartCtrl.getPinnedKeys().length > 0;
     document.querySelectorAll("#ymode-switch .seg-btn").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset["ymode"] === mode);
+      btn.setAttribute("aria-pressed", String(btn.dataset["ymode"] === mode));
     });
     const pinnedBtn = qs("#ymode-pinned");
     pinnedBtn.disabled = !hasPinned;

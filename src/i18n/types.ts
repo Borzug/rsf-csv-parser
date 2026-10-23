@@ -52,6 +52,11 @@ export interface ITranslations {
 
     // Сравнение закреплённых
     pinnedHint:             string;
+    pinnedHintTouch:        string;
+
+    // Доступность и мобильная вёрстка
+    chartAriaLabel:         string;
+    closeLabel:             string;
     pinnedChipRemove:       string;
 
     // Быстрый выбор участников

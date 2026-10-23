@@ -25,6 +25,11 @@ export function applyDomTranslations(): void {
     setTextById('drop-overlay-text',       t.dropOverlay);
     setTextById('welcome-help',            t.welcomeHelp);
 
+    setTextById('btn-filters-label',       t.filtersLabel);
+    setAttrById('btn-sidebar-close',       'aria-label', t.closeLabel);
+    setAttrById('race-chart',              'aria-label', t.chartAriaLabel);
+    document.documentElement.lang = i18n.getLanguage();
+
     setTitleById('pinned-close',           t.pinnedCloseTitle);
     setTitleById('legend-expand-btn',      t.legendExpandTitle);
 
@@ -34,6 +39,10 @@ export function applyDomTranslations(): void {
 function setTextById(id: string, text: string): void {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
+}
+
+function setAttrById(id: string, attr: string, value: string): void {
+    document.getElementById(id)?.setAttribute(attr, value);
 }
 
 function setTitleById(id: string, title: string): void {

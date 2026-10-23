@@ -16,7 +16,13 @@
     --green:    #2ecc71;
     --radius:   6px;
     --ff:       'Fira Code', 'Consolas', monospace;
+    /* Использовались переключателем языка, но не были объявлены — активный язык не выделялся */
+    --accent:       rgba(255,255,255,0.22);
+    --text-primary: #fff;
 }
+
+/* Видимый фокус для навигации с клавиатуры */
+:focus-visible { outline: 2px solid #f1c40f; outline-offset: 1px; }
 
 html, body { height: 100%; overflow: hidden; }
 
@@ -26,7 +32,7 @@ body {
     display: flex; flex-direction: column;
 }
 
-#app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; overflow: hidden; }
 
 /* ── Header ──────────────────────────────────────────────────── */
 .app-header {
@@ -143,7 +149,11 @@ body {
     transition: background 0.12s;
 }
 .filter-header:hover { background: #202020; }
-.filter-header-left  { display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; }
+.filter-header-left  {
+    display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
+    background: none; border: none; padding: 0; color: inherit; font: inherit;
+    text-align: left; cursor: pointer;
+}
 .filter-header-right { display: flex; gap: 3px; flex-shrink: 0; }
 
 .collapse-icon {
@@ -160,8 +170,13 @@ body {
 }
 .filter-counter { font-size: 10px; color: #777; font-family: var(--ff); flex-shrink: 0; white-space: nowrap; }
 
-.filter-body { max-height: 0; overflow: hidden; transition: max-height 0.22s ease; }
-.filter-group:not(.collapsed) .filter-body { max-height: 5000px; }
+/* visibility — чтобы Tab не заходил в чекбоксы свёрнутой группы */
+.filter-body { max-height: 0; overflow: hidden; visibility: hidden; transition: max-height 0.22s ease, visibility 0.22s; }
+/* Раскрытие — видимость сразу, сворачивание — после анимации (правило выше) */
+.filter-group:not(.collapsed) .filter-body {
+    max-height: 5000px; visibility: visible;
+    transition: max-height 0.22s ease, visibility 0s;
+}
 
 /* Все/Никого */
 .btn-fa {
@@ -329,8 +344,10 @@ body {
 .legend-item {
     display: flex; align-items: center; gap: 6px;
     padding: 2px 6px; border-radius: 4px;
-    cursor: default; white-space: nowrap;
+    cursor: pointer; white-space: nowrap;
     transition: background 0.1s;
+    background: none; border: none; font: inherit; color: inherit;
+    text-align: left; min-width: 0; max-width: 100%;
 }
 .legend-item:hover,
 .legend-item.legend-item-hover { background: var(--surface2); }
@@ -519,8 +536,8 @@ body {
 
 .lang-btn {
     background: transparent;
-    border: 1px solid #444;
-    color: #888;
+    border: 1px solid rgba(255,255,255,0.35);
+    color: rgba(255,255,255,0.8);
     font-family: 'Fira Code', monospace;
     font-size: 11px;
     padding: 3px 7px;
@@ -540,4 +557,78 @@ body {
     background: var(--accent);
     border-color: var(--accent);
     color: #fff;
+}
+
+/* ── Filters drawer controls (visible only on narrow screens) ── */
+.btn-filters, .sidebar-close, .sidebar-backdrop { display: none; }
+
+.btn-filters {
+    align-items: center; gap: 6px;
+    padding: 5px 10px; margin-right: 6px;
+    font-size: 12px; font-weight: 600; font-family: var(--ff);
+    background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
+}
+.sidebar-close {
+    width: 32px; height: 32px; margin-left: 6px;
+    background: transparent; border: none; color: #888;
+    font-size: 22px; line-height: 1; cursor: pointer; border-radius: var(--radius);
+}
+.sidebar-close:hover { color: var(--text); background: var(--surface2); }
+
+/* ── Narrow screens: drawer sidebar, legend under the chart ───── */
+@media (max-width: 768px) {
+    .app-header { flex-wrap: wrap; row-gap: 4px; padding: 8px 12px; }
+    .app-header h1 { font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .header-stats { order: 10; flex-basis: 100%; margin-left: 0; }
+    .header-stats:not(:empty) { padding-left: 0; border-left: none; }
+
+    .welcome-card { padding: 28px 20px; }
+
+    .btn-filters { display: inline-flex; }
+    .sidebar-close { display: block; }
+
+    .sidebar {
+        position: fixed; top: 0; bottom: 0; left: 0; z-index: 900;
+        width: min(320px, 88vw);
+        transform: translateX(-100%); transition: transform 0.22s ease;
+        box-shadow: 4px 0 24px rgba(0,0,0,0.6);
+    }
+    #app.sidebar-open .sidebar { transform: none; }
+    .sidebar-backdrop {
+        position: fixed; inset: 0; z-index: 850;
+        background: rgba(0,0,0,0.55);
+    }
+    #app.sidebar-open .sidebar-backdrop { display: block; }
+    .sidebar-header { gap: 6px; }
+    #sidebar-filters-label { margin-right: auto; }
+
+    /* Крупнее цели касания */
+    .filter-header { padding: 10px 10px 10px 12px; }
+    .filter-item   { padding: 6px 10px 6px 12px; }
+    .btn-fa        { padding: 5px 10px; }
+
+    .main-toolbar { flex-wrap: wrap; gap: 6px; padding: 6px 10px; }
+    .tab-btn      { padding: 6px 10px; }
+    .chart-toolbar { margin-left: 0; flex-basis: 100%; }
+    .chart-type-legend { display: none; }
+    .seg-switch   { flex: 1; }
+    .seg-btn      { flex: 1; padding: 6px 4px; white-space: normal; line-height: 1.2; }
+
+    .pinned-bar   { flex-wrap: wrap; padding: 4px 10px; }
+    .pinned-hint  { order: 10; flex-basis: 100%; white-space: normal; }
+
+    .content-row  { flex-direction: column; }
+    .chart-area   { min-height: 260px; }
+    .legend-panel {
+        width: 100% !important; height: 128px; flex-shrink: 0;
+        border-left: none; border-top: 1px solid var(--border);
+    }
+    .legend-expand-btn { display: none !important; }
+    .legend-inner { align-items: flex-start; }
+    .legend-items { flex-direction: row; flex-wrap: wrap; gap: 2px 4px; margin-block: 0; }
+    .legend-item  { padding: 4px 8px; max-width: 48%; }
+    .legend-name  { font-size: 11px; }
+
+    .results-wrap { padding-right: 8px; }
 }

@@ -17,6 +17,7 @@ const ROTATE_90_AT   = 20;
 const BOT_PAD_NORMAL = 46;
 const BOT_PAD_45     = 90;
 const BOT_PAD_90     = 110;
+const NARROW_CHART_PX = 520;
 const DIM_ALPHA      = 0.06;
 const DIM_ALPHA_SOFT = 0.35;
 const BORDER_WIDTH        = 1.8;
@@ -262,6 +263,10 @@ export function createChartController(): IChartController {
                     normalized: true,
                     interaction: { mode: 'nearest', axis: 'xy', intersect: false },
                     layout: { padding: { bottom: currentBotPad } },
+                    // На узком экране правая ось-дубликат отнимает место у линий
+                    onResize: (c: any, size: { width: number }) => {
+                        c.options.scales.y2.display = size.width >= NARROW_CHART_PX;
+                    },
                     onHover: (event: any, elements: any[]) => {
                         if (pinnedIdxs.length) { hoveredDsIdx = null; return; }
                         let newIdx: number | null = null;
@@ -304,6 +309,7 @@ export function createChartController(): IChartController {
             // Закреплённые участники переживают перестройку графика (смену фильтра СУ)
             syncPinnedIdxs();
             applyYMode();
+            chart.options.scales.y2.display = chart.width >= NARROW_CHART_PX;
             chart.update('none');
 
             clickHandler = (e: MouseEvent) => {

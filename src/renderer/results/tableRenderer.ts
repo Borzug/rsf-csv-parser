@@ -71,7 +71,13 @@ export function renderResultsRows(
     tbody.innerHTML = '';
     for (const r of results) {
         const row = buildResultRow(r, stageRanks.get(r.stats.username) ?? [], selectedRows);
+        row.tabIndex = 0;
         row.addEventListener('click', () => onRowClick(r.stats.username, row));
+        row.addEventListener('keydown', (e: KeyboardEvent) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            onRowClick(r.stats.username, row);
+        });
         tbody.appendChild(row);
     }
 }
@@ -84,6 +90,7 @@ function buildResultRow(
     const row = document.createElement('tr');
     row.dataset['username'] = r.stats.username;
     if (selectedRows.has(r.stats.username)) row.classList.add('row-selected');
+    row.setAttribute('aria-selected', String(selectedRows.has(r.stats.username)));
 
     const t = i18n.t();
     // Темп сошедших считается по неполному набору СУ и вводит в заблуждение

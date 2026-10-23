@@ -17,8 +17,11 @@ export function buildCollapsibleFilterGroup(
     const group = createElement('div', 'filter-group collapsed');
 
     const hdr  = createElement('div', 'filter-header');
-    const left = createElement('div', 'filter-header-left');
-    left.innerHTML = `<span class="collapse-icon">▶</span>`
+    // Кнопка — чтобы группу можно было раскрыть с клавиатуры и скринридер знал её состояние
+    const left = createElement('button', 'filter-header-left');
+    left.type = 'button';
+    left.setAttribute('aria-expanded', 'false');
+    left.innerHTML = `<span class="collapse-icon" aria-hidden="true">▶</span>`
         + `<span class="filter-title">${title}</span>`
         + `<span class="filter-counter" id="${counterId}"></span>`;
 
@@ -33,7 +36,10 @@ export function buildCollapsibleFilterGroup(
 
     const body = createElement('div', 'filter-body');
 
-    left.addEventListener('click', () => group.classList.toggle('collapsed'));
+    left.addEventListener('click', () => {
+        const collapsed = group.classList.toggle('collapsed');
+        left.setAttribute('aria-expanded', String(!collapsed));
+    });
     btnAll.addEventListener('click',  e => e.stopPropagation());
     btnNone.addEventListener('click', e => e.stopPropagation());
 
