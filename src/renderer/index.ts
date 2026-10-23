@@ -2,7 +2,10 @@ import type { IParsedRallyData } from '../shared/types';
 import { parseCsvText } from "../csvParser";
 import { i18n } from "../i18n/index";
 import { initLangSwitcher } from "../lang-switcher";
-import { createChartController } from "./chart/controller";
+import {
+    createChartController,
+    TYMode
+} from "./chart/controller";
 import {
     ILegendPanelCallbacks,
     updateLegendPanel
@@ -27,6 +30,7 @@ import {
     initResultsModule,
     renderResultsTable
 } from "./results/index";
+import { nullableCompare } from "./utils";
 
 declare const window: Window & {
     __onStageBandClick?: (stageNum: number) => void;
@@ -34,12 +38,18 @@ declare const window: Window & {
 
 type TTab = 'chart' | 'results' | 'comments';
 
+const RSF_RALLY_URL = 'https://www.rallysimfans.hu/rbr/rally_online.php?centerbox=rally_list_details.php&rally_id=';
+
 // ── App state ─────────────────────────────────────────────────────────────────
 
 let data:          IParsedRallyData | null = null;
 let eventName      = '';
+let fileName       = '';
+let currentTab:    TTab = 'chart';
 let legendExpanded = false;
 let prevStageFilter: Set<number> | null = null;
+/** Итоговое место участника по всем СУ; null — сошёл. */
+let rankMap        = new Map<string, number | null>();
 
 let lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [] });
 
@@ -60,13 +70,18 @@ window.addEventListener('DOMContentLoaded', () => {
 
     initLangSwitcher(() => {
         applyDomTranslations();
+        updateHeaderTitle();
+        updateResumeButton();
         if (data) {
-            buildChartFilterPanel(data, chartState, makeFilterCallbacks());
+            buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
+            updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
+            afterFilterChange();
             buildResultsFilters(() => {});
             updateHeaderStats();
             renderResultsTable();
             renderCommentsView(data);
             chartCtrl.refreshLabels();
+            onPinsChanged(chartCtrl.getPinnedKeys());
         }
     });
 
@@ -74,21 +89,28 @@ window.addEventListener('DOMContentLoaded', () => {
         qs<HTMLInputElement>('#file-input').click();
     });
     qs<HTMLInputElement>('#file-input').addEventListener('change', onFileInputChange);
+    initFileDrop();
 
     qs<HTMLInputElement>('#inp-event-name').addEventListener('input', e => {
         eventName = (e.target as HTMLInputElement).value.trim();
-        const el = document.getElementById('header-event-name');
-        if (el) el.textContent = eventName || i18n.t().defaultTitle;
+        updateHeaderTitle();
     });
     qs<HTMLButtonElement>('#btn-back').addEventListener('click', showWelcome);
-    qs<HTMLButtonElement>('#pinned-close').addEventListener('click', unpinDriver);
+    qs<HTMLButtonElement>('#btn-resume').addEventListener('click', resumeChart);
+    qs<HTMLButtonElement>('#pinned-close').addEventListener('click', () => chartCtrl.clearPins());
     qs<HTMLButtonElement>('#tab-chart').addEventListener('click', () => switchTab('chart'));
     qs<HTMLButtonElement>('#tab-results').addEventListener('click', () => switchTab('results'));
     qs<HTMLButtonElement>('#tab-comments').addEventListener('click', () => switchTab('comments'));
     qs<HTMLButtonElement>('#legend-expand-btn').addEventListener('click', toggleLegendExpand);
 
+    document.querySelectorAll<HTMLButtonElement>('#ymode-switch .seg-btn').forEach(btn => {
+        btn.addEventListener('click', () => setYMode(btn.dataset['ymode'] as TYMode));
+    });
+
+    chartCtrl.setOnPinChange(onPinsChanged);
+
     document.addEventListener('keydown', (e: KeyboardEvent) => {
-        if (e.key === 'Escape' && chartCtrl.getPinnedIndex() !== null) unpinDriver();
+        if (e.key === 'Escape' && chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
     });
     document.addEventListener('mousemove', onCellTooltipMove);
 
@@ -98,24 +120,62 @@ window.addEventListener('DOMContentLoaded', () => {
 // ── File loading ──────────────────────────────────────────────────────────────
 
 async function onFileInputChange(e: Event): Promise<void> {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+    const input = e.target as HTMLInputElement;
+    const file  = input.files?.[0];
+    input.value = '';
+    if (file) await loadFile(file);
+}
 
+function initFileDrop(): void {
+    const overlay  = document.getElementById('drop-overlay')!;
+    const hasFiles = (e: DragEvent) => !!e.dataTransfer?.types.includes('Files');
+    let depth = 0;
+
+    document.addEventListener('dragenter', e => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        depth++;
+        overlay.classList.add('visible');
+    });
+    document.addEventListener('dragover', e => {
+        if (hasFiles(e)) e.preventDefault();
+    });
+    document.addEventListener('dragleave', e => {
+        if (!hasFiles(e)) return;
+        if (--depth <= 0) { depth = 0; overlay.classList.remove('visible'); }
+    });
+    document.addEventListener('drop', e => {
+        if (!hasFiles(e)) return;
+        e.preventDefault();
+        depth = 0;
+        overlay.classList.remove('visible');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) void loadFile(file);
+    });
+}
+
+async function loadFile(file: File): Promise<void> {
     const btn  = qs<HTMLButtonElement>('#btn-choose-file');
     const info = qs<HTMLElement>('#file-info');
     btn.disabled     = true;
     info.textContent = i18n.t().fileReading;
     info.className   = 'file-info loading';
 
-    chartCtrl.destroy();
-
     try {
         const text   = await readFileAsText(file);
-        data         = parseCsvText(text);
-        lookups      = buildRallyLookups(data);
+        const parsed = parseCsvText(text);
+
+        chartCtrl.destroy();
+        data     = parsed;
+        fileName = file.name;
+        lookups  = buildRallyLookups(data);
 
         const allStats = computeAllDriverStats(data, lookups.recordMap);
         initResultsModule(data, lookups.recordMap, allStats);
+        rankMap = new Map();
+        [...allStats]
+            .sort((a, b) => nullableCompare(a.totalTime, b.totalTime))
+            .forEach((s, i) => rankMap.set(s.username, s.totalTime !== null ? i + 1 : null));
 
         eventName        = qs<HTMLInputElement>('#inp-event-name').value.trim();
         info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
@@ -125,9 +185,10 @@ async function onFileInputChange(e: Event): Promise<void> {
         const msg = err instanceof Error ? err.message : String(err);
         info.textContent = `${i18n.t().fileError}: ${msg}`;
         info.className   = 'file-info error';
+        // Ошибку видно только на стартовом экране — переходим туда, если файл бросили на график
+        showWelcome();
     } finally {
         btn.disabled = false;
-        (e.target as HTMLInputElement).value = '';
     }
 }
 
@@ -142,17 +203,28 @@ function readFileAsText(file: File): Promise<string> {
 
 // ── Screens ───────────────────────────────────────────────────────────────────
 
+/** Стартовый экран. Загруженные данные сохраняются — к ним можно вернуться. */
 function showWelcome(): void {
     document.getElementById('screen-welcome')!.style.display = 'flex';
     document.getElementById('screen-chart')!.style.display   = 'none';
     document.getElementById('chart-tooltip')!.style.display  = 'none';
-    chartCtrl.destroy();
-    document.getElementById('header-stats')!.textContent  = '';
-    document.getElementById('pinned-bar')!.style.display  = 'none';
-    const legendItems = document.getElementById('legend-items');
-    if (legendItems) legendItems.innerHTML = '';
-    document.getElementById('legend-panel')!.style.display = 'none';
-    prevStageFilter = null;
+    document.getElementById('header-stats')!.textContent     = '';
+    updateResumeButton();
+}
+
+function resumeChart(): void {
+    if (!data) return;
+    document.getElementById('screen-welcome')!.style.display = 'none';
+    document.getElementById('screen-chart')!.style.display   = 'flex';
+    updateHeaderTitle();
+    updateHeaderStats();
+    switchTab(currentTab);
+}
+
+function updateResumeButton(): void {
+    const btn = qs<HTMLButtonElement>('#btn-resume');
+    btn.style.display = data ? '' : 'none';
+    if (data) btn.textContent = i18n.t().resumeButton(fileName);
 }
 
 function showChart(): void {
@@ -168,13 +240,27 @@ function showChart(): void {
 
     document.getElementById('screen-welcome')!.style.display  = 'none';
     document.getElementById('screen-chart')!.style.display    = 'flex';
-    document.getElementById('header-event-name')!.textContent = eventName || i18n.t().defaultTitle;
+    updateHeaderTitle();
 
     applyDomTranslations();
-    buildChartFilterPanel(data, chartState, makeFilterCallbacks());
+    buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
     buildResultsFilters(() => {});
     switchTab('chart');
     updateHeaderStats();
+}
+
+/** Ручное название → номер ралли из имени файла (NNNNNN_table.csv) → название по умолчанию. */
+function updateHeaderTitle(): void {
+    const rallyId = data ? fileName.match(/(\d{4,})_table/)?.[1] ?? null : null;
+    const title   = eventName || (rallyId ? i18n.t().rallyTitle(rallyId) : i18n.t().defaultTitle);
+    document.getElementById('header-event-name')!.textContent = title;
+
+    const link = document.getElementById('header-rally-link') as HTMLAnchorElement;
+    link.style.display = rallyId ? '' : 'none';
+    if (rallyId) {
+        link.href  = RSF_RALLY_URL + rallyId;
+        link.title = i18n.t().rallyLinkTitle;
+    }
 }
 
 function updateHeaderStats(): void {
@@ -190,6 +276,7 @@ function updateHeaderStats(): void {
 // ── Tab switching ─────────────────────────────────────────────────────────────
 
 function switchTab(tab: TTab): void {
+    currentTab = tab;
     qs<HTMLButtonElement>('#tab-chart').classList.toggle('active',    tab === 'chart');
     qs<HTMLButtonElement>('#tab-results').classList.toggle('active',  tab === 'results');
     qs<HTMLButtonElement>('#tab-comments').classList.toggle('active', tab === 'comments');
@@ -197,6 +284,7 @@ function switchTab(tab: TTab): void {
     document.getElementById('view-chart')!.style.display    = tab === 'chart'    ? 'flex' : 'none';
     document.getElementById('view-results')!.style.display  = tab === 'results'  ? 'flex' : 'none';
     document.getElementById('view-comments')!.style.display = tab === 'comments' ? 'flex' : 'none';
+    document.getElementById('chart-toolbar')!.style.display = tab === 'chart'    ? ''     : 'none';
 
     document.getElementById('sidebar-chart-filters')!.style.display    = tab === 'chart'    ? '' : 'none';
     document.getElementById('sidebar-results-filters')!.style.display  = tab === 'results'  ? '' : 'none';
@@ -253,13 +341,35 @@ function afterFilterChange(): void {
     refreshLegend();
 }
 
-// ── Pinned driver ─────────────────────────────────────────────────────────────
+// ── Y mode & pinned drivers ───────────────────────────────────────────────────
 
-function unpinDriver(): void {
-    chartCtrl.pinDriver(null);
-    updatePinnedBar(data, chartCtrl.getChart(), null);
-    highlightLegendItem(null);
+function setYMode(mode: TYMode): void {
+    if (mode === 'pinned' && !chartCtrl.getPinnedKeys().length) return;
+    chartCtrl.setYMode(mode);
+    syncYModeSwitch();
     refreshLegend();
+    const pinned = chartCtrl.getPinnedKeys();
+    scrollLegendTo(pinned[pinned.length - 1] ?? null);
+}
+
+function syncYModeSwitch(): void {
+    const mode      = chartCtrl.getYMode();
+    const hasPinned = chartCtrl.getPinnedKeys().length > 0;
+    document.querySelectorAll<HTMLButtonElement>('#ymode-switch .seg-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset['ymode'] === mode);
+    });
+    const pinnedBtn = qs<HTMLButtonElement>('#ymode-pinned');
+    pinnedBtn.disabled = !hasPinned;
+    pinnedBtn.title    = hasPinned ? '' : i18n.t().yModePinnedDisabled;
+}
+
+function onPinsChanged(keys: string[]): void {
+    // «От выбранного» без выбранных теряет смысл — переключаемся на отставание от лидера
+    if (!keys.length && chartCtrl.getYMode() === 'pinned') chartCtrl.setYMode('leader');
+    syncYModeSwitch();
+    updatePinnedBar(data, keys, key => chartCtrl.togglePin(key, true));
+    refreshLegend();
+    scrollLegendTo(keys[keys.length - 1] ?? null);
 }
 
 // ── Stage band click ──────────────────────────────────────────────────────────
@@ -298,13 +408,8 @@ function rebuildChart(): void {
         chartState.activeDriverKeys, chartState.activeGroups, chartState.activeCars,
     );
 
-    chartCtrl.setOnPinChange((key) => {
-        updatePinnedBar(data, chartCtrl.getChart(), chartCtrl.getPinnedIndex());
-        highlightLegendItem(key);
-        refreshLegend();
-    });
-
-    document.getElementById('pinned-bar')!.style.display = 'none';
+    updatePinnedBar(data, chartCtrl.getPinnedKeys(), key => chartCtrl.togglePin(key, true));
+    syncYModeSwitch();
     afterFilterChange();
 }
 
@@ -320,49 +425,26 @@ function refreshLegend(): void {
 
     const callbacks: ILegendPanelCallbacks = {
         onDriverHover: (key) => chartCtrl.setHoveredKey(key),
-        onDriverClick: (key) => {
-            const chart = chartCtrl.getChart();
-            if (!chart) return;
-            const dsIdx = chart.data.datasets.findIndex((ds: any) => ds.driverKey === key);
-            if (dsIdx === -1) return;
-            const currentPinned = chartCtrl.getPinnedIndex();
-            if (currentPinned === dsIdx) {
-                chartCtrl.pinDriver(null);
-                updatePinnedBar(data, chart, null);
-                highlightLegendItem(null);
-                refreshLegend();
-            } else {
-                chartCtrl.pinDriver(dsIdx);
-                updatePinnedBar(data, chart, dsIdx);
-                highlightLegendItem(key);
-                refreshLegend();
-            }
-        },
+        onDriverClick: (key, additive) => chartCtrl.togglePin(key, additive),
     };
 
     updateLegendPanel(
         data, chartCtrl.getChart(), chartCtrl.getActiveStages(),
         lookups.recordMap,
-        chartState.activeDriverKeys, chartState.activeGroups, chartState.activeCars,
         legendExpanded,
-        chartCtrl.getPinnedDriverKey(),
+        chartCtrl.getPinnedKeys(),
+        chartCtrl.getYMode() !== 'abs',
         callbacks,
     );
 }
 
-function highlightLegendItem(driverKey: string | null): void {
+function scrollLegendTo(driverKey: string | null): void {
     const inner = document.getElementById('legend-inner');
-    if (!inner) return;
-
-    inner.querySelectorAll('.legend-item.pinned-highlight')
-        .forEach(el => el.classList.remove('pinned-highlight'));
-
-    if (!driverKey) return;
+    if (!inner || !driverKey) return;
 
     const items = inner.querySelectorAll<HTMLElement>('.legend-item');
     for (const item of items) {
         if (item.dataset['driverKey'] === driverKey) {
-            item.classList.add('pinned-highlight');
             const itemRect  = item.getBoundingClientRect();
             const innerRect = inner.getBoundingClientRect();
             const offset    = itemRect.top - innerRect.top - (innerRect.height / 2) + (itemRect.height / 2);

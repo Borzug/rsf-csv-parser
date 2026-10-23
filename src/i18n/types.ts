@@ -34,6 +34,35 @@ export interface ITranslations {
     axisTimeTitle:          string;
     axisTimeUnits:          { h: string; m: string; s: string };
 
+    // Режим оси Y
+    yModeAbs:               string;
+    yModeLeader:            string;
+    yModePinned:            string;
+    yModePinnedDisabled:    string;
+    tooltipGapLeader:       string;
+    tooltipGapPinned:       string;
+
+    // Стартовый экран — файл и возврат к анализу
+    dropHint:               string;
+    dropOverlay:            string;
+    welcomeHelp:            string;
+    resumeButton:           (fileName: string) => string;
+    rallyTitle:             (rallyId: string) => string;
+    rallyLinkTitle:         string;
+
+    // Сравнение закреплённых
+    pinnedHint:             string;
+    pinnedChipRemove:       string;
+
+    // Быстрый выбор участников
+    presetTop:              (n: number) => string;
+    presetTopTitle:         (n: number) => string;
+    presetFinished:         string;
+    presetFinishedTitle:    string;
+
+    // Таблица результатов — выбор строк
+    selectedCount:          (n: number) => string;
+
     // Закреплённая строка
     pinnedCloseTitle:       string;
     legendExpandTitle:      string;

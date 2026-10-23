@@ -4,7 +4,7 @@ import { createElement } from "../dom";
 
 export interface ILegendPanelCallbacks {
     onDriverHover: (key: string | null) => void;
-    onDriverClick: (key: string) => void;
+    onDriverClick: (key: string, additive: boolean) => void;
 }
 
 export function updateLegendPanel(
@@ -12,11 +12,9 @@ export function updateLegendPanel(
     chart:            any,
     activeStages:     IStageInfo[],
     recordMap:        Map<string, Map<number, any>>,
-    activeDriverKeys: Set<string>,
-    activeGroups:     Set<string>,
-    activeCars:       Set<string>,
     isExpanded:       boolean,
-    pinnedDriverKey:  string | null = null,
+    pinnedKeys:       string[],
+    leaderFirst:      boolean,
     callbacks?:       ILegendPanelCallbacks,
 ): void {
     const panel     = document.getElementById('legend-panel')!;
@@ -26,7 +24,9 @@ export function updateLegendPanel(
     panel.style.display = '';
 
     const visibleWithTime = buildSortedVisibleDrivers(data, chart, activeStages, recordMap);
-    renderLegendItems(itemsEl, visibleWithTime, data, pinnedDriverKey, callbacks);
+    // Порядок легенды повторяет порядок линий на графике сверху вниз
+    if (leaderFirst) visibleWithTime.reverse();
+    renderLegendItems(itemsEl, visibleWithTime, data, pinnedKeys, callbacks);
 
     panel.classList.toggle('expanded', isExpanded);
     expandBtn.textContent = isExpanded ? '›' : '‹';
@@ -53,8 +53,9 @@ function buildSortedVisibleDrivers(
         let cum: number | null = 0;
         for (const st of activeStages) {
             const r = recordMap.get(drv.username)?.get(st.num);
-            if (!r || r.time1 === null) { cum = null; break; }
-            cum! += r.time3 ?? 0;
+            // Сход на СУ (нет финишного времени) — тоже DNF, иначе неполное время ставит его в лидеры
+            if (!r || r.time3 === null) { cum = null; break; }
+            cum! += r.time3;
         }
         return { drv, cum };
     });
@@ -73,7 +74,7 @@ function renderLegendItems(
     container:       HTMLElement,
     items:           Array<{ drv: any; cum: number | null }>,
     data:            IParsedRallyData,
-    pinnedDriverKey: string | null,
+    pinnedKeys:      string[],
     callbacks?:      ILegendPanelCallbacks,
 ): void {
     container.innerHTML = '';
@@ -83,7 +84,7 @@ function renderLegendItems(
         const item  = createElement('div', 'legend-item') as HTMLElement;
         item.dataset['driverKey'] = drv.username;
         item.style.cursor = 'pointer';
-        if (drv.username === pinnedDriverKey) item.classList.add('pinned-highlight');
+        if (pinnedKeys.includes(drv.username)) item.classList.add('pinned-highlight');
 
         const dot = createElement('span', 'legend-dot') as HTMLElement;
         dot.style.background = color;
@@ -104,8 +105,8 @@ function renderLegendItems(
                 callbacks.onDriverHover(null);
                 item.classList.remove('legend-item-hover');
             });
-            item.addEventListener('click', () => {
-                callbacks.onDriverClick(drv.username);
+            item.addEventListener('click', (e: MouseEvent) => {
+                callbacks.onDriverClick(drv.username, e.ctrlKey || e.metaKey || e.shiftKey);
             });
         }
 

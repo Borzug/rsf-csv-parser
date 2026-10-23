@@ -16,9 +16,10 @@ export function buildChartFilterPanel(
     data:      IParsedRallyData,
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
+    rankMap:   Map<string, number | null>,
 ): void {
     buildStageFilterUI(data.stages, state, callbacks);
-    buildDriverFilterUI(data.drivers, data, state, callbacks);
+    buildDriverFilterUI(data.drivers, data, state, callbacks, rankMap);
     buildGroupFilterUI(
         data.groups, data, state, callbacks,
         () => applyGroupOrCarFilterToDriverList(data, state),

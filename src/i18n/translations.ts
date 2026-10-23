@@ -15,7 +15,7 @@ export const ru: ITranslations = {
     defaultTitle:           'Rally Race Chart',
     filtersLabel:           'Фильтры',
     backButton:             '← Назад',
-    headerStats:            (finished, total, stages) => `| 👤 ${finished}/${total}  |  SS ${stages}`,
+    headerStats:            (finished, total, stages) => `финишировали ${finished} из ${total} · СУ: ${stages}`,
 
     tabChart:               '📈 График',
     tabResults:             '🏆 Результаты',
@@ -27,6 +27,30 @@ export const ru: ITranslations = {
 
     axisTimeTitle:          'Время',
     axisTimeUnits:          { h: 'ч', m: 'м', s: 'с' },
+
+    yModeAbs:               'Время',
+    yModeLeader:            'От лидера',
+    yModePinned:            'От выбранного',
+    yModePinnedDisabled:    'Выберите участника на графике или в легенде',
+    tooltipGapLeader:       'К лидеру',
+    tooltipGapPinned:       'К выбранному',
+
+    dropHint:               'или перетащите файл в окно',
+    dropOverlay:            'Отпустите CSV-файл',
+    welcomeHelp:            'Таблица результатов онлайн-ралли, экспортированная с rallysimfans.hu (например, 105003_table.csv).',
+    resumeButton:           (name) => `← Вернуться к анализу: ${name}`,
+    rallyTitle:             (id) => `Ралли #${id}`,
+    rallyLinkTitle:         'Открыть ралли на rallysimfans.hu',
+
+    pinnedHint:             'Ctrl/Shift + клик — добавить к сравнению',
+    pinnedChipRemove:       'Убрать из сравнения',
+
+    presetTop:              (n) => `Топ-${n}`,
+    presetTopTitle:         (n) => `Оставить первые ${n} мест среди видимых участников`,
+    presetFinished:         'Финиш',
+    presetFinishedTitle:    'Оставить только финишировавших',
+
+    selectedCount:          (n) => `Выбрано участников: ${n}`,
 
     pinnedCloseTitle:       'Снять выделение (Esc)',
     legendExpandTitle:      'Развернуть',
@@ -49,10 +73,10 @@ export const ru: ITranslations = {
     colCar:                 'Автомобиль',
     colTotalTime:           'Общее время',
     colPenalties:           'Штрафы',
-    colAvgGapLeader:        'Темп за участок к лидеру',
-    colAvgGapPrev:          'Темп за участок к пред.',
-    colCleanGapLeader:      'Чист. темп за участок к лидеру',
-    colCleanGapPrev:        'Чист. темп за участок к пред.',
+    colAvgGapLeader:        'Темп/СУ: лидер',
+    colAvgGapPrev:          'Темп/СУ: пред.',
+    colCleanGapLeader:      'Чист. темп: лидер',
+    colCleanGapPrev:        'Чист. темп: пред.',
     colTotalGap:            'Общее отставание',
     colSuperRally:          'SR',
 
@@ -99,7 +123,7 @@ export const en: ITranslations = {
     defaultTitle:           'Rally Race Chart',
     filtersLabel:           'Filters',
     backButton:             '← Back',
-    headerStats:            (finished, total, stages) => `| 👤 ${finished}/${total}  |  SS ${stages}`,
+    headerStats:            (finished, total, stages) => `${finished} of ${total} finished · ${stages} stage${stages !== 1 ? 's' : ''}`,
 
     tabChart:               '📈 Chart',
     tabResults:             '🏆 Results',
@@ -111,6 +135,30 @@ export const en: ITranslations = {
 
     axisTimeTitle:          'Time',
     axisTimeUnits:          { h: 'h', m: 'm', s: 's' },
+
+    yModeAbs:               'Time',
+    yModeLeader:            'Gap to leader',
+    yModePinned:            'Gap to selected',
+    yModePinnedDisabled:    'Select a driver on the chart or in the legend',
+    tooltipGapLeader:       'To leader',
+    tooltipGapPinned:       'To selected',
+
+    dropHint:               'or drop the file into the window',
+    dropOverlay:            'Drop the CSV file',
+    welcomeHelp:            'Online rally results table exported from rallysimfans.hu (e.g. 105003_table.csv).',
+    resumeButton:           (name) => `← Back to analysis: ${name}`,
+    rallyTitle:             (id) => `Rally #${id}`,
+    rallyLinkTitle:         'Open the rally on rallysimfans.hu',
+
+    pinnedHint:             'Ctrl/Shift + click to add to comparison',
+    pinnedChipRemove:       'Remove from comparison',
+
+    presetTop:              (n) => `Top ${n}`,
+    presetTopTitle:         (n) => `Keep the top ${n} of the visible drivers`,
+    presetFinished:         'Finished',
+    presetFinishedTitle:    'Keep only drivers who finished',
+
+    selectedCount:          (n) => `Selected: ${n}`,
 
     pinnedCloseTitle:       'Unpin (Esc)',
     legendExpandTitle:      'Expand',
@@ -133,10 +181,10 @@ export const en: ITranslations = {
     colCar:                 'Car',
     colTotalTime:           'Total Time',
     colPenalties:           'Penalties',
-    colAvgGapLeader:        'Pace Diff. per stage Leader',
-    colAvgGapPrev:          'Pace Diff. per stage Prev',
-    colCleanGapLeader:      'Clean Pace Diff. per stage Leader',
-    colCleanGapPrev:        'Clean Pace Diff per stage Prev',
+    colAvgGapLeader:        'Pace/SS: leader',
+    colAvgGapPrev:          'Pace/SS: prev',
+    colCleanGapLeader:      'Clean pace: leader',
+    colCleanGapPrev:        'Clean pace: prev',
     colTotalGap:            'Total Gap',
     colSuperRally:          'SR',
 
@@ -179,7 +227,7 @@ export const hu: ITranslations = {
     defaultTitle:           'Rally Race Chart',
     filtersLabel:           'Szűrők',
     backButton:             '← Vissza',
-    headerStats:            (finished, total, stages) => `| 👤 ${finished}/${total}  |  SS ${stages}`,
+    headerStats:            (finished, total, stages) => `${total} indulóból ${finished} célba ért · ${stages} szakasz`,
 
     tabChart:               '📈 Grafikon',
     tabResults:             '🏆 Eredmények',
@@ -191,6 +239,30 @@ export const hu: ITranslations = {
 
     axisTimeTitle:          'Idő',
     axisTimeUnits:          { h: 'ó', m: 'p', s: 'mp' },
+
+    yModeAbs:               'Idő',
+    yModeLeader:            'Hátrány a vezetőtől',
+    yModePinned:            'Hátrány a kijelölttől',
+    yModePinnedDisabled:    'Válassz versenyzőt a grafikonon vagy a jelmagyarázatban',
+    tooltipGapLeader:       'Vezetőhöz',
+    tooltipGapPinned:       'Kijelölthöz',
+
+    dropHint:               'vagy húzd a fájlt az ablakba',
+    dropOverlay:            'Engedd el a CSV fájlt',
+    welcomeHelp:            'A rallysimfans.hu oldalról exportált online rally eredménytábla (pl. 105003_table.csv).',
+    resumeButton:           (name) => `← Vissza az elemzéshez: ${name}`,
+    rallyTitle:             (id) => `Rally #${id}`,
+    rallyLinkTitle:         'Rally megnyitása a rallysimfans.hu oldalon',
+
+    pinnedHint:             'Ctrl/Shift + kattintás — hozzáadás az összehasonlításhoz',
+    pinnedChipRemove:       'Eltávolítás az összehasonlításból',
+
+    presetTop:              (n) => `Top ${n}`,
+    presetTopTitle:         (n) => `Csak a látható versenyzők első ${n} helyezettje`,
+    presetFinished:         'Célba értek',
+    presetFinishedTitle:    'Csak a célba ért versenyzők',
+
+    selectedCount:          (n) => `Kijelölve: ${n}`,
 
     pinnedCloseTitle:       'Rögzítés feloldása (Esc)',
     legendExpandTitle:      'Kibontás',

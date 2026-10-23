@@ -1,5 +1,6 @@
 import type { IParsedRallyData } from '../../shared/types';
-import type { IDriverStats } from './types';
+import type { IDriverResult, IDriverStats } from './types';
+import { i18n } from "../../i18n/index.js";
 import {
     computeDriverResults,
     recalculateStatsForStages
@@ -64,12 +65,15 @@ export function renderResultsTable(): void {
     if (!_data) return;
     const stats   = getFilteredStats();
     const results = computeDriverResults(stats);
+    const stages  = _data.stages
+        .filter(s => _filterState.stageFilter.has(s.num))
+        .sort((a, b) => a.num - b.num);
 
     const thead = document.getElementById('results-thead')!;
-    buildResultsTableHeader(thead, activateParticipantSearch);
+    buildResultsTableHeader(thead, stages, activateParticipantSearch);
 
     const tbody = document.getElementById('results-tbody')!;
-    renderResultsRows(tbody, results, _selectedRows, toggleRowSelection);
+    renderResultsRows(tbody, results, computeStageRanks(results, stages.length), _selectedRows, toggleRowSelection);
 }
 
 export function setResultsGroupFilter(groups: Set<string>): void {
@@ -81,6 +85,19 @@ export function getSelectedRows(): Set<string> {
 }
 
 // ── Private ───────────────────────────────────────────────────────────────────
+
+/** Место на каждом СУ среди участников, попавших в таблицу (с учётом фильтра класса). */
+function computeStageRanks(results: IDriverResult[], nStages: number): Map<string, (number | null)[]> {
+    const ranks = new Map<string, (number | null)[]>();
+    results.forEach(r => ranks.set(r.stats.username, new Array(nStages).fill(null)));
+    for (let s = 0; s < nStages; s++) {
+        results
+            .filter(r => r.stats.snaps[s]?.time3 != null)
+            .sort((a, b) => a.stats.snaps[s].time3! - b.stats.snaps[s].time3!)
+            .forEach((r, i) => { ranks.get(r.stats.username)![s] = i + 1; });
+    }
+    return ranks;
+}
 
 function getFilteredStats(): IDriverStats[] {
     if (!_data) return [];
@@ -115,7 +132,7 @@ function updateApplyBar(): void {
     if (!bar) return;
     if (_selectedRows.size > 0) {
         bar.classList.add('visible');
-        if (countEl) countEl.textContent = `Выбрано участников: ${_selectedRows.size}`;
+        if (countEl) countEl.textContent = i18n.t().selectedCount(_selectedRows.size);
     } else {
         bar.classList.remove('visible');
     }
@@ -134,12 +151,12 @@ function applyRowSelectionAsFilter(selected: Set<string>): void {
 function activateParticipantSearch(th: HTMLElement): void {
     if (_searchActive) return;
     _searchActive = true;
-    const origLabel = th.textContent || 'Участник';
+    const origLabel = th.textContent || i18n.t().colParticipant;
     th.textContent = '';
 
     const inp         = document.createElement('input');
     inp.className     = 'th-search-input';
-    inp.placeholder   = 'Поиск участника…';
+    inp.placeholder   = i18n.t().commentsSearchPlaceholder;
     inp.type          = 'text';
     th.appendChild(inp);
     inp.focus();
@@ -152,7 +169,7 @@ function activateParticipantSearch(th: HTMLElement): void {
     inp.addEventListener('blur', () => {
         _searchActive = false;
         th.textContent = origLabel;
-        th.className   = 'th-participant';
+        th.className   = 'th-participant sticky-col sticky-col-2';
         clearParticipantHighlight();
     });
     inp.addEventListener('keydown', (e) => {

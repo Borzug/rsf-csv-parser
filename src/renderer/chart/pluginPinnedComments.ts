@@ -29,24 +29,26 @@ interface IAnchorGroup {
 }
 
 export function buildPinnedCommentsPlugin(
-    getPinnedIdx: () => number | null,
+    getPinnedIdxs: () => number[],
 ): object {
     return {
         id: 'pinnedComments',
         afterDraw(ch: any): void {
-            const pinnedIdx = getPinnedIdx();
-            if (pinnedIdx === null) return;
+            const pinnedIdxs = getPinnedIdxs();
+            if (!pinnedIdxs.length) return;
 
-            const ds = ch.data.datasets[pinnedIdx];
-            if (!ds || ds.hidden) return;
-
-            const cmts  = ds._cmts        as string[];
-            const slbls = ds._stageLabels as string[];
-            const meta  = ch.getDatasetMeta(pinnedIdx);
             const { ctx, chartArea } = ch;
-
             ctx.save();
-            const boxes = collectCommentBoxes(ctx, ds, meta, cmts, slbls, chartArea);
+
+            const boxes: ICommentBox[] = [];
+            for (const pinnedIdx of pinnedIdxs) {
+                const ds = ch.data.datasets[pinnedIdx];
+                if (!ds || ds.hidden) continue;
+                const cmts  = ds._cmts        as string[];
+                const slbls = ds._stageLabels as string[];
+                const meta  = ch.getDatasetMeta(pinnedIdx);
+                boxes.push(...collectCommentBoxes(ctx, ds, meta, cmts, slbls, chartArea));
+            }
             resolveCollisions(boxes, chartArea);
             renderBoxes(ctx, boxes);
             ctx.restore();

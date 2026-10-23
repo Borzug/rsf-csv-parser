@@ -1,30 +1,44 @@
+/**
+ * Набор «активных» датасетов, которые рисуются ярко (остальные приглушены).
+ * null — ничего не выделено, все линии рисуются как обычно.
+ */
+export function resolveActiveIdxs(
+    ch:             any,
+    getHoveredKey:  () => string | null,
+    getPinnedIdxs:  () => number[],
+    getHoveredIdx:  () => number | null,
+): Set<number> | null {
+    const key = getHoveredKey();
+    if (key !== null)
+        return new Set([ch.data.datasets.findIndex((d: any) => d.driverKey === key) as number]);
+    const pinned = getPinnedIdxs();
+    if (pinned.length) return new Set(pinned);
+    const hovered = getHoveredIdx();
+    return hovered !== null ? new Set([hovered]) : null;
+}
+
 export function buildHoverDimPlugin(
     getHoveredKey:  () => string | null,
-    getPinnedIdx:   () => number | null,
+    getPinnedIdxs:  () => number[],
     getHoveredIdx:  () => number | null,
+    getDimAlpha:    () => number,
 ): object {
-    function resolveActiveIdx(ch: any): number | null {
-        const key = getHoveredKey();
-        if (key !== null)
-            return ch.data.datasets.findIndex((d: any) => d.driverKey === key) as number;
-        const pinned = getPinnedIdx();
-        if (pinned !== null) return pinned;
-        return getHoveredIdx();
-    }
+    let active: Set<number> | null = null;
 
     return {
         id: 'hoverDim',
+        beforeDatasetsDraw(ch: any): void {
+            active = resolveActiveIdxs(ch, getHoveredKey, getPinnedIdxs, getHoveredIdx);
+        },
         beforeDatasetDraw(ch: any, args: any): void {
             if (ch.data.datasets[args.index]?.hidden) return;
-            const activeIdx = resolveActiveIdx(ch);
-            if (activeIdx === null || args.index === activeIdx) return;
+            if (active === null || active.has(args.index)) return;
             ch.ctx.save();
-            ch.ctx.globalAlpha = 0.06;
+            ch.ctx.globalAlpha = getDimAlpha();
         },
         afterDatasetDraw(ch: any, args: any): void {
             if (ch.data.datasets[args.index]?.hidden) return;
-            const activeIdx = resolveActiveIdx(ch);
-            if (activeIdx === null || args.index === activeIdx) return;
+            if (active === null || active.has(args.index)) return;
             ch.ctx.restore();
         },
     };

@@ -16,6 +16,7 @@
     <header class="app-header">
         <span class="header-logo">🏁</span>
         <h1 id="header-event-name">Rally Race Chart</h1>
+        <a id="header-rally-link" class="header-rally-link" target="_blank" rel="noopener" style="display:none">rallysimfans ↗</a>
         <span id="header-stats" class="header-stats"></span>
         <div class="lang-switcher" id="lang-switcher">
             <button class="lang-btn active" data-lang="ru">RU</button>
@@ -36,9 +37,14 @@
             </div>
             <input type="file" id="file-input" accept=".csv,.txt" style="display:none">
             <button class="btn btn-primary" id="btn-choose-file">📂 Выбрать CSV-файл</button>
+            <p class="drop-hint" id="drop-hint">или перетащите файл сюда</p>
             <div id="file-info" class="file-info"></div>
+            <button class="btn btn-ghost btn-resume" id="btn-resume" style="display:none"></button>
+            <p class="welcome-help" id="welcome-help"></p>
         </div>
     </section>
+
+    <div id="drop-overlay" class="drop-overlay"><span id="drop-overlay-text">Отпустите CSV-файл</span></div>
 
     <!-- ═══ ANALYSIS ═══ -->
     <section id="screen-chart" style="display:none">
@@ -75,6 +81,18 @@
                     <button class="tab-btn" id="tab-results">🏆 Результаты</button>
                     <button class="tab-btn" id="tab-comments">💬 Комментарии</button>
                 </div>
+                <div class="chart-toolbar" id="chart-toolbar">
+                    <div class="chart-type-legend">
+                        <span class="ctl-item"><span class="ctl-line ctl-solid"></span><span id="chart-legend-success">Успешный проезд</span></span>
+                        <span class="ctl-item"><span class="ctl-line ctl-dashed"></span><span id="chart-legend-sr">Super Rally</span></span>
+                        <span class="ctl-item"><span class="ctl-diamond">◆</span><span id="chart-legend-comment">Комментарий</span></span>
+                    </div>
+                    <div class="seg-switch" id="ymode-switch" role="group">
+                        <button class="seg-btn active" data-ymode="abs" id="ymode-abs">Время</button>
+                        <button class="seg-btn" data-ymode="leader" id="ymode-leader">От лидера</button>
+                        <button class="seg-btn" data-ymode="pinned" id="ymode-pinned">От выбранного</button>
+                    </div>
+                </div>
             </div>
 
             <!-- Content row (chart + legend, or results) -->
@@ -83,17 +101,12 @@
                 <!-- ── CHART VIEW ── -->
                 <div id="view-chart" class="view">
                     <div id="pinned-bar" class="pinned-bar" style="display:none">
-                        <span class="pinned-dot" id="pinned-dot"></span>
-                        <span class="pinned-name" id="pinned-name"></span>
+                        <div class="pinned-chips" id="pinned-chips"></div>
+                        <span class="pinned-hint" id="pinned-hint"></span>
                         <button class="pinned-close" id="pinned-close" title="Снять выделение (Esc)">×</button>
                     </div>
                     <div id="chart-area" class="chart-area">
                         <canvas id="race-chart"></canvas>
-                        <div class="chart-type-legend">
-                            <span class="ctl-item"><span class="ctl-line ctl-solid"></span><span id="chart-legend-success">Успешный проезд</span></span>
-                            <span class="ctl-item"><span class="ctl-line ctl-dashed"></span><span id="chart-legend-sr">Super Rally</span></span>
-                            <span class="ctl-item"><span class="ctl-diamond">◆</span><span id="chart-legend-comment">Комментарий</span></span>
-                        </div>
                     </div>
                 </div>
 
@@ -128,6 +141,6 @@
     <div id="cell-tooltip"   class="cell-tooltip"></div>
 
 </div>
-<script type="module" src=" dist/renderer/index.js"></script>
+<script type="module" src="dist/renderer/index.js"></script>
 </body>
 </html>

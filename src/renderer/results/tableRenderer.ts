@@ -1,4 +1,5 @@
-import type { IDriverResult } from './types.js';
+import type { IStageInfo } from '../../shared/types.js';
+import type { IDriverResult, IDriverStageSnap } from './types.js';
 import { i18n } from "../../i18n/index.js";
 import {
     createElement,
@@ -33,6 +34,7 @@ const COLUMNS: IColumnDef[] = [
 
 export function buildResultsTableHeader(
     thead:         HTMLElement,
+    stages:        IStageInfo[],
     onSearchClick: (th: HTMLElement) => void,
 ): void {
     thead.innerHTML = '';
@@ -41,8 +43,9 @@ export function buildResultsTableHeader(
         const th = document.createElement('th');
         const titleText = col.title();
         if (titleText) th.title = titleText;
+        if (col.key === 'pos') th.className = 'sticky-col sticky-col-1';
         if (col.special === 'search') {
-            th.className = 'th-participant';
+            th.className = 'th-participant sticky-col sticky-col-2';
             th.innerHTML = col.label();
             th.addEventListener('click', () => onSearchClick(th));
         } else {
@@ -50,29 +53,41 @@ export function buildResultsTableHeader(
         }
         tr.appendChild(th);
     });
+    for (const st of stages) {
+        const th = createElement('th', 'th-stage', `SS${st.num}`);
+        th.title = st.name;
+        tr.appendChild(th);
+    }
     thead.appendChild(tr);
 }
 
 export function renderResultsRows(
     tbody:        HTMLElement,
     results:      IDriverResult[],
+    stageRanks:   Map<string, (number | null)[]>,
     selectedRows: Set<string>,
     onRowClick:   (username: string, row: HTMLElement) => void,
 ): void {
     tbody.innerHTML = '';
     for (const r of results) {
-        const row = buildResultRow(r, selectedRows);
+        const row = buildResultRow(r, stageRanks.get(r.stats.username) ?? [], selectedRows);
         row.addEventListener('click', () => onRowClick(r.stats.username, row));
         tbody.appendChild(row);
     }
 }
 
-function buildResultRow(r: IDriverResult, selectedRows: Set<string>): HTMLTableRowElement {
+function buildResultRow(
+    r:            IDriverResult,
+    stageRanks:   (number | null)[],
+    selectedRows: Set<string>,
+): HTMLTableRowElement {
     const row = document.createElement('tr');
     row.dataset['username'] = r.stats.username;
     if (selectedRows.has(r.stats.username)) row.classList.add('row-selected');
 
     const t = i18n.t();
+    // Темп сошедших считается по неполному набору СУ и вводит в заблуждение
+    const noPace = r.position === 1 || r.stats.totalTime === null;
 
     row.appendChild(buildPositionCell(r.stats.totalTime !== null ? r.position : null));
     row.appendChild(buildNameCell(r.stats));
@@ -82,34 +97,46 @@ function buildResultRow(r: IDriverResult, selectedRows: Set<string>): HTMLTableR
         r.stats.totalTime !== null ? formatTime(r.stats.totalTime) : 'DNF'));
     row.appendChild(buildPenaltyCell(r.stats.totalPenalty));
     row.appendChild(buildGapWithTooltip(
-        r.position === 1 ? '—' : formatTimeSigned(r.avgGapFromLeader),
+        noPace ? '—' : formatTimeSigned(r.avgGapFromLeader),
         t.colAvgGapLeaderTitle,
-        r.avgGapFromLeader,
+        noPace ? null : r.avgGapFromLeader,
     ));
     row.appendChild(buildGapWithTooltip(
-        r.position === 1 ? '—' : formatTimeSigned(r.avgGapFromPrev),
+        noPace ? '—' : formatTimeSigned(r.avgGapFromPrev),
         t.colAvgGapPrevTitle,
-        r.avgGapFromPrev,
+        noPace ? null : r.avgGapFromPrev,
     ));
     row.appendChild(buildCleanGapCell(
-        r.position === 1 ? null : r.cleanGapFromLeader,
-        r.cleanCountLeader,
+        noPace ? null : r.cleanGapFromLeader,
+        noPace ? 0 : r.cleanCountLeader,
         r.totalStageCount,
     ));
     row.appendChild(buildCleanGapCell(
-        r.position === 1 ? null : r.cleanGapFromPrev,
-        r.cleanCountPrev,
+        noPace ? null : r.cleanGapFromPrev,
+        noPace ? 0 : r.cleanCountPrev,
         r.totalStageCount,
     ));
     row.appendChild(createTd('td-total-gap',
         r.position === 1 ? '—' : (r.totalGap !== null ? formatTimeSigned(r.totalGap) : '—')));
     row.appendChild(buildSRCell(r.stats.srCount));
+    r.stats.snaps.forEach((snap, s) => row.appendChild(buildStageCell(snap, stageRanks[s] ?? null)));
 
     return row;
 }
 
+/** Время на СУ и место на нём; SR — пометка, что участок пройден по Super Rally. */
+function buildStageCell(snap: IDriverStageSnap, rank: number | null): HTMLTableCellElement {
+    if (snap.time3 === null) return createTd('td-stage td-gap-zero', '—');
+    const td = createTd('td-stage', formatTime(snap.time3));
+    const rk = createElement('span', 'td-stage-rank', `${rank ?? ''}`);
+    if (rank === 1) rk.classList.add('pos-gold');
+    td.appendChild(rk);
+    if (snap.hasSR) td.appendChild(createElement('span', 'td-stage-sr', 'SR'));
+    return td;
+}
+
 function buildPositionCell(pos: number | null): HTMLTableCellElement {
-    const td = createTd('td-pos', pos !== null ? String(pos) : 'DNF');
+    const td = createTd('td-pos sticky-col sticky-col-1', pos !== null ? String(pos) : 'DNF');
     if (pos === null) td.classList.add('pos-dnf');
     if (pos === 1) td.classList.add('pos-gold');
     else if (pos === 2) td.classList.add('pos-silver');
@@ -118,7 +145,7 @@ function buildPositionCell(pos: number | null): HTMLTableCellElement {
 }
 
 function buildNameCell(stats: any): HTMLTableCellElement {
-    const td   = createTd('td-name');
+    const td   = createTd('td-name sticky-col sticky-col-2');
     const user = createElement('span', 'td-name-user', stats.username);
     td.appendChild(user);
     if (stats.realName && stats.realName !== stats.username) {

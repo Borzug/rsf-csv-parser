@@ -166,7 +166,7 @@
     defaultTitle: "Rally Race Chart",
     filtersLabel: "\u0424\u0438\u043B\u044C\u0442\u0440\u044B",
     backButton: "\u2190 \u041D\u0430\u0437\u0430\u0434",
-    headerStats: (finished, total, stages) => `| \u{1F464} ${finished}/${total}  |  SS ${stages}`,
+    headerStats: (finished, total, stages) => `\u0444\u0438\u043D\u0438\u0448\u0438\u0440\u043E\u0432\u0430\u043B\u0438 ${finished} \u0438\u0437 ${total} \xB7 \u0421\u0423: ${stages}`,
     tabChart: "\u{1F4C8} \u0413\u0440\u0430\u0444\u0438\u043A",
     tabResults: "\u{1F3C6} \u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u044B",
     tabComments: "\u{1F4AC} \u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438",
@@ -175,6 +175,25 @@
     chartLegendComment: "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439",
     axisTimeTitle: "\u0412\u0440\u0435\u043C\u044F",
     axisTimeUnits: { h: "\u0447", m: "\u043C", s: "\u0441" },
+    yModeAbs: "\u0412\u0440\u0435\u043C\u044F",
+    yModeLeader: "\u041E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430",
+    yModePinned: "\u041E\u0442 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0433\u043E",
+    yModePinnedDisabled: "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430 \u043D\u0430 \u0433\u0440\u0430\u0444\u0438\u043A\u0435 \u0438\u043B\u0438 \u0432 \u043B\u0435\u0433\u0435\u043D\u0434\u0435",
+    tooltipGapLeader: "\u041A \u043B\u0438\u0434\u0435\u0440\u0443",
+    tooltipGapPinned: "\u041A \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u043C\u0443",
+    dropHint: "\u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u0435 \u0444\u0430\u0439\u043B \u0432 \u043E\u043A\u043D\u043E",
+    dropOverlay: "\u041E\u0442\u043F\u0443\u0441\u0442\u0438\u0442\u0435 CSV-\u0444\u0430\u0439\u043B",
+    welcomeHelp: "\u0422\u0430\u0431\u043B\u0438\u0446\u0430 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442\u043E\u0432 \u043E\u043D\u043B\u0430\u0439\u043D-\u0440\u0430\u043B\u043B\u0438, \u044D\u043A\u0441\u043F\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u0430\u044F \u0441 rallysimfans.hu (\u043D\u0430\u043F\u0440\u0438\u043C\u0435\u0440, 105003_table.csv).",
+    resumeButton: (name) => `\u2190 \u0412\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F \u043A \u0430\u043D\u0430\u043B\u0438\u0437\u0443: ${name}`,
+    rallyTitle: (id) => `\u0420\u0430\u043B\u043B\u0438 #${id}`,
+    rallyLinkTitle: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0440\u0430\u043B\u043B\u0438 \u043D\u0430 rallysimfans.hu",
+    pinnedHint: "Ctrl/Shift + \u043A\u043B\u0438\u043A \u2014 \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043A \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044E",
+    pinnedChipRemove: "\u0423\u0431\u0440\u0430\u0442\u044C \u0438\u0437 \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044F",
+    presetTop: (n) => `\u0422\u043E\u043F-${n}`,
+    presetTopTitle: (n) => `\u041E\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u043F\u0435\u0440\u0432\u044B\u0435 ${n} \u043C\u0435\u0441\u0442 \u0441\u0440\u0435\u0434\u0438 \u0432\u0438\u0434\u0438\u043C\u044B\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`,
+    presetFinished: "\u0424\u0438\u043D\u0438\u0448",
+    presetFinishedTitle: "\u041E\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u0444\u0438\u043D\u0438\u0448\u0438\u0440\u043E\u0432\u0430\u0432\u0448\u0438\u0445",
+    selectedCount: (n) => `\u0412\u044B\u0431\u0440\u0430\u043D\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432: ${n}`,
     pinnedCloseTitle: "\u0421\u043D\u044F\u0442\u044C \u0432\u044B\u0434\u0435\u043B\u0435\u043D\u0438\u0435 (Esc)",
     legendExpandTitle: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044C",
     filterChartStages: "\u0421\u043F\u0435\u0446\u0443\u0447\u0430\u0441\u0442\u043A\u0438",
@@ -192,10 +211,10 @@
     colCar: "\u0410\u0432\u0442\u043E\u043C\u043E\u0431\u0438\u043B\u044C",
     colTotalTime: "\u041E\u0431\u0449\u0435\u0435 \u0432\u0440\u0435\u043C\u044F",
     colPenalties: "\u0428\u0442\u0440\u0430\u0444\u044B",
-    colAvgGapLeader: "\u0422\u0435\u043C\u043F \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u043A \u043B\u0438\u0434\u0435\u0440\u0443",
-    colAvgGapPrev: "\u0422\u0435\u043C\u043F \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u043A \u043F\u0440\u0435\u0434.",
-    colCleanGapLeader: "\u0427\u0438\u0441\u0442. \u0442\u0435\u043C\u043F \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u043A \u043B\u0438\u0434\u0435\u0440\u0443",
-    colCleanGapPrev: "\u0427\u0438\u0441\u0442. \u0442\u0435\u043C\u043F \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u043A \u043F\u0440\u0435\u0434.",
+    colAvgGapLeader: "\u0422\u0435\u043C\u043F/\u0421\u0423: \u043B\u0438\u0434\u0435\u0440",
+    colAvgGapPrev: "\u0422\u0435\u043C\u043F/\u0421\u0423: \u043F\u0440\u0435\u0434.",
+    colCleanGapLeader: "\u0427\u0438\u0441\u0442. \u0442\u0435\u043C\u043F: \u043B\u0438\u0434\u0435\u0440",
+    colCleanGapPrev: "\u0427\u0438\u0441\u0442. \u0442\u0435\u043C\u043F: \u043F\u0440\u0435\u0434.",
     colTotalGap: "\u041E\u0431\u0449\u0435\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435",
     colSuperRally: "SR",
     colAvgGapLeaderTitle: "\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043F\u043E \u0442\u0435\u043C\u043F\u0443 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR",
@@ -235,7 +254,7 @@
     defaultTitle: "Rally Race Chart",
     filtersLabel: "Filters",
     backButton: "\u2190 Back",
-    headerStats: (finished, total, stages) => `| \u{1F464} ${finished}/${total}  |  SS ${stages}`,
+    headerStats: (finished, total, stages) => `${finished} of ${total} finished \xB7 ${stages} stage${stages !== 1 ? "s" : ""}`,
     tabChart: "\u{1F4C8} Chart",
     tabResults: "\u{1F3C6} Results",
     tabComments: "\u{1F4AC} Comments",
@@ -244,6 +263,25 @@
     chartLegendComment: "Comment",
     axisTimeTitle: "Time",
     axisTimeUnits: { h: "h", m: "m", s: "s" },
+    yModeAbs: "Time",
+    yModeLeader: "Gap to leader",
+    yModePinned: "Gap to selected",
+    yModePinnedDisabled: "Select a driver on the chart or in the legend",
+    tooltipGapLeader: "To leader",
+    tooltipGapPinned: "To selected",
+    dropHint: "or drop the file into the window",
+    dropOverlay: "Drop the CSV file",
+    welcomeHelp: "Online rally results table exported from rallysimfans.hu (e.g. 105003_table.csv).",
+    resumeButton: (name) => `\u2190 Back to analysis: ${name}`,
+    rallyTitle: (id) => `Rally #${id}`,
+    rallyLinkTitle: "Open the rally on rallysimfans.hu",
+    pinnedHint: "Ctrl/Shift + click to add to comparison",
+    pinnedChipRemove: "Remove from comparison",
+    presetTop: (n) => `Top ${n}`,
+    presetTopTitle: (n) => `Keep the top ${n} of the visible drivers`,
+    presetFinished: "Finished",
+    presetFinishedTitle: "Keep only drivers who finished",
+    selectedCount: (n) => `Selected: ${n}`,
     pinnedCloseTitle: "Unpin (Esc)",
     legendExpandTitle: "Expand",
     filterChartStages: "Stages",
@@ -261,10 +299,10 @@
     colCar: "Car",
     colTotalTime: "Total Time",
     colPenalties: "Penalties",
-    colAvgGapLeader: "Pace Diff. per stage Leader",
-    colAvgGapPrev: "Pace Diff. per stage Prev",
-    colCleanGapLeader: "Clean Pace Diff. per stage Leader",
-    colCleanGapPrev: "Clean Pace Diff per stage Prev",
+    colAvgGapLeader: "Pace/SS: leader",
+    colAvgGapPrev: "Pace/SS: prev",
+    colCleanGapLeader: "Clean pace: leader",
+    colCleanGapPrev: "Clean pace: prev",
     colTotalGap: "Total Gap",
     colSuperRally: "SR",
     colAvgGapLeaderTitle: "Pace difference to leader per stage (SR included)",
@@ -300,7 +338,7 @@ Only stages without SR for both drivers`,
     defaultTitle: "Rally Race Chart",
     filtersLabel: "Sz\u0171r\u0151k",
     backButton: "\u2190 Vissza",
-    headerStats: (finished, total, stages) => `| \u{1F464} ${finished}/${total}  |  SS ${stages}`,
+    headerStats: (finished, total, stages) => `${total} indul\xF3b\xF3l ${finished} c\xE9lba \xE9rt \xB7 ${stages} szakasz`,
     tabChart: "\u{1F4C8} Grafikon",
     tabResults: "\u{1F3C6} Eredm\xE9nyek",
     tabComments: "\u{1F4AC} Megjegyz\xE9sek",
@@ -309,6 +347,25 @@ Only stages without SR for both drivers`,
     chartLegendComment: "Megjegyz\xE9s",
     axisTimeTitle: "Id\u0151",
     axisTimeUnits: { h: "\xF3", m: "p", s: "mp" },
+    yModeAbs: "Id\u0151",
+    yModeLeader: "H\xE1tr\xE1ny a vezet\u0151t\u0151l",
+    yModePinned: "H\xE1tr\xE1ny a kijel\xF6ltt\u0151l",
+    yModePinnedDisabled: "V\xE1lassz versenyz\u0151t a grafikonon vagy a jelmagyar\xE1zatban",
+    tooltipGapLeader: "Vezet\u0151h\xF6z",
+    tooltipGapPinned: "Kijel\xF6lth\xF6z",
+    dropHint: "vagy h\xFAzd a f\xE1jlt az ablakba",
+    dropOverlay: "Engedd el a CSV f\xE1jlt",
+    welcomeHelp: "A rallysimfans.hu oldalr\xF3l export\xE1lt online rally eredm\xE9nyt\xE1bla (pl. 105003_table.csv).",
+    resumeButton: (name) => `\u2190 Vissza az elemz\xE9shez: ${name}`,
+    rallyTitle: (id) => `Rally #${id}`,
+    rallyLinkTitle: "Rally megnyit\xE1sa a rallysimfans.hu oldalon",
+    pinnedHint: "Ctrl/Shift + kattint\xE1s \u2014 hozz\xE1ad\xE1s az \xF6sszehasonl\xEDt\xE1shoz",
+    pinnedChipRemove: "Elt\xE1vol\xEDt\xE1s az \xF6sszehasonl\xEDt\xE1sb\xF3l",
+    presetTop: (n) => `Top ${n}`,
+    presetTopTitle: (n) => `Csak a l\xE1that\xF3 versenyz\u0151k els\u0151 ${n} helyezettje`,
+    presetFinished: "C\xE9lba \xE9rtek",
+    presetFinishedTitle: "Csak a c\xE9lba \xE9rt versenyz\u0151k",
+    selectedCount: (n) => `Kijel\xF6lve: ${n}`,
     pinnedCloseTitle: "R\xF6gz\xEDt\xE9s felold\xE1sa (Esc)",
     legendExpandTitle: "Kibont\xE1s",
     filterChartStages: "Szakaszok",
@@ -424,14 +481,15 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
   function formatYAxisTick(sec, units) {
     if (sec === 0) return "0";
-    const h = Math.floor(sec / 3600);
-    const m = Math.floor(sec % 3600 / 60);
-    const s = Math.floor(sec % 60);
+    const a = Math.abs(sec);
+    const h = Math.floor(a / 3600);
+    const m = Math.floor(a % 3600 / 60);
+    const s = Math.floor(a % 60);
     const parts = [];
     if (h) parts.push(`${h}${units.h}`);
     if (m) parts.push(`${m}${units.m}`);
     if (s) parts.push(`${s}${units.s}`);
-    return parts.length ? parts.join(" ") : "0";
+    return parts.length ? (sec < 0 ? "-" : "") + parts.join(" ") : "0";
   }
   function computeYAxisStep(maxSec) {
     if (maxSec <= 0) return 60;
@@ -689,29 +747,51 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     };
   }
 
+  // src/renderer/chart/pluginHoverDim.ts
+  function resolveActiveIdxs(ch, getHoveredKey, getPinnedIdxs, getHoveredIdx) {
+    const key = getHoveredKey();
+    if (key !== null)
+      return /* @__PURE__ */ new Set([ch.data.datasets.findIndex((d) => d.driverKey === key)]);
+    const pinned = getPinnedIdxs();
+    if (pinned.length) return new Set(pinned);
+    const hovered = getHoveredIdx();
+    return hovered !== null ? /* @__PURE__ */ new Set([hovered]) : null;
+  }
+  function buildHoverDimPlugin(getHoveredKey, getPinnedIdxs, getHoveredIdx, getDimAlpha) {
+    let active = null;
+    return {
+      id: "hoverDim",
+      beforeDatasetsDraw(ch) {
+        active = resolveActiveIdxs(ch, getHoveredKey, getPinnedIdxs, getHoveredIdx);
+      },
+      beforeDatasetDraw(ch, args) {
+        if (ch.data.datasets[args.index]?.hidden) return;
+        if (active === null || active.has(args.index)) return;
+        ch.ctx.save();
+        ch.ctx.globalAlpha = getDimAlpha();
+      },
+      afterDatasetDraw(ch, args) {
+        if (ch.data.datasets[args.index]?.hidden) return;
+        if (active === null || active.has(args.index)) return;
+        ch.ctx.restore();
+      }
+    };
+  }
+
   // src/renderer/chart/pluginDnfLine.ts
-  var DIM_ALPHA = 0.06;
   var DNF_DASH_ON = 6;
   var DNF_DASH_OFF = 4;
   var DNF_LINE_W = 1.8;
-  function buildDnfLinePlugin(getHoveredKey, getPinnedIdx, getHoveredIdx) {
-    function resolveActiveIdx(chart) {
-      const key = getHoveredKey();
-      if (key !== null)
-        return chart.data.datasets.findIndex((d) => d.driverKey === key);
-      const pinned = getPinnedIdx();
-      if (pinned !== null) return pinned;
-      return getHoveredIdx();
-    }
+  function buildDnfLinePlugin(getHoveredKey, getPinnedIdxs, getHoveredIdx, getDimAlpha) {
     return {
       id: "dnfLine",
       afterDatasetsDraw(chart) {
-        const pinnedIdx = getPinnedIdx();
-        const activeIdx = resolveActiveIdx(chart);
+        const pinnedIdxs = getPinnedIdxs();
+        const active = resolveActiveIdxs(chart, getHoveredKey, getPinnedIdxs, getHoveredIdx);
         const { ctx } = chart;
         chart.data.datasets.forEach((ds, di) => {
           if (ds.hidden) return;
-          if (di === pinnedIdx) return;
+          if (pinnedIdxs.includes(di)) return;
           const dnfPtIdx = ds._dnfCommentPtIdx;
           const lastPtIdx = ds._lastValidPtIdx;
           if (dnfPtIdx == null || lastPtIdx == null) return;
@@ -719,9 +799,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           const fromPt = meta.data[lastPtIdx];
           const toPt = meta.data[dnfPtIdx];
           if (!fromPt || !toPt) return;
-          const isDimmed = activeIdx !== null && di !== activeIdx;
+          const isDimmed = active !== null && !active.has(di);
           ctx.save();
-          if (isDimmed) ctx.globalAlpha = DIM_ALPHA;
+          if (isDimmed) ctx.globalAlpha = getDimAlpha();
           ctx.beginPath();
           ctx.setLineDash([DNF_DASH_ON, DNF_DASH_OFF]);
           ctx.strokeStyle = ds.borderColor;
@@ -735,34 +815,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     };
   }
 
-  // src/renderer/chart/pluginHoverDim.ts
-  function buildHoverDimPlugin(getHoveredKey, getPinnedIdx, getHoveredIdx) {
-    function resolveActiveIdx(ch) {
-      const key = getHoveredKey();
-      if (key !== null)
-        return ch.data.datasets.findIndex((d) => d.driverKey === key);
-      const pinned = getPinnedIdx();
-      if (pinned !== null) return pinned;
-      return getHoveredIdx();
-    }
-    return {
-      id: "hoverDim",
-      beforeDatasetDraw(ch, args) {
-        if (ch.data.datasets[args.index]?.hidden) return;
-        const activeIdx = resolveActiveIdx(ch);
-        if (activeIdx === null || args.index === activeIdx) return;
-        ch.ctx.save();
-        ch.ctx.globalAlpha = 0.06;
-      },
-      afterDatasetDraw(ch, args) {
-        if (ch.data.datasets[args.index]?.hidden) return;
-        const activeIdx = resolveActiveIdx(ch);
-        if (activeIdx === null || args.index === activeIdx) return;
-        ch.ctx.restore();
-      }
-    };
-  }
-
   // src/renderer/chart/pluginPinnedComments.ts
   var FONT_FAMILY = "'Fira Code', monospace";
   var PAD_X = 10;
@@ -772,20 +824,23 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var STAGE_FONT_SZ = 10;
   var MAX_BOX_W = 280;
   var BOX_GAP = 6;
-  function buildPinnedCommentsPlugin(getPinnedIdx) {
+  function buildPinnedCommentsPlugin(getPinnedIdxs) {
     return {
       id: "pinnedComments",
       afterDraw(ch) {
-        const pinnedIdx = getPinnedIdx();
-        if (pinnedIdx === null) return;
-        const ds = ch.data.datasets[pinnedIdx];
-        if (!ds || ds.hidden) return;
-        const cmts = ds._cmts;
-        const slbls = ds._stageLabels;
-        const meta = ch.getDatasetMeta(pinnedIdx);
+        const pinnedIdxs = getPinnedIdxs();
+        if (!pinnedIdxs.length) return;
         const { ctx, chartArea } = ch;
         ctx.save();
-        const boxes = collectCommentBoxes(ctx, ds, meta, cmts, slbls, chartArea);
+        const boxes = [];
+        for (const pinnedIdx of pinnedIdxs) {
+          const ds = ch.data.datasets[pinnedIdx];
+          if (!ds || ds.hidden) continue;
+          const cmts = ds._cmts;
+          const slbls = ds._stageLabels;
+          const meta = ch.getDatasetMeta(pinnedIdx);
+          boxes.push(...collectCommentBoxes(ctx, ds, meta, cmts, slbls, chartArea));
+        }
         resolveCollisions(boxes, chartArea);
         renderBoxes(ctx, boxes);
         ctx.restore();
@@ -1019,7 +1074,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   // src/renderer/chart/tooltip.ts
   var TOOLTIP_MARGIN_PX = 16;
   var TOOLTIP_OFFSET_Y = 12;
-  function buildTooltipHandler(stages, getChart, getPinnedIdx) {
+  function buildTooltipHandler(stages, getChart, getPinnedIdxs, getYMode) {
     return function handler(context) {
       const el = document.getElementById("chart-tooltip");
       const tooltip = context.tooltip;
@@ -1032,34 +1087,59 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         el.style.display = "none";
         return;
       }
-      const pinnedIdx = getPinnedIdx();
-      if (pinnedIdx !== null && dp.datasetIndex !== pinnedIdx) {
+      const pinnedIdxs = getPinnedIdxs();
+      const yMode = getYMode();
+      const onPinned = pinnedIdxs.includes(dp.datasetIndex);
+      const fieldTips = yMode === "pinned";
+      if (pinnedIdxs.length && !onPinned && !fieldTips) {
         el.style.display = "none";
         return;
       }
       const xIdx = dp.dataIndex;
       const y0 = dp.raw;
       const chart = getChart();
-      const matches = collectMatchingDatasets(chart, xIdx, y0, pinnedIdx);
       const stageInfo = resolveStageFromIndex(xIdx, stages);
-      el.innerHTML = buildTooltipHtml(matches, xIdx, stageInfo);
+      el.innerHTML = pinnedIdxs.length > 1 && onPinned ? buildCompareHtml(chart, pinnedIdxs, xIdx, stageInfo) : buildTooltipHtml(
+        collectMatchingDatasets(chart, xIdx, y0, fieldTips ? [] : pinnedIdxs),
+        xIdx,
+        stageInfo,
+        yMode
+      );
       el.style.display = "block";
       positionTooltip(el, context, TOOLTIP_MARGIN_PX, TOOLTIP_OFFSET_Y);
     };
   }
-  function collectMatchingDatasets(chart, xIdx, y0, pinnedIdx) {
+  function collectMatchingDatasets(chart, xIdx, y0, pinnedIdxs) {
     const matches = [];
     if (!chart || y0 === null) return matches;
     chart.data.datasets.forEach((ds, di) => {
       if (ds.hidden) return;
-      if (pinnedIdx !== null && di !== pinnedIdx) return;
+      if (pinnedIdxs.length && !pinnedIdxs.includes(di)) return;
       const yv = ds.data[xIdx];
       const isDnf = xIdx === ds._dnfCommentPtIdx;
       if (yv !== null && Math.abs(yv - y0) < 1) matches.push({ ds, y: yv, isDnf });
     });
     return matches;
   }
-  function buildTooltipHtml(matches, xIdx, stageInfo) {
+  function buildCompareHtml(chart, pinnedIdxs, xIdx, stageInfo) {
+    const rows = pinnedIdxs.map((di) => chart.data.datasets[di]).filter((ds) => ds && !ds.hidden).map((ds) => ({ ds, abs: ds._abs[xIdx] ?? null })).sort((a, b) => {
+      if (a.abs === null) return 1;
+      if (b.abs === null) return -1;
+      return a.abs - b.abs;
+    });
+    const best = rows[0]?.abs ?? null;
+    let html = '<div class="tt-block">';
+    if (stageInfo) html += `<span class="tt-stage">${escapeHtml(stageInfo.label)}</span>`;
+    html += '<table class="tt-compare">';
+    rows.forEach(({ ds, abs }, i) => {
+      const name = escapeHtml(ds._displayName || ds.driverKey);
+      const delta = abs === null ? "" : i === 0 ? "" : formatTimeSigned(abs - best);
+      html += `<tr><td><span class="tt-dot" style="background:${ds.borderColor}"></span>${name}</td><td class="tt-num">${abs === null ? '<span class="tt-red">DNF</span>' : formatTime(abs)}</td><td class="tt-num tt-delta">${delta}</td></tr>`;
+    });
+    html += "</table></div>";
+    return html;
+  }
+  function buildTooltipHtml(matches, xIdx, stageInfo, yMode) {
     const t = i18n.t();
     return matches.map(({ ds, y, isDnf }, mi) => {
       const divider = mi > 0 ? '<div class="tt-divider"></div>' : "";
@@ -1074,7 +1154,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       html += `<span class="tt-name">${name}</span>`;
       if (car) html += `<span class="tt-car">\u{1F697} ${car}</span>`;
       html += `<span class="tt-sep"></span>`;
-      html += isDnf ? `<span class="tt-red">DNF</span>` : y !== null ? `<span class="tt-row">\u23F1 ${formatTime(y)}</span>` : `<span class="tt-red">DNF</span>`;
+      const abs = ds._abs[xIdx] ?? null;
+      html += isDnf || abs === null ? `<span class="tt-red">DNF</span>` : `<span class="tt-row">\u23F1 ${formatTime(abs)}</span>`;
+      if (!isDnf && y !== null && yMode !== "abs")
+        html += `<span class="tt-row">${yMode === "leader" ? t.tooltipGapLeader : t.tooltipGapPinned}: ${formatTimeSigned(y)}</span>`;
       if (pen > 0) html += `<span class="tt-red">${t.tooltipPenalty}: +${formatTime(pen)}</span>`;
       if (sp > 0) html += `<span class="tt-red">${t.tooltipServicePenalty}: +${formatTime(sp)}</span>`;
       if (sr > 0) html += `<span class="tt-red">${t.tooltipSuperRally}: ${sr}\xD7</span>`;
@@ -1114,12 +1197,18 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var BOT_PAD_NORMAL = 46;
   var BOT_PAD_45 = 90;
   var BOT_PAD_90 = 110;
+  var DIM_ALPHA = 0.06;
+  var DIM_ALPHA_SOFT = 0.35;
+  var BORDER_WIDTH2 = 1.8;
+  var BORDER_WIDTH_PINNED = 2.8;
   function createChartController() {
     let chart = null;
     let canvas = null;
     let hoveredDsIdx = null;
     let hoveredDsKey = null;
-    let pinnedDsIdx = null;
+    let pinnedKeys = [];
+    let pinnedIdxs = [];
+    let yMode = "abs";
     let hoveredBandIdx = null;
     let activeStages = [];
     let currentBotPad = BOT_PAD_NORMAL;
@@ -1134,13 +1223,82 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       if (mouseleaveHandler) canvas.removeEventListener("mouseleave", mouseleaveHandler);
       clickHandler = mousemoveHandler = mouseleaveHandler = null;
     }
+    function syncPinnedIdxs() {
+      if (!chart) {
+        pinnedIdxs = [];
+        return;
+      }
+      const dss = chart.data.datasets;
+      pinnedKeys = pinnedKeys.filter((k) => dss.some((d) => d.driverKey === k));
+      pinnedIdxs = pinnedKeys.map((k) => dss.findIndex((d) => d.driverKey === k));
+    }
+    function effectiveYMode() {
+      return yMode === "pinned" && !pinnedIdxs.length ? "leader" : yMode;
+    }
+    function dimAlpha() {
+      return hoveredDsKey === null && effectiveYMode() === "pinned" ? DIM_ALPHA_SOFT : DIM_ALPHA;
+    }
+    function applyYMode() {
+      if (!chart) return;
+      const dss = chart.data.datasets;
+      const mode = effectiveYMode();
+      const nPts = chart.data.labels.length;
+      let ref = null;
+      if (mode === "leader") {
+        ref = new Array(nPts).fill(null);
+        for (const ds of dss) {
+          if (ds.hidden) continue;
+          ds._abs.forEach((v, i) => {
+            if (v !== null && (ref[i] === null || v < ref[i])) ref[i] = v;
+          });
+        }
+      } else if (mode === "pinned") {
+        ref = dss[pinnedIdxs[0]]._abs;
+      }
+      const fitToPinned = !!ref && pinnedIdxs.length > 1;
+      let min = 0, max = 0;
+      dss.forEach((ds, di) => {
+        const abs = ds._abs;
+        ds.data = ref ? abs.map((v, i) => v === null || ref[i] === null ? null : v - ref[i]) : abs.slice();
+        ds.borderWidth = pinnedIdxs.includes(di) ? BORDER_WIDTH_PINNED : BORDER_WIDTH2;
+        ds.order = pinnedIdxs.includes(di) ? -1 : 0;
+        if (ds.hidden && ref) return;
+        if (fitToPinned && !pinnedIdxs.includes(di)) return;
+        for (const v of ds.data) {
+          if (v === null) continue;
+          if (v < min) min = v;
+          if (v > max) max = v;
+        }
+      });
+      const step = computeYAxisStep(Math.max(max - min, 1));
+      for (const id of ["y", "y2"]) {
+        const s = chart.options.scales[id];
+        s.min = ref ? Math.floor(min / step) * step : 0;
+        s.max = Math.max(Math.ceil(max / step) * step, step);
+        s.reverse = !!ref;
+        s.ticks.stepSize = step;
+      }
+    }
+    function notifyPinChange() {
+      syncPinnedIdxs();
+      applyYMode();
+      chart?.update("none");
+      onPinChange?.([...pinnedKeys]);
+    }
+    function togglePin(key, additive) {
+      const has = pinnedKeys.includes(key);
+      if (additive) {
+        pinnedKeys = has ? pinnedKeys.filter((k) => k !== key) : [...pinnedKeys, key];
+      } else {
+        pinnedKeys = has && pinnedKeys.length === 1 ? [] : [key];
+      }
+      hoveredDsIdx = null;
+      notifyPinChange();
+    }
     return {
       getChart: () => chart,
-      getPinnedIndex: () => pinnedDsIdx,
-      getPinnedDriverKey: () => {
-        if (pinnedDsIdx === null || !chart) return null;
-        return chart.data.datasets[pinnedDsIdx]?.driverKey ?? null;
-      },
+      getPinnedKeys: () => [...pinnedKeys],
+      getYMode: () => yMode,
       getActiveStages: () => activeStages,
       refreshLabels() {
         if (!chart) return;
@@ -1163,11 +1321,19 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           chart = null;
         }
         hoveredDsIdx = null;
-        pinnedDsIdx = null;
+        pinnedKeys = [];
+        pinnedIdxs = [];
         hoveredBandIdx = null;
       },
-      pinDriver(idx) {
-        pinnedDsIdx = idx;
+      togglePin,
+      clearPins() {
+        if (!pinnedKeys.length) return;
+        pinnedKeys = [];
+        notifyPinChange();
+      },
+      setYMode(mode) {
+        yMode = mode;
+        applyYMode();
         chart?.update("none");
       },
       updateDatasetVisibility(data2, activeDriverKeys, activeGroups, activeCars) {
@@ -1178,6 +1344,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           const carOk = !activeCars.size || !drv || activeCars.has(drv.car);
           ds.hidden = !activeDriverKeys.has(ds.driverKey) || !grpOk || !carOk;
         });
+        applyYMode();
         chart.update("none");
       },
       build(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, activeDriverKeys, activeGroups, activeCars) {
@@ -1187,8 +1354,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         currentBotPad = useRot90 ? BOT_PAD_90 : useRot45 ? BOT_PAD_45 : BOT_PAD_NORMAL;
         const nPts = 1 + stages.length * 3;
         const labels = new Array(nPts).fill("");
-        const maxCum = computeMaxCumulative(data2, stages, recordMap);
-        const yStep = computeYAxisStep(maxCum);
         const datasets = buildDatasets(
           data2,
           stages,
@@ -1200,13 +1365,15 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           activeGroups,
           activeCars
         );
+        datasets.forEach((ds) => {
+          ds._abs = ds.data.slice();
+        });
         canvas = document.getElementById("race-chart");
         removeCanvasListeners();
         if (chart) {
           chart.destroy();
           chart = null;
           hoveredDsIdx = null;
-          pinnedDsIdx = null;
         }
         const Chart = window.Chart;
         chart = new Chart(canvas, {
@@ -1220,7 +1387,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             interaction: { mode: "nearest", axis: "xy", intersect: false },
             layout: { padding: { bottom: currentBotPad } },
             onHover: (event, elements) => {
-              if (pinnedDsIdx !== null) {
+              if (pinnedIdxs.length) {
                 hoveredDsIdx = null;
                 return;
               }
@@ -1244,42 +1411,42 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
                 external: buildTooltipHandler(
                   stages,
                   () => chart,
-                  () => pinnedDsIdx
+                  () => pinnedIdxs,
+                  effectiveYMode
                 )
               }
             },
-            scales: buildScales(yStep, maxCum)
+            scales: buildScales(() => effectiveYMode() !== "abs")
           },
           plugins: [
             buildHoverDimPlugin(
               () => hoveredDsKey,
-              () => pinnedDsIdx,
-              () => hoveredDsIdx
+              () => pinnedIdxs,
+              () => hoveredDsIdx,
+              dimAlpha
             ),
             buildStageNamesPlugin(stages, useRot45, useRot90, () => hoveredBandIdx),
-            buildDnfLinePlugin(() => hoveredDsKey, () => pinnedDsIdx, () => hoveredDsIdx),
-            buildPinnedCommentsPlugin(() => pinnedDsIdx)
+            buildDnfLinePlugin(() => hoveredDsKey, () => pinnedIdxs, () => hoveredDsIdx, dimAlpha),
+            buildPinnedCommentsPlugin(() => pinnedIdxs)
           ]
         });
-        clickHandler = (e) => handleCanvasClick(
-          e,
-          chart,
-          canvas,
-          stages,
-          currentBotPad,
-          pinnedDsIdx,
-          (idx) => {
-            pinnedDsIdx = idx;
-            chart.update("none");
-            const key = chart.data.datasets[idx]?.driverKey ?? null;
-            onPinChange?.(key);
-          },
-          () => {
-            pinnedDsIdx = null;
-            chart.update("none");
-            onPinChange?.(null);
+        syncPinnedIdxs();
+        applyYMode();
+        chart.update("none");
+        clickHandler = (e) => {
+          const additive = e.ctrlKey || e.metaKey || e.shiftKey;
+          const hit = handleCanvasClick(e, chart, canvas, stages, currentBotPad);
+          if (hit === "ignore") return;
+          if (hit === null) {
+            if (!additive && pinnedKeys.length) {
+              pinnedKeys = [];
+              notifyPinChange();
+            }
+            return;
           }
-        );
+          const key = chart.data.datasets[hit]?.driverKey;
+          if (key) togglePin(key, additive);
+        };
         mousemoveHandler = (e) => {
           const newBandIdx = resolveHoveredBandIdx(e, chart, canvas, stages, currentBotPad);
           canvas.style.cursor = newBandIdx !== null ? "pointer" : "";
@@ -1321,26 +1488,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     return null;
   }
-  function computeMaxCumulative(data2, stages, recordMap) {
-    let max = 0;
-    for (const drv of data2.drivers) {
-      let cum = 0;
-      for (const st of stages) {
-        const r = recordMap.get(drv.username)?.get(st.num);
-        if (!r || r.time1 === null) break;
-        cum += r.time3 ?? 0;
-      }
-      if (cum > max) max = cum;
-    }
-    return max;
-  }
-  function buildScales(yStep, maxCum) {
-    const yMax = Math.ceil(maxCum / yStep) * yStep;
+  function buildScales(isGapMode) {
     const yTickConfig = {
       color: "#555",
       font: { size: 11, family: "'Fira Code', monospace" },
-      stepSize: yStep,
-      callback: (v) => formatYAxisTick(v, i18n.t().axisTimeUnits)
+      callback: (v) => {
+        const sec = v;
+        return (isGapMode() && sec > 0 ? "+" : "") + formatYAxisTick(sec, i18n.t().axisTimeUnits);
+      }
     };
     return {
       x: {
@@ -1356,10 +1511,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       y: {
         type: "linear",
         position: "left",
-        min: 0,
-        max: yMax,
-        ticks: yTickConfig,
-        grid: { color: "#1c1c1c", lineWidth: 1 },
+        ticks: { ...yTickConfig },
+        grid: {
+          color: (ctx) => isGapMode() && ctx.tick?.value === 0 ? "#3a3a3a" : "#1c1c1c",
+          lineWidth: 1
+        },
         border: { color: "#3a3a3a" },
         title: {
           display: true,
@@ -1371,9 +1527,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       y2: {
         type: "linear",
         position: "right",
-        min: 0,
-        max: yMax,
-        ticks: yTickConfig,
+        ticks: { ...yTickConfig },
         grid: { drawOnChartArea: false },
         border: { color: "#3a3a3a" },
         title: {
@@ -1385,8 +1539,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       }
     };
   }
-  function handleCanvasClick(e, chart, canvas, stages, botPad, pinnedIdx, setPin, clearPin) {
-    if (!chart) return;
+  function handleCanvasClick(e, chart, canvas, stages, botPad) {
+    if (!chart) return null;
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
@@ -1398,25 +1552,19 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         const xR = xs.getPixelForTick(i * 3 + 3);
         if (mx >= xL && mx <= xR) {
           window.__onStageBandClick?.(stages[i].num);
-          return;
+          return "ignore";
         }
       }
-      return;
+      return "ignore";
     }
-    if (my < ca.top || my > ca.bottom) return;
+    if (my < ca.top || my > ca.bottom) return "ignore";
     const elems = chart.getElementsAtEventForMode(e, "nearest", { intersect: false }, false);
-    if (!elems.length) {
-      if (pinnedIdx !== null) clearPin();
-      return;
-    }
+    if (!elems.length) return null;
     const el = elems[0];
     const meta = chart.getDatasetMeta(el.datasetIndex);
     const pt = meta.data[el.index];
-    if (!pt || Math.hypot(pt.x - mx, pt.y - my) > HOVER_DIST_PX) {
-      if (pinnedIdx !== null) clearPin();
-      return;
-    }
-    pinnedIdx === el.datasetIndex ? clearPin() : setPin(el.datasetIndex);
+    if (!pt || Math.hypot(pt.x - mx, pt.y - my) > HOVER_DIST_PX) return null;
+    return el.datasetIndex;
   }
 
   // src/renderer/dom.ts
@@ -1437,13 +1585,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/chart/legendPanel.ts
-  function updateLegendPanel(data2, chart, activeStages, recordMap, activeDriverKeys, activeGroups, activeCars, isExpanded, pinnedDriverKey = null, callbacks) {
+  function updateLegendPanel(data2, chart, activeStages, recordMap, isExpanded, pinnedKeys, leaderFirst, callbacks) {
     const panel = document.getElementById("legend-panel");
     const itemsEl = document.getElementById("legend-items");
     const expandBtn = document.getElementById("legend-expand-btn");
     panel.style.display = "";
     const visibleWithTime = buildSortedVisibleDrivers(data2, chart, activeStages, recordMap);
-    renderLegendItems(itemsEl, visibleWithTime, data2, pinnedDriverKey, callbacks);
+    if (leaderFirst) visibleWithTime.reverse();
+    renderLegendItems(itemsEl, visibleWithTime, data2, pinnedKeys, callbacks);
     panel.classList.toggle("expanded", isExpanded);
     expandBtn.textContent = isExpanded ? "\u203A" : "\u2039";
     const inner = document.getElementById("legend-inner");
@@ -1461,11 +1610,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       let cum = 0;
       for (const st of activeStages) {
         const r = recordMap.get(drv.username)?.get(st.num);
-        if (!r || r.time1 === null) {
+        if (!r || r.time3 === null) {
           cum = null;
           break;
         }
-        cum += r.time3 ?? 0;
+        cum += r.time3;
       }
       return { drv, cum };
     });
@@ -1477,7 +1626,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     });
     return withTime;
   }
-  function renderLegendItems(container, items, data2, pinnedDriverKey, callbacks) {
+  function renderLegendItems(container, items, data2, pinnedKeys, callbacks) {
     container.innerHTML = "";
     items.forEach(({ drv }) => {
       const gi = data2.drivers.indexOf(drv);
@@ -1485,7 +1634,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const item = createElement("div", "legend-item");
       item.dataset["driverKey"] = drv.username;
       item.style.cursor = "pointer";
-      if (drv.username === pinnedDriverKey) item.classList.add("pinned-highlight");
+      if (pinnedKeys.includes(drv.username)) item.classList.add("pinned-highlight");
       const dot = createElement("span", "legend-dot");
       dot.style.background = color;
       const name = createElement(
@@ -1504,8 +1653,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           callbacks.onDriverHover(null);
           item.classList.remove("legend-item-hover");
         });
-        item.addEventListener("click", () => {
-          callbacks.onDriverClick(drv.username);
+        item.addEventListener("click", (e) => {
+          callbacks.onDriverClick(drv.username, e.ctrlKey || e.metaKey || e.shiftKey);
         });
       }
       container.appendChild(item);
@@ -1547,21 +1696,33 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/chart/pinnedBar.ts
-  function updatePinnedBar(data2, chart, pinnedIdx) {
+  function updatePinnedBar(data2, pinnedKeys, onUnpin) {
     const bar = document.getElementById("pinned-bar");
-    if (pinnedIdx === null || !chart || !data2) {
+    const chips = document.getElementById("pinned-chips");
+    chips.innerHTML = "";
+    const drivers = data2 ? pinnedKeys.map((k) => data2.drivers.find((d) => d.username === k)).filter(Boolean) : [];
+    if (!data2 || !drivers.length) {
       bar.style.display = "none";
       return;
     }
-    const ds = chart.data.datasets[pinnedIdx];
-    const drv = data2.drivers.find((d) => d.username === ds?.driverKey);
-    if (!ds || !drv) {
-      bar.style.display = "none";
-      return;
+    for (const drv of drivers) {
+      const chip = createElement("span", "pinned-chip");
+      const dot = createElement("span", "pinned-dot");
+      dot.style.background = driverColor(data2.drivers.indexOf(drv));
+      const name = createElement(
+        "span",
+        "pinned-name",
+        drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
+      );
+      const x = createElement("button", "pinned-chip-x", "\xD7");
+      x.title = i18n.t().pinnedChipRemove;
+      x.addEventListener("click", () => onUnpin(drv.username));
+      chip.appendChild(dot);
+      chip.appendChild(name);
+      chip.appendChild(x);
+      chips.appendChild(chip);
     }
-    const gi = data2.drivers.indexOf(drv);
-    document.getElementById("pinned-dot").style.background = driverColor(gi);
-    document.getElementById("pinned-name").textContent = drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username;
+    document.getElementById("pinned-hint").textContent = i18n.t().pinnedHint;
     bar.style.display = "flex";
   }
 
@@ -2219,7 +2380,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       lbl.dataset["stageNum"] = String(s.num);
       const cb = createElement("input");
       cb.type = "checkbox";
-      cb.checked = true;
+      cb.checked = state.activeStageNums.has(s.num);
       cb.addEventListener("change", () => {
         cb.checked ? state.activeStageNums.add(s.num) : state.activeStageNums.delete(s.num);
         callbacks.onStagesChanged();
@@ -2231,10 +2392,19 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     cont.appendChild(group);
   }
-  function buildDriverFilterUI(drivers, data2, state, callbacks) {
+  function buildDriverFilterUI(drivers, data2, state, callbacks, rankMap2) {
     const wrap = document.getElementById("filter-drivers-wrap");
     wrap.innerHTML = "";
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterParticipants, "counter-drivers");
+    const t = i18n.t();
+    const rankOf = (d) => rankMap2.get(d.username) ?? null;
+    const sorted = [...drivers].sort((a, b) => {
+      const ra = rankOf(a), rb = rankOf(b);
+      if (ra !== null && rb !== null) return ra - rb;
+      if (ra !== null) return -1;
+      if (rb !== null) return 1;
+      return a.username.localeCompare(b.username);
+    });
     btnAll.addEventListener("click", () => {
       drivers.filter((d) => state.visibleDriverKeys.has(d.username)).forEach((d) => state.activeDriverKeys.add(d.username));
       syncVisibleCheckboxes(body, true);
@@ -2249,18 +2419,48 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       applyDriverSearch(q, body, data2, state);
       callbacks.onDriversChanged();
     });
-    for (const drv of drivers) {
+    const applyPreset = (pick) => {
+      const visible = sorted.filter((d) => state.visibleDriverKeys.has(d.username));
+      const finishers = visible.filter((d) => rankOf(d) !== null);
+      visible.forEach((d) => state.activeDriverKeys.delete(d.username));
+      finishers.forEach((d, i) => {
+        if (pick(i + 1)) state.activeDriverKeys.add(d.username);
+      });
+      qsa(".filter-item[data-driver-key]", body).forEach((item) => {
+        const cb = item.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = state.activeDriverKeys.has(item.dataset["driverKey"]);
+      });
+      callbacks.onDriversChanged();
+    };
+    const presets = createElement("div", "filter-presets");
+    const addPreset = (label, title, pick) => {
+      const btn = createElement("button", "btn-fa", label);
+      btn.title = title;
+      btn.addEventListener("click", () => applyPreset(pick));
+      presets.appendChild(btn);
+    };
+    addPreset(t.presetTop(10), t.presetTopTitle(10), (r) => r <= 10);
+    addPreset(t.presetTop(20), t.presetTopTitle(20), (r) => r <= 20);
+    addPreset(t.presetFinished, t.presetFinishedTitle, () => true);
+    body.appendChild(presets);
+    for (const drv of sorted) {
       const lbl = createElement("label", "filter-item");
       lbl.dataset["driverKey"] = drv.username;
       lbl.dataset["group"] = drv.group;
       lbl.dataset["car"] = drv.car;
       const cb = createElement("input");
       cb.type = "checkbox";
-      cb.checked = true;
+      cb.checked = state.activeDriverKeys.has(drv.username);
       cb.addEventListener("change", () => {
         cb.checked ? state.activeDriverKeys.add(drv.username) : state.activeDriverKeys.delete(drv.username);
         callbacks.onDriversChanged();
       });
+      const rank = rankOf(drv);
+      const place = createElement(
+        "span",
+        rank !== null ? "filter-driver-rank" : "filter-driver-rank dnf",
+        rank !== null ? String(rank) : "DNF"
+      );
       const content = createElement("div", "filter-driver-content");
       const nameSpan = createElement(
         "span",
@@ -2278,6 +2478,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         callbacks.onDriverHover(null);
       });
       lbl.appendChild(cb);
+      lbl.appendChild(place);
       lbl.appendChild(content);
       body.appendChild(lbl);
     }
@@ -2307,7 +2508,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const lbl = createElement("label", "filter-item");
       const cb = createElement("input");
       cb.type = "checkbox";
-      cb.checked = true;
+      cb.checked = state.activeGroups.has(grp);
       cb.addEventListener("change", () => {
         cb.checked ? state.activeGroups.add(grp) : state.activeGroups.delete(grp);
         onRefilterDrivers();
@@ -2344,7 +2545,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const lbl = createElement("label", "filter-item");
       const cb = createElement("input");
       cb.type = "checkbox";
-      cb.checked = true;
+      cb.checked = state.activeCars.has(car);
       cb.addEventListener("change", () => {
         cb.checked ? state.activeCars.add(car) : state.activeCars.delete(car);
         onRefilterDrivers();
@@ -2387,9 +2588,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/filters/chartFilters.ts
-  function buildChartFilterPanel(data2, state, callbacks) {
+  function buildChartFilterPanel(data2, state, callbacks, rankMap2) {
     buildStageFilterUI(data2.stages, state, callbacks);
-    buildDriverFilterUI(data2.drivers, data2, state, callbacks);
+    buildDriverFilterUI(data2.drivers, data2, state, callbacks, rankMap2);
     buildGroupFilterUI(
       data2.groups,
       data2,
@@ -2420,6 +2621,12 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     setTextById("chart-legend-success", t.chartLegendSuccess);
     setTextById("chart-legend-sr", t.chartLegendSuperRally);
     setTextById("chart-legend-comment", t.chartLegendComment);
+    setTextById("ymode-abs", t.yModeAbs);
+    setTextById("ymode-leader", t.yModeLeader);
+    setTextById("ymode-pinned", t.yModePinned);
+    setTextById("drop-hint", t.dropHint);
+    setTextById("drop-overlay-text", t.dropOverlay);
+    setTextById("welcome-help", t.welcomeHelp);
     setTitleById("pinned-close", t.pinnedCloseTitle);
     setTitleById("legend-expand-btn", t.legendExpandTitle);
     applyEventNameLabel(t.eventNameLabel, t.eventNameOptional);
@@ -2733,15 +2940,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     { key: "totalGap", label: () => i18n.t().colTotalGap, title: () => "" },
     { key: "sr", label: () => i18n.t().colSuperRally, title: () => "" }
   ];
-  function buildResultsTableHeader(thead, onSearchClick) {
+  function buildResultsTableHeader(thead, stages, onSearchClick) {
     thead.innerHTML = "";
     const tr = document.createElement("tr");
     COLUMNS.forEach((col) => {
       const th = document.createElement("th");
       const titleText = col.title();
       if (titleText) th.title = titleText;
+      if (col.key === "pos") th.className = "sticky-col sticky-col-1";
       if (col.special === "search") {
-        th.className = "th-participant";
+        th.className = "th-participant sticky-col sticky-col-2";
         th.innerHTML = col.label();
         th.addEventListener("click", () => onSearchClick(th));
       } else {
@@ -2749,21 +2957,27 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       }
       tr.appendChild(th);
     });
+    for (const st of stages) {
+      const th = createElement("th", "th-stage", `SS${st.num}`);
+      th.title = st.name;
+      tr.appendChild(th);
+    }
     thead.appendChild(tr);
   }
-  function renderResultsRows(tbody, results, selectedRows, onRowClick) {
+  function renderResultsRows(tbody, results, stageRanks, selectedRows, onRowClick) {
     tbody.innerHTML = "";
     for (const r of results) {
-      const row = buildResultRow(r, selectedRows);
+      const row = buildResultRow(r, stageRanks.get(r.stats.username) ?? [], selectedRows);
       row.addEventListener("click", () => onRowClick(r.stats.username, row));
       tbody.appendChild(row);
     }
   }
-  function buildResultRow(r, selectedRows) {
+  function buildResultRow(r, stageRanks, selectedRows) {
     const row = document.createElement("tr");
     row.dataset["username"] = r.stats.username;
     if (selectedRows.has(r.stats.username)) row.classList.add("row-selected");
     const t = i18n.t();
+    const noPace = r.position === 1 || r.stats.totalTime === null;
     row.appendChild(buildPositionCell(r.stats.totalTime !== null ? r.position : null));
     row.appendChild(buildNameCell(r.stats));
     row.appendChild(buildGroupCell(r.stats.group));
@@ -2774,23 +2988,23 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     ));
     row.appendChild(buildPenaltyCell(r.stats.totalPenalty));
     row.appendChild(buildGapWithTooltip(
-      r.position === 1 ? "\u2014" : formatTimeSigned(r.avgGapFromLeader),
+      noPace ? "\u2014" : formatTimeSigned(r.avgGapFromLeader),
       t.colAvgGapLeaderTitle,
-      r.avgGapFromLeader
+      noPace ? null : r.avgGapFromLeader
     ));
     row.appendChild(buildGapWithTooltip(
-      r.position === 1 ? "\u2014" : formatTimeSigned(r.avgGapFromPrev),
+      noPace ? "\u2014" : formatTimeSigned(r.avgGapFromPrev),
       t.colAvgGapPrevTitle,
-      r.avgGapFromPrev
+      noPace ? null : r.avgGapFromPrev
     ));
     row.appendChild(buildCleanGapCell(
-      r.position === 1 ? null : r.cleanGapFromLeader,
-      r.cleanCountLeader,
+      noPace ? null : r.cleanGapFromLeader,
+      noPace ? 0 : r.cleanCountLeader,
       r.totalStageCount
     ));
     row.appendChild(buildCleanGapCell(
-      r.position === 1 ? null : r.cleanGapFromPrev,
-      r.cleanCountPrev,
+      noPace ? null : r.cleanGapFromPrev,
+      noPace ? 0 : r.cleanCountPrev,
       r.totalStageCount
     ));
     row.appendChild(createTd(
@@ -2798,10 +3012,20 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       r.position === 1 ? "\u2014" : r.totalGap !== null ? formatTimeSigned(r.totalGap) : "\u2014"
     ));
     row.appendChild(buildSRCell(r.stats.srCount));
+    r.stats.snaps.forEach((snap, s) => row.appendChild(buildStageCell(snap, stageRanks[s] ?? null)));
     return row;
   }
+  function buildStageCell(snap, rank) {
+    if (snap.time3 === null) return createTd("td-stage td-gap-zero", "\u2014");
+    const td = createTd("td-stage", formatTime(snap.time3));
+    const rk = createElement("span", "td-stage-rank", `${rank ?? ""}`);
+    if (rank === 1) rk.classList.add("pos-gold");
+    td.appendChild(rk);
+    if (snap.hasSR) td.appendChild(createElement("span", "td-stage-sr", "SR"));
+    return td;
+  }
   function buildPositionCell(pos) {
-    const td = createTd("td-pos", pos !== null ? String(pos) : "DNF");
+    const td = createTd("td-pos sticky-col sticky-col-1", pos !== null ? String(pos) : "DNF");
     if (pos === null) td.classList.add("pos-dnf");
     if (pos === 1) td.classList.add("pos-gold");
     else if (pos === 2) td.classList.add("pos-silver");
@@ -2809,7 +3033,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     return td;
   }
   function buildNameCell(stats) {
-    const td = createTd("td-name");
+    const td = createTd("td-name sticky-col sticky-col-2");
     const user = createElement("span", "td-name-user", stats.username);
     td.appendChild(user);
     if (stats.realName && stats.realName !== stats.username) {
@@ -2914,10 +3138,21 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (!_data) return;
     const stats = getFilteredStats();
     const results = computeDriverResults(stats);
+    const stages = _data.stages.filter((s) => _filterState.stageFilter.has(s.num)).sort((a, b) => a.num - b.num);
     const thead = document.getElementById("results-thead");
-    buildResultsTableHeader(thead, activateParticipantSearch);
+    buildResultsTableHeader(thead, stages, activateParticipantSearch);
     const tbody = document.getElementById("results-tbody");
-    renderResultsRows(tbody, results, _selectedRows, toggleRowSelection);
+    renderResultsRows(tbody, results, computeStageRanks(results, stages.length), _selectedRows, toggleRowSelection);
+  }
+  function computeStageRanks(results, nStages) {
+    const ranks = /* @__PURE__ */ new Map();
+    results.forEach((r) => ranks.set(r.stats.username, new Array(nStages).fill(null)));
+    for (let s = 0; s < nStages; s++) {
+      results.filter((r) => r.stats.snaps[s]?.time3 != null).sort((a, b) => a.stats.snaps[s].time3 - b.stats.snaps[s].time3).forEach((r, i) => {
+        ranks.get(r.stats.username)[s] = i + 1;
+      });
+    }
+    return ranks;
   }
   function getFilteredStats() {
     if (!_data) return [];
@@ -2947,7 +3182,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (!bar) return;
     if (_selectedRows.size > 0) {
       bar.classList.add("visible");
-      if (countEl) countEl.textContent = `\u0412\u044B\u0431\u0440\u0430\u043D\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432: ${_selectedRows.size}`;
+      if (countEl) countEl.textContent = i18n.t().selectedCount(_selectedRows.size);
     } else {
       bar.classList.remove("visible");
     }
@@ -2964,11 +3199,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   function activateParticipantSearch(th) {
     if (_searchActive) return;
     _searchActive = true;
-    const origLabel = th.textContent || "\u0423\u0447\u0430\u0441\u0442\u043D\u0438\u043A";
+    const origLabel = th.textContent || i18n.t().colParticipant;
     th.textContent = "";
     const inp = document.createElement("input");
     inp.className = "th-search-input";
-    inp.placeholder = "\u041F\u043E\u0438\u0441\u043A \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430\u2026";
+    inp.placeholder = i18n.t().commentsSearchPlaceholder;
     inp.type = "text";
     th.appendChild(inp);
     inp.focus();
@@ -2980,7 +3215,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     inp.addEventListener("blur", () => {
       _searchActive = false;
       th.textContent = origLabel;
-      th.className = "th-participant";
+      th.className = "th-participant sticky-col sticky-col-2";
       clearParticipantHighlight();
     });
     inp.addEventListener("keydown", (e) => {
@@ -3006,10 +3241,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/index.ts
+  var RSF_RALLY_URL = "https://www.rallysimfans.hu/rbr/rally_online.php?centerbox=rally_list_details.php&rally_id=";
   var data = null;
   var eventName = "";
+  var fileName = "";
+  var currentTab = "chart";
   var legendExpanded = false;
   var prevStageFilter = null;
+  var rankMap = /* @__PURE__ */ new Map();
   var lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [] });
   var chartState = {
     activeStageNums: /* @__PURE__ */ new Set(),
@@ -3023,52 +3262,99 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     applyDomTranslations();
     initLangSwitcher(() => {
       applyDomTranslations();
+      updateHeaderTitle();
+      updateResumeButton();
       if (data) {
-        buildChartFilterPanel(data, chartState, makeFilterCallbacks());
+        buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
+        updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
+        afterFilterChange();
         buildResultsFilters(() => {
         });
         updateHeaderStats();
         renderResultsTable();
         renderCommentsView(data);
         chartCtrl.refreshLabels();
+        onPinsChanged(chartCtrl.getPinnedKeys());
       }
     });
     qs("#btn-choose-file").addEventListener("click", () => {
       qs("#file-input").click();
     });
     qs("#file-input").addEventListener("change", onFileInputChange);
+    initFileDrop();
     qs("#inp-event-name").addEventListener("input", (e) => {
       eventName = e.target.value.trim();
-      const el = document.getElementById("header-event-name");
-      if (el) el.textContent = eventName || i18n.t().defaultTitle;
+      updateHeaderTitle();
     });
     qs("#btn-back").addEventListener("click", showWelcome);
-    qs("#pinned-close").addEventListener("click", unpinDriver);
+    qs("#btn-resume").addEventListener("click", resumeChart);
+    qs("#pinned-close").addEventListener("click", () => chartCtrl.clearPins());
     qs("#tab-chart").addEventListener("click", () => switchTab("chart"));
     qs("#tab-results").addEventListener("click", () => switchTab("results"));
     qs("#tab-comments").addEventListener("click", () => switchTab("comments"));
     qs("#legend-expand-btn").addEventListener("click", toggleLegendExpand);
+    document.querySelectorAll("#ymode-switch .seg-btn").forEach((btn) => {
+      btn.addEventListener("click", () => setYMode(btn.dataset["ymode"]));
+    });
+    chartCtrl.setOnPinChange(onPinsChanged);
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && chartCtrl.getPinnedIndex() !== null) unpinDriver();
+      if (e.key === "Escape" && chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
     });
     document.addEventListener("mousemove", onCellTooltipMove);
     window.__onStageBandClick = handleStageBandClick;
   });
   async function onFileInputChange(e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = "";
+    if (file) await loadFile(file);
+  }
+  function initFileDrop() {
+    const overlay = document.getElementById("drop-overlay");
+    const hasFiles = (e) => !!e.dataTransfer?.types.includes("Files");
+    let depth = 0;
+    document.addEventListener("dragenter", (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      depth++;
+      overlay.classList.add("visible");
+    });
+    document.addEventListener("dragover", (e) => {
+      if (hasFiles(e)) e.preventDefault();
+    });
+    document.addEventListener("dragleave", (e) => {
+      if (!hasFiles(e)) return;
+      if (--depth <= 0) {
+        depth = 0;
+        overlay.classList.remove("visible");
+      }
+    });
+    document.addEventListener("drop", (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      depth = 0;
+      overlay.classList.remove("visible");
+      const file = e.dataTransfer?.files?.[0];
+      if (file) void loadFile(file);
+    });
+  }
+  async function loadFile(file) {
     const btn = qs("#btn-choose-file");
     const info = qs("#file-info");
     btn.disabled = true;
     info.textContent = i18n.t().fileReading;
     info.className = "file-info loading";
-    chartCtrl.destroy();
     try {
       const text = await readFileAsText(file);
-      data = parseCsvText(text);
+      const parsed = parseCsvText(text);
+      chartCtrl.destroy();
+      data = parsed;
+      fileName = file.name;
       lookups = buildRallyLookups(data);
       const allStats = computeAllDriverStats(data, lookups.recordMap);
       initResultsModule(data, lookups.recordMap, allStats);
+      rankMap = /* @__PURE__ */ new Map();
+      [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime)).forEach((s, i) => rankMap.set(s.username, s.totalTime !== null ? i + 1 : null));
       eventName = qs("#inp-event-name").value.trim();
       info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
       info.className = "file-info ok";
@@ -3077,9 +3363,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const msg = err instanceof Error ? err.message : String(err);
       info.textContent = `${i18n.t().fileError}: ${msg}`;
       info.className = "file-info error";
+      showWelcome();
     } finally {
       btn.disabled = false;
-      e.target.value = "";
     }
   }
   function readFileAsText(file) {
@@ -3094,13 +3380,21 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     document.getElementById("screen-welcome").style.display = "flex";
     document.getElementById("screen-chart").style.display = "none";
     document.getElementById("chart-tooltip").style.display = "none";
-    chartCtrl.destroy();
     document.getElementById("header-stats").textContent = "";
-    document.getElementById("pinned-bar").style.display = "none";
-    const legendItems = document.getElementById("legend-items");
-    if (legendItems) legendItems.innerHTML = "";
-    document.getElementById("legend-panel").style.display = "none";
-    prevStageFilter = null;
+    updateResumeButton();
+  }
+  function resumeChart() {
+    if (!data) return;
+    document.getElementById("screen-welcome").style.display = "none";
+    document.getElementById("screen-chart").style.display = "flex";
+    updateHeaderTitle();
+    updateHeaderStats();
+    switchTab(currentTab);
+  }
+  function updateResumeButton() {
+    const btn = qs("#btn-resume");
+    btn.style.display = data ? "" : "none";
+    if (data) btn.textContent = i18n.t().resumeButton(fileName);
   }
   function showChart() {
     if (!data) return;
@@ -3113,13 +3407,24 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     legendExpanded = false;
     document.getElementById("screen-welcome").style.display = "none";
     document.getElementById("screen-chart").style.display = "flex";
-    document.getElementById("header-event-name").textContent = eventName || i18n.t().defaultTitle;
+    updateHeaderTitle();
     applyDomTranslations();
-    buildChartFilterPanel(data, chartState, makeFilterCallbacks());
+    buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
     buildResultsFilters(() => {
     });
     switchTab("chart");
     updateHeaderStats();
+  }
+  function updateHeaderTitle() {
+    const rallyId = data ? fileName.match(/(\d{4,})_table/)?.[1] ?? null : null;
+    const title = eventName || (rallyId ? i18n.t().rallyTitle(rallyId) : i18n.t().defaultTitle);
+    document.getElementById("header-event-name").textContent = title;
+    const link = document.getElementById("header-rally-link");
+    link.style.display = rallyId ? "" : "none";
+    if (rallyId) {
+      link.href = RSF_RALLY_URL + rallyId;
+      link.title = i18n.t().rallyLinkTitle;
+    }
   }
   function updateHeaderStats() {
     if (!data) return;
@@ -3130,12 +3435,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     document.getElementById("header-stats").textContent = i18n.t().headerStats(finished, data.drivers.length, data.stages.length);
   }
   function switchTab(tab) {
+    currentTab = tab;
     qs("#tab-chart").classList.toggle("active", tab === "chart");
     qs("#tab-results").classList.toggle("active", tab === "results");
     qs("#tab-comments").classList.toggle("active", tab === "comments");
     document.getElementById("view-chart").style.display = tab === "chart" ? "flex" : "none";
     document.getElementById("view-results").style.display = tab === "results" ? "flex" : "none";
     document.getElementById("view-comments").style.display = tab === "comments" ? "flex" : "none";
+    document.getElementById("chart-toolbar").style.display = tab === "chart" ? "" : "none";
     document.getElementById("sidebar-chart-filters").style.display = tab === "chart" ? "" : "none";
     document.getElementById("sidebar-results-filters").style.display = tab === "results" ? "" : "none";
     document.getElementById("sidebar-comments-filters").style.display = tab === "comments" ? "" : "none";
@@ -3183,11 +3490,30 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     updateToggleButtonStates(data, chartState);
     refreshLegend();
   }
-  function unpinDriver() {
-    chartCtrl.pinDriver(null);
-    updatePinnedBar(data, chartCtrl.getChart(), null);
-    highlightLegendItem(null);
+  function setYMode(mode) {
+    if (mode === "pinned" && !chartCtrl.getPinnedKeys().length) return;
+    chartCtrl.setYMode(mode);
+    syncYModeSwitch();
     refreshLegend();
+    const pinned = chartCtrl.getPinnedKeys();
+    scrollLegendTo(pinned[pinned.length - 1] ?? null);
+  }
+  function syncYModeSwitch() {
+    const mode = chartCtrl.getYMode();
+    const hasPinned = chartCtrl.getPinnedKeys().length > 0;
+    document.querySelectorAll("#ymode-switch .seg-btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset["ymode"] === mode);
+    });
+    const pinnedBtn = qs("#ymode-pinned");
+    pinnedBtn.disabled = !hasPinned;
+    pinnedBtn.title = hasPinned ? "" : i18n.t().yModePinnedDisabled;
+  }
+  function onPinsChanged(keys) {
+    if (!keys.length && chartCtrl.getYMode() === "pinned") chartCtrl.setYMode("leader");
+    syncYModeSwitch();
+    updatePinnedBar(data, keys, (key) => chartCtrl.togglePin(key, true));
+    refreshLegend();
+    scrollLegendTo(keys[keys.length - 1] ?? null);
   }
   function handleStageBandClick(stageNum) {
     const isSingleAndSame = chartState.activeStageNums.size === 1 && chartState.activeStageNums.has(stageNum) && prevStageFilter !== null;
@@ -3217,12 +3543,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       chartState.activeGroups,
       chartState.activeCars
     );
-    chartCtrl.setOnPinChange((key) => {
-      updatePinnedBar(data, chartCtrl.getChart(), chartCtrl.getPinnedIndex());
-      highlightLegendItem(key);
-      refreshLegend();
-    });
-    document.getElementById("pinned-bar").style.display = "none";
+    updatePinnedBar(data, chartCtrl.getPinnedKeys(), (key) => chartCtrl.togglePin(key, true));
+    syncYModeSwitch();
     afterFilterChange();
   }
   function toggleLegendExpand() {
@@ -3233,47 +3555,25 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (!data || !chartCtrl.getChart()) return;
     const callbacks = {
       onDriverHover: (key) => chartCtrl.setHoveredKey(key),
-      onDriverClick: (key) => {
-        const chart = chartCtrl.getChart();
-        if (!chart) return;
-        const dsIdx = chart.data.datasets.findIndex((ds) => ds.driverKey === key);
-        if (dsIdx === -1) return;
-        const currentPinned = chartCtrl.getPinnedIndex();
-        if (currentPinned === dsIdx) {
-          chartCtrl.pinDriver(null);
-          updatePinnedBar(data, chart, null);
-          highlightLegendItem(null);
-          refreshLegend();
-        } else {
-          chartCtrl.pinDriver(dsIdx);
-          updatePinnedBar(data, chart, dsIdx);
-          highlightLegendItem(key);
-          refreshLegend();
-        }
-      }
+      onDriverClick: (key, additive) => chartCtrl.togglePin(key, additive)
     };
     updateLegendPanel(
       data,
       chartCtrl.getChart(),
       chartCtrl.getActiveStages(),
       lookups.recordMap,
-      chartState.activeDriverKeys,
-      chartState.activeGroups,
-      chartState.activeCars,
       legendExpanded,
-      chartCtrl.getPinnedDriverKey(),
+      chartCtrl.getPinnedKeys(),
+      chartCtrl.getYMode() !== "abs",
       callbacks
     );
   }
-  function highlightLegendItem(driverKey) {
+  function scrollLegendTo(driverKey) {
     const inner = document.getElementById("legend-inner");
-    if (!inner) return;
-    inner.querySelectorAll(".legend-item.pinned-highlight").forEach((el) => el.classList.remove("pinned-highlight"));
-    if (!driverKey) return;
+    if (!inner || !driverKey) return;
     const items = inner.querySelectorAll(".legend-item");
     for (const item of items) {
       if (item.dataset["driverKey"] === driverKey) {
-        item.classList.add("pinned-highlight");
         const itemRect = item.getBoundingClientRect();
         const innerRect = inner.getBoundingClientRect();
         const offset = itemRect.top - innerRect.top - innerRect.height / 2 + itemRect.height / 2;

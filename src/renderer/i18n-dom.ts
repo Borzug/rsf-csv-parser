@@ -17,6 +17,14 @@ export function applyDomTranslations(): void {
     setTextById('chart-legend-sr',         t.chartLegendSuperRally);
     setTextById('chart-legend-comment',    t.chartLegendComment);
 
+    setTextById('ymode-abs',               t.yModeAbs);
+    setTextById('ymode-leader',            t.yModeLeader);
+    setTextById('ymode-pinned',            t.yModePinned);
+
+    setTextById('drop-hint',               t.dropHint);
+    setTextById('drop-overlay-text',       t.dropOverlay);
+    setTextById('welcome-help',            t.welcomeHelp);
+
     setTitleById('pinned-close',           t.pinnedCloseTitle);
     setTitleById('legend-expand-btn',      t.legendExpandTitle);
 

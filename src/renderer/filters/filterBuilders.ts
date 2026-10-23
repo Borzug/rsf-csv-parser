@@ -43,7 +43,7 @@ export function buildStageFilterUI(
         const lbl = createElement('label', 'filter-item');
         lbl.dataset['stageNum'] = String(s.num);
         const cb = createElement('input') as HTMLInputElement;
-        cb.type = 'checkbox'; cb.checked = true;
+        cb.type = 'checkbox'; cb.checked = state.activeStageNums.has(s.num);
         cb.addEventListener('change', () => {
             cb.checked
                 ? state.activeStageNums.add(s.num)
@@ -63,11 +63,23 @@ export function buildDriverFilterUI(
     data:      IParsedRallyData,
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
+    rankMap:   Map<string, number | null>,
 ): void {
     const wrap = document.getElementById('filter-drivers-wrap')!;
     wrap.innerHTML = '';
     const { group, body, btnAll, btnNone } =
         buildCollapsibleFilterGroup(i18n.t().filterParticipants, 'counter-drivers');
+    const t = i18n.t();
+
+    // Сначала финишировавшие по месту, затем сошедшие по алфавиту
+    const rankOf = (d: IDriverInfo) => rankMap.get(d.username) ?? null;
+    const sorted = [...drivers].sort((a, b) => {
+        const ra = rankOf(a), rb = rankOf(b);
+        if (ra !== null && rb !== null) return ra - rb;
+        if (ra !== null) return -1;
+        if (rb !== null) return 1;
+        return a.username.localeCompare(b.username);
+    });
 
     btnAll.addEventListener('click', () => {
         drivers.filter(d => state.visibleDriverKeys.has(d.username))
@@ -87,14 +99,38 @@ export function buildDriverFilterUI(
         callbacks.onDriversChanged();
     });
 
-    for (const drv of drivers) {
+    /** Оставляет выбранными только видимых (с учётом класса/поиска), прошедших отбор pick. */
+    const applyPreset = (pick: (rank: number) => boolean) => {
+        const visible = sorted.filter(d => state.visibleDriverKeys.has(d.username));
+        const finishers = visible.filter(d => rankOf(d) !== null);
+        visible.forEach(d => state.activeDriverKeys.delete(d.username));
+        finishers.forEach((d, i) => { if (pick(i + 1)) state.activeDriverKeys.add(d.username); });
+        qsa<HTMLElement>('.filter-item[data-driver-key]', body).forEach(item => {
+            const cb = item.querySelector<HTMLInputElement>('input[type="checkbox"]');
+            if (cb) cb.checked = state.activeDriverKeys.has(item.dataset['driverKey']!);
+        });
+        callbacks.onDriversChanged();
+    };
+    const presets = createElement('div', 'filter-presets');
+    const addPreset = (label: string, title: string, pick: (rank: number) => boolean) => {
+        const btn = createElement('button', 'btn-fa', label);
+        btn.title = title;
+        btn.addEventListener('click', () => applyPreset(pick));
+        presets.appendChild(btn);
+    };
+    addPreset(t.presetTop(10), t.presetTopTitle(10), r => r <= 10);
+    addPreset(t.presetTop(20), t.presetTopTitle(20), r => r <= 20);
+    addPreset(t.presetFinished, t.presetFinishedTitle, () => true);
+    body.appendChild(presets);
+
+    for (const drv of sorted) {
         const lbl = createElement('label', 'filter-item');
         lbl.dataset['driverKey'] = drv.username;
         lbl.dataset['group']     = drv.group;
         lbl.dataset['car']       = drv.car;
 
         const cb = createElement('input') as HTMLInputElement;
-        cb.type = 'checkbox'; cb.checked = true;
+        cb.type = 'checkbox'; cb.checked = state.activeDriverKeys.has(drv.username);
         cb.addEventListener('change', () => {
             cb.checked
                 ? state.activeDriverKeys.add(drv.username)
@@ -102,6 +138,9 @@ export function buildDriverFilterUI(
             callbacks.onDriversChanged();
         });
 
+        const rank     = rankOf(drv);
+        const place    = createElement('span', rank !== null ? 'filter-driver-rank' : 'filter-driver-rank dnf',
+            rank !== null ? String(rank) : 'DNF');
         const content  = createElement('div', 'filter-driver-content');
         const nameSpan = createElement('span', 'filter-driver-name',
             drv.realName && drv.realName !== drv.username
@@ -121,6 +160,7 @@ export function buildDriverFilterUI(
         });
 
         lbl.appendChild(cb);
+        lbl.appendChild(place);
         lbl.appendChild(content);
         body.appendChild(lbl);
     }
@@ -157,7 +197,7 @@ export function buildGroupFilterUI(
     for (const grp of groups) {
         const lbl = createElement('label', 'filter-item');
         const cb  = createElement('input') as HTMLInputElement;
-        cb.type = 'checkbox'; cb.checked = true;
+        cb.type = 'checkbox'; cb.checked = state.activeGroups.has(grp);
         cb.addEventListener('change', () => {
             cb.checked ? state.activeGroups.add(grp) : state.activeGroups.delete(grp);
             onRefilterDrivers();
@@ -200,7 +240,7 @@ export function buildCarFilterUI(
     for (const car of cars) {
         const lbl = createElement('label', 'filter-item');
         const cb  = createElement('input') as HTMLInputElement;
-        cb.type = 'checkbox'; cb.checked = true;
+        cb.type = 'checkbox'; cb.checked = state.activeCars.has(car);
         cb.addEventListener('change', () => {
             cb.checked ? state.activeCars.add(car) : state.activeCars.delete(car);
             onRefilterDrivers();

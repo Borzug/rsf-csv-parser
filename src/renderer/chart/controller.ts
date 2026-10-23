@@ -17,6 +17,13 @@ const ROTATE_90_AT   = 20;
 const BOT_PAD_NORMAL = 46;
 const BOT_PAD_45     = 90;
 const BOT_PAD_90     = 110;
+const DIM_ALPHA      = 0.06;
+const DIM_ALPHA_SOFT = 0.35;
+const BORDER_WIDTH        = 1.8;
+const BORDER_WIDTH_PINNED = 2.8;
+
+/** Режим оси Y: накопленное время, отставание от лидера, отставание от первого закреплённого. */
+export type TYMode = 'abs' | 'leader' | 'pinned';
 
 export interface IChartController {
     build(
@@ -37,11 +44,14 @@ export interface IChartController {
         activeGroups:     Set<string>,
         activeCars:       Set<string>,
     ): void;
-    pinDriver(datasetIndex: number | null): void;
+    /** additive = true — добавить/убрать из сравнения, иначе выделить только этого участника. */
+    togglePin(key: string, additive: boolean): void;
+    clearPins(): void;
+    getPinnedKeys(): string[];
+    setYMode(mode: TYMode): void;
+    getYMode(): TYMode;
     setHoveredKey(key: string | null): void;
-    setOnPinChange(cb: (key: string | null) => void): void;
-    getPinnedIndex(): number | null;
-    getPinnedDriverKey(): string | null;
+    setOnPinChange(cb: (keys: string[]) => void): void;
     getActiveStages(): IStageInfo[];
     getChart(): any;
     refreshLabels(): void;
@@ -52,7 +62,9 @@ export function createChartController(): IChartController {
     let canvas:             HTMLCanvasElement | null = null;
     let hoveredDsIdx:       number | null = null;
     let hoveredDsKey:       string | null = null;
-    let pinnedDsIdx:        number | null = null;
+    let pinnedKeys:         string[]      = [];
+    let pinnedIdxs:         number[]      = [];
+    let yMode:              TYMode        = 'abs';
     let hoveredBandIdx:     number | null = null;
     let activeStages:       IStageInfo[]  = [];
     let currentBotPad       = BOT_PAD_NORMAL;
@@ -60,7 +72,7 @@ export function createChartController(): IChartController {
     let clickHandler:       ((e: MouseEvent) => void) | null = null;
     let mousemoveHandler:   ((e: MouseEvent) => void) | null = null;
     let mouseleaveHandler:  (() => void)              | null = null;
-    let onPinChange:        ((key: string | null) => void) | null = null;
+    let onPinChange:        ((keys: string[]) => void) | null = null;
 
     function removeCanvasListeners(): void {
         if (!canvas) return;
@@ -70,14 +82,102 @@ export function createChartController(): IChartController {
         clickHandler = mousemoveHandler = mouseleaveHandler = null;
     }
 
+    /** Закреплённые, которые есть на текущем графике, в порядке закрепления. */
+    function syncPinnedIdxs(): void {
+        if (!chart) { pinnedIdxs = []; return; }
+        const dss = chart.data.datasets;
+        pinnedKeys = pinnedKeys.filter(k => dss.some((d: any) => d.driverKey === k));
+        pinnedIdxs = pinnedKeys.map(k => dss.findIndex((d: any) => d.driverKey === k));
+    }
+
+    function effectiveYMode(): TYMode {
+        return yMode === 'pinned' && !pinnedIdxs.length ? 'leader' : yMode;
+    }
+
+    /**
+     * Насколько приглушать невыделенные линии. В режиме «от выбранного» остальные
+     * участники и есть предмет анализа — их лишь слегка приглушаем.
+     */
+    function dimAlpha(): number {
+        return hoveredDsKey === null && effectiveYMode() === 'pinned' ? DIM_ALPHA_SOFT : DIM_ALPHA;
+    }
+
+    /** Пересчитывает ds.data из абсолютных значений (ds._abs) и границы оси Y. */
+    function applyYMode(): void {
+        if (!chart) return;
+        const dss  = chart.data.datasets;
+        const mode = effectiveYMode();
+        const nPts = chart.data.labels.length;
+
+        let ref: (number | null)[] | null = null;
+        if (mode === 'leader') {
+            ref = new Array(nPts).fill(null);
+            for (const ds of dss) {
+                if (ds.hidden) continue;
+                (ds._abs as (number | null)[]).forEach((v, i) => {
+                    if (v !== null && (ref![i] === null || v < ref![i]!)) ref![i] = v;
+                });
+            }
+        } else if (mode === 'pinned') {
+            ref = dss[pinnedIdxs[0]]._abs;
+        }
+
+        // В режимах отставания при сравнении (2+ закреплённых) шкала подгоняется под них,
+        // иначе их разница в секундах теряется на фоне медленных участников.
+        // Один закреплённый — это база отсчёта: шкала по всем видимым.
+        const fitToPinned = !!ref && pinnedIdxs.length > 1;
+        let min = 0, max = 0;
+        dss.forEach((ds: any, di: number) => {
+            const abs = ds._abs as (number | null)[];
+            ds.data = ref
+                ? abs.map((v, i) => v === null || ref![i] === null ? null : v - ref![i]!)
+                : abs.slice();
+            // Закреплённые — толще и поверх остальных (меньший order рисуется последним)
+            ds.borderWidth = pinnedIdxs.includes(di) ? BORDER_WIDTH_PINNED : BORDER_WIDTH;
+            ds.order       = pinnedIdxs.includes(di) ? -1 : 0;
+            // В абсолютном режиме шкала не зависит от фильтров — как и раньше
+            if (ds.hidden && ref) return;
+            if (fitToPinned && !pinnedIdxs.includes(di)) return;
+            for (const v of ds.data as (number | null)[]) {
+                if (v === null) continue;
+                if (v < min) min = v;
+                if (v > max) max = v;
+            }
+        });
+
+        const step = computeYAxisStep(Math.max(max - min, 1));
+        for (const id of ['y', 'y2']) {
+            const s = chart.options.scales[id];
+            s.min           = ref ? Math.floor(min / step) * step : 0;
+            s.max           = Math.max(Math.ceil(max / step) * step, step);
+            s.reverse       = !!ref;
+            s.ticks.stepSize = step;
+        }
+    }
+
+    function notifyPinChange(): void {
+        syncPinnedIdxs();
+        applyYMode();
+        chart?.update('none');
+        onPinChange?.([...pinnedKeys]);
+    }
+
+    function togglePin(key: string, additive: boolean): void {
+        const has = pinnedKeys.includes(key);
+        if (additive) {
+            pinnedKeys = has ? pinnedKeys.filter(k => k !== key) : [...pinnedKeys, key];
+        } else {
+            pinnedKeys = has && pinnedKeys.length === 1 ? [] : [key];
+        }
+        hoveredDsIdx = null;
+        notifyPinChange();
+    }
+
     return {
-        getChart:           () => chart,
-        getPinnedIndex:     () => pinnedDsIdx,
-        getPinnedDriverKey: () => {
-            if (pinnedDsIdx === null || !chart) return null;
-            return chart.data.datasets[pinnedDsIdx]?.driverKey ?? null;
-        },
-        getActiveStages:    () => activeStages,
+        getChart:        () => chart,
+        getPinnedKeys:   () => [...pinnedKeys],
+        getYMode:        () => yMode,
+        getActiveStages: () => activeStages,
 
         refreshLabels(): void {
             if (!chart) return;
@@ -92,20 +192,30 @@ export function createChartController(): IChartController {
             chart?.update('none');
         },
 
-        setOnPinChange(cb: (key: string | null) => void): void {
+        setOnPinChange(cb: (keys: string[]) => void): void {
             onPinChange = cb;
         },
 
         destroy(): void {
             removeCanvasListeners();
             if (chart) { chart.destroy(); chart = null; }
-            hoveredDsIdx  = null;
-            pinnedDsIdx   = null;
+            hoveredDsIdx   = null;
+            pinnedKeys     = [];
+            pinnedIdxs     = [];
             hoveredBandIdx = null;
         },
 
-        pinDriver(idx: number | null): void {
-            pinnedDsIdx = idx;
+        togglePin,
+
+        clearPins(): void {
+            if (!pinnedKeys.length) return;
+            pinnedKeys = [];
+            notifyPinChange();
+        },
+
+        setYMode(mode: TYMode): void {
+            yMode = mode;
+            applyYMode();
             chart?.update('none');
         },
 
@@ -117,6 +227,7 @@ export function createChartController(): IChartController {
                 const carOk = !activeCars.size || !drv || activeCars.has(drv.car);
                 ds.hidden   = !activeDriverKeys.has(ds.driverKey) || !grpOk || !carOk;
             });
+            applyYMode();
             chart.update('none');
         },
 
@@ -129,17 +240,16 @@ export function createChartController(): IChartController {
 
             const nPts   = 1 + stages.length * 3;
             const labels = new Array<string>(nPts).fill('');
-            const maxCum = computeMaxCumulative(data, stages, recordMap);
-            const yStep  = computeYAxisStep(maxCum);
 
             const datasets = buildDatasets(
                 data, stages, recordMap, cumPenMap, cumSPMap, cumSRMap,
                 activeDriverKeys, activeGroups, activeCars,
             );
+            datasets.forEach((ds: any) => { ds._abs = ds.data.slice(); });
 
             canvas = document.getElementById('race-chart') as HTMLCanvasElement;
             removeCanvasListeners();
-            if (chart) { chart.destroy(); chart = null; hoveredDsIdx = null; pinnedDsIdx = null; }
+            if (chart) { chart.destroy(); chart = null; hoveredDsIdx = null; }
 
             const Chart = (window as any).Chart;
             chart = new Chart(canvas, {
@@ -153,7 +263,7 @@ export function createChartController(): IChartController {
                     interaction: { mode: 'nearest', axis: 'xy', intersect: false },
                     layout: { padding: { bottom: currentBotPad } },
                     onHover: (event: any, elements: any[]) => {
-                        if (pinnedDsIdx !== null) { hoveredDsIdx = null; return; }
+                        if (pinnedIdxs.length) { hoveredDsIdx = null; return; }
                         let newIdx: number | null = null;
                         if (elements.length && event.native) {
                             const el   = elements[0];
@@ -171,38 +281,42 @@ export function createChartController(): IChartController {
                             external: buildTooltipHandler(
                                 stages,
                                 () => chart,
-                                () => pinnedDsIdx,
+                                () => pinnedIdxs,
+                                effectiveYMode,
                             ),
                         },
                     },
-                    scales: buildScales(yStep, maxCum),
+                    scales: buildScales(() => effectiveYMode() !== 'abs'),
                 },
                 plugins: [
                     buildHoverDimPlugin(
                         () => hoveredDsKey,
-                        () => pinnedDsIdx,
+                        () => pinnedIdxs,
                         () => hoveredDsIdx,
+                        dimAlpha,
                     ),
                     buildStageNamesPlugin(stages, useRot45, useRot90, () => hoveredBandIdx),
-                    buildDnfLinePlugin(() => hoveredDsKey, () => pinnedDsIdx, () => hoveredDsIdx),
-                    buildPinnedCommentsPlugin(() => pinnedDsIdx),
+                    buildDnfLinePlugin(() => hoveredDsKey, () => pinnedIdxs, () => hoveredDsIdx, dimAlpha),
+                    buildPinnedCommentsPlugin(() => pinnedIdxs),
                 ],
             });
 
-            clickHandler = (e: MouseEvent) =>
-                handleCanvasClick(e, chart, canvas!, stages, currentBotPad, pinnedDsIdx,
-                    (idx) => {
-                        pinnedDsIdx = idx;
-                        chart.update('none');
-                        const key = chart.data.datasets[idx]?.driverKey ?? null;
-                        onPinChange?.(key);
-                    },
-                    () => {
-                        pinnedDsIdx = null;
-                        chart.update('none');
-                        onPinChange?.(null);
-                    },
-                );
+            // Закреплённые участники переживают перестройку графика (смену фильтра СУ)
+            syncPinnedIdxs();
+            applyYMode();
+            chart.update('none');
+
+            clickHandler = (e: MouseEvent) => {
+                const additive = e.ctrlKey || e.metaKey || e.shiftKey;
+                const hit = handleCanvasClick(e, chart, canvas!, stages, currentBotPad);
+                if (hit === 'ignore') return;
+                if (hit === null) {
+                    if (!additive && pinnedKeys.length) { pinnedKeys = []; notifyPinChange(); }
+                    return;
+                }
+                const key = chart.data.datasets[hit]?.driverKey;
+                if (key) togglePin(key, additive);
+            };
 
             mousemoveHandler = (e: MouseEvent) => {
                 const newBandIdx = resolveHoveredBandIdx(e, chart, canvas!, stages, currentBotPad);
@@ -256,32 +370,14 @@ function resolveHoveredBandIdx(
     return null;
 }
 
-function computeMaxCumulative(
-    data:      IParsedRallyData,
-    stages:    IStageInfo[],
-    recordMap: Map<string, Map<number, any>>,
-): number {
-    let max = 0;
-    for (const drv of data.drivers) {
-        let cum = 0;
-        for (const st of stages) {
-            const r = recordMap.get(drv.username)?.get(st.num);
-            if (!r || r.time1 === null) break;
-            cum += r.time3 ?? 0;
-        }
-        if (cum > max) max = cum;
-    }
-    return max;
-}
-
-function buildScales(yStep: number, maxCum: number): object {
-    const yMax = Math.ceil(maxCum / yStep) * yStep;
-
+function buildScales(isGapMode: () => boolean): object {
     const yTickConfig = {
         color:    '#555',
         font:     { size: 11, family: "'Fira Code', monospace" },
-        stepSize: yStep,
-        callback: (v: any) => formatYAxisTick(v as number, i18n.t().axisTimeUnits),
+        callback: (v: any) => {
+            const sec = v as number;
+            return (isGapMode() && sec > 0 ? '+' : '') + formatYAxisTick(sec, i18n.t().axisTimeUnits);
+        },
     };
 
     return {
@@ -298,10 +394,11 @@ function buildScales(yStep: number, maxCum: number): object {
         y: {
             type:     'linear',
             position: 'left',
-            min:      0,
-            max:      yMax,
-            ticks:    yTickConfig,
-            grid:     { color: '#1c1c1c', lineWidth: 1 },
+            ticks:    { ...yTickConfig },
+            grid:     {
+                color:     (ctx: any) => isGapMode() && ctx.tick?.value === 0 ? '#3a3a3a' : '#1c1c1c',
+                lineWidth: 1,
+            },
             border:   { color: '#3a3a3a' },
             title: {
                 display: true,
@@ -313,9 +410,7 @@ function buildScales(yStep: number, maxCum: number): object {
         y2: {
             type:      'linear',
             position:  'right',
-            min:       0,
-            max:       yMax,
-            ticks:     yTickConfig,
+            ticks:     { ...yTickConfig },
             grid:      { drawOnChartArea: false },
             border:    { color: '#3a3a3a' },
             title: {
@@ -328,17 +423,15 @@ function buildScales(yStep: number, maxCum: number): object {
     };
 }
 
+/** Индекс датасета под курсором; 'ignore' — клик вне области линий (в т.ч. по подписи СУ); null — мимо линий. */
 function handleCanvasClick(
-    e:         MouseEvent,
-    chart:     any,
-    canvas:    HTMLCanvasElement,
-    stages:    IStageInfo[],
-    botPad:    number,
-    pinnedIdx: number | null,
-    setPin:    (idx: number) => void,
-    clearPin:  () => void,
-): void {
-    if (!chart) return;
+    e:      MouseEvent,
+    chart:  any,
+    canvas: HTMLCanvasElement,
+    stages: IStageInfo[],
+    botPad: number,
+): number | 'ignore' | null {
+    if (!chart) return null;
     const rect = canvas.getBoundingClientRect();
     const mx   = e.clientX - rect.left;
     const my   = e.clientY - rect.top;
@@ -351,24 +444,20 @@ function handleCanvasClick(
             const xR = xs.getPixelForTick(i * 3 + 3);
             if (mx >= xL && mx <= xR) {
                 (window as any).__onStageBandClick?.(stages[i].num);
-                return;
+                return 'ignore';
             }
         }
-        return;
+        return 'ignore';
     }
 
-    if (my < ca.top || my > ca.bottom) return;
+    if (my < ca.top || my > ca.bottom) return 'ignore';
 
     const elems = chart.getElementsAtEventForMode(e, 'nearest', { intersect: false }, false) as any[];
-    if (!elems.length) { if (pinnedIdx !== null) clearPin(); return; }
+    if (!elems.length) return null;
 
     const el   = elems[0];
     const meta = chart.getDatasetMeta(el.datasetIndex);
     const pt   = meta.data[el.index];
-    if (!pt || Math.hypot(pt.x - mx, pt.y - my) > HOVER_DIST_PX) {
-        if (pinnedIdx !== null) clearPin();
-        return;
-    }
-
-    pinnedIdx === el.datasetIndex ? clearPin() : setPin(el.datasetIndex);
+    if (!pt || Math.hypot(pt.x - mx, pt.y - my) > HOVER_DIST_PX) return null;
+    return el.datasetIndex;
 }

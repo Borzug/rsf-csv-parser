@@ -1,32 +1,25 @@
-const DIM_ALPHA    = 0.06;
+import { resolveActiveIdxs } from "./pluginHoverDim";
+
 const DNF_DASH_ON  = 6;
 const DNF_DASH_OFF = 4;
 const DNF_LINE_W   = 1.8;
 
 export function buildDnfLinePlugin(
     getHoveredKey: () => string | null,
-    getPinnedIdx:  () => number | null,
+    getPinnedIdxs: () => number[],
     getHoveredIdx: () => number | null,
+    getDimAlpha:   () => number,
 ): object {
-    function resolveActiveIdx(chart: any): number | null {
-        const key = getHoveredKey();
-        if (key !== null)
-            return chart.data.datasets.findIndex((d: any) => d.driverKey === key) as number;
-        const pinned = getPinnedIdx();
-        if (pinned !== null) return pinned;
-        return getHoveredIdx();
-    }
-
     return {
         id: 'dnfLine',
         afterDatasetsDraw(chart: any): void {
-            const pinnedIdx = getPinnedIdx();
-            const activeIdx = resolveActiveIdx(chart);
-            const { ctx }   = chart;
+            const pinnedIdxs = getPinnedIdxs();
+            const active     = resolveActiveIdxs(chart, getHoveredKey, getPinnedIdxs, getHoveredIdx);
+            const { ctx }    = chart;
 
             chart.data.datasets.forEach((ds: any, di: number) => {
                 if (ds.hidden) return;
-                if (di === pinnedIdx) return;
+                if (pinnedIdxs.includes(di)) return;
 
                 const dnfPtIdx  = ds._dnfCommentPtIdx as number | null;
                 const lastPtIdx = ds._lastValidPtIdx  as number | undefined;
@@ -37,10 +30,10 @@ export function buildDnfLinePlugin(
                 const toPt   = meta.data[dnfPtIdx];
                 if (!fromPt || !toPt) return;
 
-                const isDimmed = activeIdx !== null && di !== activeIdx;
+                const isDimmed = active !== null && !active.has(di);
 
                 ctx.save();
-                if (isDimmed) ctx.globalAlpha = DIM_ALPHA;
+                if (isDimmed) ctx.globalAlpha = getDimAlpha();
                 ctx.beginPath();
                 ctx.setLineDash([DNF_DASH_ON, DNF_DASH_OFF]);
                 ctx.strokeStyle = ds.borderColor as string;
