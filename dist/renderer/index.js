@@ -2000,7 +2000,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (entry.time3 !== null) {
       const time = document.createElement("span");
       time.className = "cmt-time";
-      time.textContent = formatTime2(entry.time3);
+      time.textContent = formatTime(entry.time3);
       meta.appendChild(time);
     }
     if (entry.gapToLeader === 0) {
@@ -2011,7 +2011,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     } else if (entry.gapToLeader !== null && entry.gapToLeader > 0) {
       const gap = document.createElement("span");
       gap.className = "cmt-gap";
-      gap.textContent = i18n.t().commentsGap(formatTime2(entry.gapToLeader));
+      gap.textContent = i18n.t().commentsGap(formatTime(entry.gapToLeader));
       meta.appendChild(gap);
     }
     return meta;
@@ -2028,33 +2028,34 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (entry.penalty > 0) {
       const pen = document.createElement("span");
       pen.className = "cmt-badge-penalty";
-      pen.textContent = i18n.t().commentsPenalty(formatTime2(entry.penalty));
+      pen.textContent = i18n.t().commentsPenalty(formatTime(entry.penalty));
       badges.appendChild(pen);
     }
     if (entry.servicePenalty > 0) {
       const sp = document.createElement("span");
       sp.className = "cmt-badge-penalty";
-      sp.textContent = i18n.t().commentsServicePenalty(formatTime2(entry.servicePenalty));
+      sp.textContent = i18n.t().commentsServicePenalty(formatTime(entry.servicePenalty));
       badges.appendChild(sp);
     }
     return badges;
-  }
-  function formatTime2(seconds) {
-    const abs = Math.abs(seconds);
-    const h = Math.floor(abs / 3600);
-    const m = Math.floor(abs % 3600 / 60);
-    const s = abs % 60;
-    const dec = Math.round(s % 1 * 10);
-    const ss = Math.floor(s).toString().padStart(2, "0");
-    const sign = seconds < 0 ? "-" : "";
-    if (h > 0) return `${sign}${h}:${m.toString().padStart(2, "0")}:${ss}.${dec}`;
-    return `${sign}${m}:${ss}.${dec}`;
   }
   function injectStyles() {
     if (document.getElementById(STYLES_ID)) return;
     const style = document.createElement("style");
     style.id = STYLES_ID;
     style.textContent = `
+        /* \u0418\u043C\u0435\u043D\u0430 \u043F\u0435\u0440\u0435\u043C\u0435\u043D\u043D\u044B\u0445 \u043D\u0438\u0436\u0435 \u043D\u0438\u0433\u0434\u0435 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u043E\u0431\u044A\u044F\u0432\u043B\u044F\u043B\u0438\u0441\u044C \u2014 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043E\u0441\u0442\u0430\u0432\u0430\u043B\u0438\u0441\u044C
+           \u0431\u0435\u0437 \u0444\u043E\u043D\u0430 \u0438 \u0440\u0430\u043C\u043A\u0438 \u0438 \u0441 \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u043C \u0448\u0440\u0438\u0444\u0442\u043E\u043C. \u0421\u0432\u043E\u0434\u0438\u043C \u0438\u0445 \u043A \u0442\u043E\u043A\u0435\u043D\u0430\u043C \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F. */
+        :root {
+            --font-mono:                var(--ff);
+            --color-text-primary:       var(--text);
+            --color-text-secondary:     #aaa;
+            --color-text-tertiary:      var(--muted);
+            --color-background-secondary: var(--surface);
+            --color-border-tertiary:    var(--border);
+            --color-border-secondary:   #444;
+        }
+        #view-comments, .cmt-search-wrap { font-family: var(--ff); }
         #view-comments {
             flex: 1;
             overflow-y: auto;
@@ -3461,18 +3462,85 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     chartState.visibleDriverKeys = new Set(data.drivers.map((d) => d.username));
     prevStageFilter = null;
     legendExpanded = false;
+    const urlState = readUrlState();
+    restoringUrlState = true;
+    if (urlState) applyUrlFilters(urlState);
     document.getElementById("screen-welcome").style.display = "none";
     document.getElementById("screen-chart").style.display = "flex";
     updateHeaderTitle();
     applyDomTranslations();
     buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
+    updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
     buildResultsFilters(() => {
     });
     switchTab("chart");
+    if (urlState) applyUrlView(urlState);
+    if (chartCtrl.getYMode() === "pinned" && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode("leader");
+    syncYModeSwitch();
+    refreshLegend();
     updateHeaderStats();
+    restoringUrlState = false;
+    writeUrlState();
+  }
+  var LIST_SEP = "|";
+  var restoringUrlState = false;
+  function currentRallyId() {
+    return data ? fileName.match(/(\d{4,})_table/)?.[1] ?? null : null;
+  }
+  function readUrlState() {
+    const p = new URLSearchParams(location.hash.slice(1));
+    if (![...p.keys()].length) return null;
+    const rally = p.get("r");
+    if (rally && rally !== currentRallyId()) return null;
+    const list = (key) => p.get(key)?.split(LIST_SEP).filter(Boolean) ?? null;
+    const tab = p.get("tab");
+    const y = p.get("y");
+    return {
+      tab: tab === "chart" || tab === "results" || tab === "comments" ? tab : null,
+      yMode: y === "abs" || y === "leader" || y === "pinned" ? y : null,
+      stages: list("ss")?.map(Number).filter((n) => !isNaN(n)) ?? null,
+      groups: list("cls"),
+      pins: list("pin") ?? []
+    };
+  }
+  function applyUrlFilters(s) {
+    if (!data) return;
+    const stages = s.stages?.filter((n) => data.stages.some((st) => st.num === n));
+    if (stages?.length) chartState.activeStageNums = new Set(stages);
+    const groups = s.groups?.filter((g) => data.groups.includes(g));
+    if (groups?.length) chartState.activeGroups = new Set(groups);
+  }
+  function applyUrlView(s) {
+    if (!data) return;
+    syncDatasetVisibility();
+    for (const key of s.pins)
+      if (data.drivers.some((d) => d.username === key)) chartCtrl.togglePin(key, true);
+    if (s.yMode && (s.yMode !== "pinned" || chartCtrl.getPinnedKeys().length)) {
+      chartCtrl.setYMode(s.yMode);
+      syncYModeSwitch();
+      refreshLegend();
+    }
+    if (s.tab && s.tab !== "chart") switchTab(s.tab);
+  }
+  function writeUrlState() {
+    if (!data || restoringUrlState) return;
+    const p = new URLSearchParams();
+    const rallyId = currentRallyId();
+    if (rallyId) p.set("r", rallyId);
+    if (currentTab !== "chart") p.set("tab", currentTab);
+    const yMode = chartCtrl.getYMode();
+    if (yMode !== "abs") p.set("y", yMode);
+    if (chartState.activeStageNums.size !== data.stages.length)
+      p.set("ss", [...chartState.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
+    if (data.groups.length && chartState.activeGroups.size !== data.groups.length)
+      p.set("cls", [...chartState.activeGroups].join(LIST_SEP));
+    const pins = chartCtrl.getPinnedKeys();
+    if (pins.length) p.set("pin", pins.join(LIST_SEP));
+    const hash = p.toString();
+    history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
   }
   function updateHeaderTitle() {
-    const rallyId = data ? fileName.match(/(\d{4,})_table/)?.[1] ?? null : null;
+    const rallyId = currentRallyId();
     const title = eventName || (rallyId ? i18n.t().rallyTitle(rallyId) : i18n.t().defaultTitle);
     document.getElementById("header-event-name").textContent = title;
     const link = document.getElementById("header-rally-link");
@@ -3519,6 +3587,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (tab === "chart" && chartCtrl.getChart()) refreshLegend();
     if (tab === "results") renderResultsTable();
     if (tab === "comments") renderCommentsView(data);
+    writeUrlState();
   }
   function makeFilterCallbacks() {
     return {
@@ -3557,6 +3626,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     updateFilterCounters(data, chartState);
     updateToggleButtonStates(data, chartState);
     refreshLegend();
+    writeUrlState();
   }
   function setYMode(mode) {
     if (mode === "pinned" && !chartCtrl.getPinnedKeys().length) return;
@@ -3565,6 +3635,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     refreshLegend();
     const pinned = chartCtrl.getPinnedKeys();
     scrollLegendTo(pinned[pinned.length - 1] ?? null);
+    writeUrlState();
   }
   function syncYModeSwitch() {
     const mode = chartCtrl.getYMode();
@@ -3583,6 +3654,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     updatePinnedBar(data, keys, (key) => chartCtrl.togglePin(key, true));
     refreshLegend();
     scrollLegendTo(keys[keys.length - 1] ?? null);
+    writeUrlState();
   }
   function handleStageBandClick(stageNum) {
     const isSingleAndSame = chartState.activeStageNums.size === 1 && chartState.activeStageNums.has(stageNum) && prevStageFilter !== null;

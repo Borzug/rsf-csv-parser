@@ -1,7 +1,10 @@
 import type { IParsedRallyData, ILapRecord } from '../../shared/types';
 import type { ICommentEntry, IDriverComments } from './types';
 import { i18n } from "../../i18n/index";
-import { nullableCompare } from "../utils";
+import {
+    formatTime,
+    nullableCompare
+} from "../utils";
 
 const STYLES_ID    = 'comments-module-styles';
 const CARD_WIDTH   = 220;
@@ -362,18 +365,6 @@ function buildCardBadges(entry: ICommentEntry): HTMLElement {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatTime(seconds: number): string {
-    const abs = Math.abs(seconds);
-    const h   = Math.floor(abs / 3600);
-    const m   = Math.floor((abs % 3600) / 60);
-    const s   = abs % 60;
-    const dec = Math.round((s % 1) * 10);
-    const ss  = Math.floor(s).toString().padStart(2, '0');
-    const sign = seconds < 0 ? '-' : '';
-    if (h > 0) return `${sign}${h}:${m.toString().padStart(2, '0')}:${ss}.${dec}`;
-    return `${sign}${m}:${ss}.${dec}`;
-}
-
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 function injectStyles(): void {
@@ -381,6 +372,18 @@ function injectStyles(): void {
     const style = document.createElement('style');
     style.id = STYLES_ID;
     style.textContent = `
+        /* Имена переменных ниже нигде больше не объявлялись — карточки оставались
+           без фона и рамки и с системным шрифтом. Сводим их к токенам приложения. */
+        :root {
+            --font-mono:                var(--ff);
+            --color-text-primary:       var(--text);
+            --color-text-secondary:     #aaa;
+            --color-text-tertiary:      var(--muted);
+            --color-background-secondary: var(--surface);
+            --color-border-tertiary:    var(--border);
+            --color-border-secondary:   #444;
+        }
+        #view-comments, .cmt-search-wrap { font-family: var(--ff); }
         #view-comments {
             flex: 1;
             overflow-y: auto;

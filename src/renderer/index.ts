@@ -249,20 +249,113 @@ function showChart(): void {
     prevStageFilter  = null;
     legendExpanded   = false;
 
+    const urlState = readUrlState();
+    restoringUrlState = true;
+    if (urlState) applyUrlFilters(urlState);
+
     document.getElementById('screen-welcome')!.style.display  = 'none';
     document.getElementById('screen-chart')!.style.display    = 'flex';
     updateHeaderTitle();
 
     applyDomTranslations();
     buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
+    updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
     buildResultsFilters(() => {});
     switchTab('chart');
+    if (urlState) applyUrlView(urlState);
+    // Режим оси переживает смену файла, но «от выбранного» без закреплённых теряет смысл
+    if (chartCtrl.getYMode() === 'pinned' && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode('leader');
+    syncYModeSwitch();
+    refreshLegend();
     updateHeaderStats();
+    restoringUrlState = false;
+    writeUrlState();
+}
+
+// ── View state in URL (#r=…&tab=…&y=…&ss=…&cls=…&pin=…) ───────────────────────
+//
+// Сами данные в ссылку не попадают — это локальный файл. Ссылка восстанавливает вид
+// после загрузки того же CSV (номер ралли сверяется, чтобы не применить чужие настройки).
+
+interface IUrlState {
+    tab:    TTab | null;
+    yMode:  TYMode | null;
+    stages: number[] | null;
+    groups: string[] | null;
+    pins:   string[];
+}
+
+const LIST_SEP = '|';
+let restoringUrlState = false;
+
+function currentRallyId(): string | null {
+    return data ? fileName.match(/(\d{4,})_table/)?.[1] ?? null : null;
+}
+
+function readUrlState(): IUrlState | null {
+    const p = new URLSearchParams(location.hash.slice(1));
+    if (![...p.keys()].length) return null;
+    const rally = p.get('r');
+    if (rally && rally !== currentRallyId()) return null;
+
+    const list = (key: string) => p.get(key)?.split(LIST_SEP).filter(Boolean) ?? null;
+    const tab  = p.get('tab');
+    const y    = p.get('y');
+    return {
+        tab:    tab === 'chart' || tab === 'results' || tab === 'comments' ? tab : null,
+        yMode:  y === 'abs' || y === 'leader' || y === 'pinned' ? y : null,
+        stages: list('ss')?.map(Number).filter(n => !isNaN(n)) ?? null,
+        groups: list('cls'),
+        pins:   list('pin') ?? [],
+    };
+}
+
+/** Фильтры применяются до построения панели и графика — чекбоксы строятся из состояния. */
+function applyUrlFilters(s: IUrlState): void {
+    if (!data) return;
+    const stages = s.stages?.filter(n => data!.stages.some(st => st.num === n));
+    if (stages?.length) chartState.activeStageNums = new Set(stages);
+    const groups = s.groups?.filter(g => data!.groups.includes(g));
+    if (groups?.length) chartState.activeGroups = new Set(groups);
+}
+
+/** Режим, закреплённые и вкладка — когда график уже построен. */
+function applyUrlView(s: IUrlState): void {
+    if (!data) return;
+    syncDatasetVisibility();
+    for (const key of s.pins)
+        if (data.drivers.some(d => d.username === key)) chartCtrl.togglePin(key, true);
+    if (s.yMode && (s.yMode !== 'pinned' || chartCtrl.getPinnedKeys().length)) {
+        chartCtrl.setYMode(s.yMode);
+        syncYModeSwitch();
+        refreshLegend();
+    }
+    if (s.tab && s.tab !== 'chart') switchTab(s.tab);
+}
+
+/** replaceState — чтобы каждое переключение фильтра не засоряло историю «Назад». */
+function writeUrlState(): void {
+    if (!data || restoringUrlState) return;
+    const p = new URLSearchParams();
+    const rallyId = currentRallyId();
+    if (rallyId) p.set('r', rallyId);
+    if (currentTab !== 'chart') p.set('tab', currentTab);
+    const yMode = chartCtrl.getYMode();
+    if (yMode !== 'abs') p.set('y', yMode);
+    if (chartState.activeStageNums.size !== data.stages.length)
+        p.set('ss', [...chartState.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
+    if (data.groups.length && chartState.activeGroups.size !== data.groups.length)
+        p.set('cls', [...chartState.activeGroups].join(LIST_SEP));
+    const pins = chartCtrl.getPinnedKeys();
+    if (pins.length) p.set('pin', pins.join(LIST_SEP));
+
+    const hash = p.toString();
+    history.replaceState(null, '', hash ? `#${hash}` : location.pathname + location.search);
 }
 
 /** Ручное название → номер ралли из имени файла (NNNNNN_table.csv) → название по умолчанию. */
 function updateHeaderTitle(): void {
-    const rallyId = data ? fileName.match(/(\d{4,})_table/)?.[1] ?? null : null;
+    const rallyId = currentRallyId();
     const title   = eventName || (rallyId ? i18n.t().rallyTitle(rallyId) : i18n.t().defaultTitle);
     document.getElementById('header-event-name')!.textContent = title;
 
@@ -323,6 +416,7 @@ function switchTab(tab: TTab): void {
     if (tab === 'chart' && chartCtrl.getChart())  refreshLegend();
     if (tab === 'results')  renderResultsTable();
     if (tab === 'comments') renderCommentsView(data!);
+    writeUrlState();
 }
 
 // ── Filter callbacks ──────────────────────────────────────────────────────────
@@ -366,6 +460,7 @@ function afterFilterChange(): void {
     updateFilterCounters(data, chartState);
     updateToggleButtonStates(data, chartState);
     refreshLegend();
+    writeUrlState();
 }
 
 // ── Y mode & pinned drivers ───────────────────────────────────────────────────
@@ -377,6 +472,7 @@ function setYMode(mode: TYMode): void {
     refreshLegend();
     const pinned = chartCtrl.getPinnedKeys();
     scrollLegendTo(pinned[pinned.length - 1] ?? null);
+    writeUrlState();
 }
 
 function syncYModeSwitch(): void {
@@ -398,6 +494,7 @@ function onPinsChanged(keys: string[]): void {
     updatePinnedBar(data, keys, key => chartCtrl.togglePin(key, true));
     refreshLegend();
     scrollLegendTo(keys[keys.length - 1] ?? null);
+    writeUrlState();
 }
 
 // ── Stage band click ──────────────────────────────────────────────────────────
