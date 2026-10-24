@@ -1608,7 +1608,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const panel = document.getElementById("legend-panel");
     const itemsEl = document.getElementById("legend-items");
     const expandBtn = document.getElementById("legend-expand-btn");
-    panel.style.display = "";
     const visibleWithTime = buildSortedVisibleDrivers(data2, chart, activeStages, recordMap);
     if (leaderFirst) visibleWithTime.reverse();
     renderLegendItems(itemsEl, visibleWithTime, data2, pinnedKeys, callbacks);

@@ -22,7 +22,8 @@ export function updateLegendPanel(
     const itemsEl   = document.getElementById('legend-items')!;
     const expandBtn = document.getElementById('legend-expand-btn') as HTMLButtonElement;
 
-    panel.style.display = '';
+    // Видимость панели задаёт только переключатель вкладок (switchTab): легенда
+    // обновляется и на других вкладках (смена языка, закрепление), но показываться там не должна
 
     const visibleWithTime = buildSortedVisibleDrivers(data, chart, activeStages, recordMap);
     // Порядок легенды повторяет порядок линий на графике сверху вниз
