@@ -2235,6 +2235,40 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     document.head.appendChild(style);
   }
 
+  // src/renderer/rallyName.ts
+  var RALLY_NAME_ENDPOINT = "";
+  var STORAGE_PREFIX = "rsf-rally-name:";
+  var TIMEOUT_MS = 8e3;
+  var MAX_NAME_LEN = 120;
+  function getCachedRallyName(rallyId) {
+    try {
+      return localStorage.getItem(STORAGE_PREFIX + rallyId);
+    } catch {
+      return null;
+    }
+  }
+  async function fetchRallyName(rallyId) {
+    if (!RALLY_NAME_ENDPOINT || !/^\d{1,9}$/.test(rallyId)) return null;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+    try {
+      const res = await fetch(`${RALLY_NAME_ENDPOINT}?rally=${rallyId}`, { signal: ctrl.signal });
+      if (!res.ok) return null;
+      const body = await res.json();
+      const name = typeof body.name === "string" ? body.name.trim().slice(0, MAX_NAME_LEN) : "";
+      if (!name) return null;
+      try {
+        localStorage.setItem(STORAGE_PREFIX + rallyId, name);
+      } catch {
+      }
+      return name;
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   // src/renderer/filters/filterState.ts
   function setAllCheckboxes(body, value) {
     qsa('input[type="checkbox"]', body).forEach((cb) => {
@@ -3296,6 +3330,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var currentTab = "chart";
   var legendExpanded = false;
   var prevStageFilter = null;
+  var rallyName = null;
   var rankMap = /* @__PURE__ */ new Map();
   var lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [] });
   var chartState = {
@@ -3413,7 +3448,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       eventName = qs("#inp-event-name").value.trim();
       info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
       info.className = "file-info ok";
+      const rallyId = currentRallyId();
+      rallyName = rallyId ? getCachedRallyName(rallyId) : null;
       showChart();
+      if (rallyId) void refreshRallyName(rallyId);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       info.textContent = `${i18n.t().fileError}: ${msg}`;
@@ -3422,6 +3460,12 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     } finally {
       btn.disabled = false;
     }
+  }
+  async function refreshRallyName(rallyId) {
+    const name = await fetchRallyName(rallyId);
+    if (!name || currentRallyId() !== rallyId || name === rallyName) return;
+    rallyName = name;
+    updateHeaderTitle();
   }
   function readFileAsText(file) {
     return new Promise((resolve, reject) => {
@@ -3540,8 +3584,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
   function updateHeaderTitle() {
     const rallyId = currentRallyId();
-    const title = eventName || (rallyId ? i18n.t().rallyTitle(rallyId) : i18n.t().defaultTitle);
-    document.getElementById("header-event-name").textContent = title;
+    const title = eventName || rallyName || (rallyId ? i18n.t().rallyTitle(rallyId) : i18n.t().defaultTitle);
+    const h1 = document.getElementById("header-event-name");
+    h1.textContent = title;
+    h1.title = rallyId && title !== i18n.t().rallyTitle(rallyId) ? i18n.t().rallyTitle(rallyId) : "";
     const link = document.getElementById("header-rally-link");
     link.style.display = rallyId ? "" : "none";
     if (rallyId) {

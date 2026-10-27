@@ -15,6 +15,10 @@ import { updatePinnedBar } from "./chart/pinnedBar";
 import { renderCommentsView } from "./comments/index";
 import { qs } from "./dom";
 import {
+    fetchRallyName,
+    getCachedRallyName
+} from "./rallyName";
+import {
     buildChartFilterPanel,
     IChartFilterCallbacks,
     IChartFilterState,
@@ -48,6 +52,8 @@ let fileName       = '';
 let currentTab:    TTab = 'chart';
 let legendExpanded = false;
 let prevStageFilter: Set<number> | null = null;
+/** Название ралли с rallysimfans для текущего файла (см. rallyName.ts). */
+let rallyName:     string | null = null;
 /** Итоговое место участника по всем СУ; null — сошёл. */
 let rankMap        = new Map<string, number | null>();
 
@@ -190,7 +196,10 @@ async function loadFile(file: File): Promise<void> {
         eventName        = qs<HTMLInputElement>('#inp-event-name').value.trim();
         info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
         info.className   = 'file-info ok';
+        const rallyId    = currentRallyId();
+        rallyName        = rallyId ? getCachedRallyName(rallyId) : null;
         showChart();
+        if (rallyId) void refreshRallyName(rallyId);
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         info.textContent = `${i18n.t().fileError}: ${msg}`;
@@ -200,6 +209,14 @@ async function loadFile(file: File): Promise<void> {
     } finally {
         btn.disabled = false;
     }
+}
+
+/** Подтягивает название в фоне; ответ для уже сменённого файла игнорируется. */
+async function refreshRallyName(rallyId: string): Promise<void> {
+    const name = await fetchRallyName(rallyId);
+    if (!name || currentRallyId() !== rallyId || name === rallyName) return;
+    rallyName = name;
+    updateHeaderTitle();
 }
 
 function readFileAsText(file: File): Promise<string> {
@@ -353,11 +370,18 @@ function writeUrlState(): void {
     history.replaceState(null, '', hash ? `#${hash}` : location.pathname + location.search);
 }
 
-/** Ручное название → номер ралли из имени файла (NNNNNN_table.csv) → название по умолчанию. */
+/**
+ * Название в заголовке: введённое вручную → с rallysimfans (если удалось загрузить)
+ * → номер ралли из имени файла (NNNNNN_table.csv) → название по умолчанию.
+ */
 function updateHeaderTitle(): void {
     const rallyId = currentRallyId();
-    const title   = eventName || (rallyId ? i18n.t().rallyTitle(rallyId) : i18n.t().defaultTitle);
-    document.getElementById('header-event-name')!.textContent = title;
+    const title   = eventName
+        || rallyName
+        || (rallyId ? i18n.t().rallyTitle(rallyId) : i18n.t().defaultTitle);
+    const h1 = document.getElementById('header-event-name')!;
+    h1.textContent = title;
+    h1.title       = rallyId && title !== i18n.t().rallyTitle(rallyId) ? i18n.t().rallyTitle(rallyId) : '';
 
     const link = document.getElementById('header-rally-link') as HTMLAnchorElement;
     link.style.display = rallyId ? '' : 'none';
