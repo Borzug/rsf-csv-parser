@@ -8,6 +8,7 @@ import { buildDatasets } from "./datasets";
 import { buildDnfLinePlugin } from "./pluginDnfLine";
 import { buildHoverDimPlugin } from "./pluginHoverDim";
 import { buildPinnedCommentsPlugin } from "./pluginPinnedComments";
+import { buildPointsPlugin } from "./pluginPoints";
 import { buildStageNamesPlugin } from "./pluginStageNames";
 import { buildTooltipHandler } from "./tooltip";
 
@@ -189,8 +190,11 @@ export function createChartController(): IChartController {
         },
 
         setHoveredKey(key: string | null): void {
+            if (key === hoveredDsKey) return;
             hoveredDsKey = key;
-            chart?.update('none');
+            // Наведение меняет только прозрачность в плагинах — хватает перерисовки,
+            // полный update() на сотнях линий в десятки раз дороже
+            chart?.render();
         },
 
         setOnPinChange(cb: (keys: string[]) => void): void {
@@ -277,7 +281,7 @@ export function createChartController(): IChartController {
                             if (pt && Math.hypot(pt.x - (event.x ?? 0), pt.y - (event.y ?? 0)) <= HOVER_DIST_PX)
                                 newIdx = el.datasetIndex;
                         }
-                        if (newIdx !== hoveredDsIdx) { hoveredDsIdx = newIdx; chart.update('none'); }
+                        if (newIdx !== hoveredDsIdx) { hoveredDsIdx = newIdx; chart.render(); }
                     },
                     plugins: {
                         legend:  { display: false },
@@ -294,6 +298,7 @@ export function createChartController(): IChartController {
                     scales: buildScales(() => effectiveYMode() !== 'abs'),
                 },
                 plugins: [
+                    buildPointsPlugin(),
                     buildHoverDimPlugin(
                         () => hoveredDsKey,
                         () => pinnedIdxs,
@@ -329,17 +334,17 @@ export function createChartController(): IChartController {
                 canvas!.style.cursor = newBandIdx !== null ? 'pointer' : '';
                 if (newBandIdx !== hoveredBandIdx) {
                     hoveredBandIdx = newBandIdx;
-                    chart.update('none');
+                    chart.render();
                 }
             };
 
             mouseleaveHandler = () => {
                 document.getElementById('chart-tooltip')!.style.display = 'none';
-                if (hoveredDsIdx !== null)  { hoveredDsIdx  = null; chart?.update('none'); }
+                if (hoveredDsIdx !== null)  { hoveredDsIdx  = null; chart?.render(); }
                 if (hoveredBandIdx !== null) {
                     hoveredBandIdx = null;
                     canvas!.style.cursor = '';
-                    chart?.update('none');
+                    chart?.render();
                 }
             };
 

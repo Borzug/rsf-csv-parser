@@ -585,16 +585,21 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         borderColor: color,
         backgroundColor: color + "22",
         borderWidth: BORDER_WIDTH,
-        pointStyle: pts.pointStyles,
-        pointRadius: pts.pointRadii,
-        pointBackgroundColor: pts.pointColors,
-        pointHoverRadius: POINT_HOVER_RADIUS,
+        pointRadius: 0,
+        pointBackgroundColor: color,
+        pointHoverRadius: 0,
+        _ptHoverRadius: POINT_HOVER_RADIUS,
+        _ptStyle: pts.pointStyles,
+        _ptRadius: pts.pointRadii,
+        _ptColor: pts.pointColors,
         tension: 0,
         spanGaps: false,
         hidden: !activeDriverKeys.has(drv.username) || !grpOk || !carOk,
-        segment: {
+        // Функция стиля отрезков вызывается на каждый отрезок при каждом update(),
+        // поэтому подключаем её только линиям, где пунктир действительно есть
+        segment: pts.hasSR.some(Boolean) || dnfCommentPtIdx !== null ? {
           borderDash: (ctx) => pts.hasSR[ctx.p1DataIndex] || ctx.p1DataIndex === dnfCommentPtIdx ? [DASH_ON, DASH_OFF] : void 0
-        },
+        } : void 0,
         _cumPen: pts.cumPen,
         _cumSP: pts.cumSP,
         _cumSR: pts.cumSR,
@@ -993,6 +998,47 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     });
   }
 
+  // src/renderer/chart/pluginPoints.ts
+  function buildPointsPlugin() {
+    return {
+      id: "points",
+      afterDatasetDraw(ch, args) {
+        const ds = ch.data.datasets[args.index];
+        if (!ds || ds.hidden) return;
+        const radii = ds._ptRadius;
+        const styles = ds._ptStyle;
+        const colors = ds._ptColor;
+        const { ctx, chartArea: area } = ch;
+        const { drawPoint, getHoverColor } = window.Chart.helpers;
+        ctx.save();
+        const m = ds.borderWidth / 2;
+        ctx.beginPath();
+        ctx.rect(area.left - m, area.top - m, area.right - area.left + 2 * m, area.bottom - area.top + 2 * m);
+        ctx.clip();
+        const opts = { pointStyle: "circle", radius: 0, rotation: 0, borderWidth: ds.borderWidth };
+        const pts = args.meta.data;
+        const draw = (i, radius, fill, stroke, borderWidth) => {
+          const pt = pts[i];
+          if (!radius || !pt || pt.skip) return;
+          if (pt.x < area.left - 0.5 || pt.x > area.right + 0.5 || pt.y < area.top - 0.5 || pt.y > area.bottom + 0.5) return;
+          opts.pointStyle = styles[i];
+          opts.radius = radius;
+          opts.borderWidth = borderWidth;
+          ctx.fillStyle = fill;
+          ctx.strokeStyle = stroke;
+          ctx.lineWidth = borderWidth;
+          drawPoint(ctx, opts, pt.x, pt.y);
+        };
+        for (let i = 0; i < pts.length; i++) draw(i, radii[i], colors[i], ds.borderColor, ds.borderWidth);
+        for (const a of ch.getActiveElements()) {
+          if (a.datasetIndex !== args.index) continue;
+          draw(a.index, ds._ptHoverRadius, getHoverColor(colors[a.index]), getHoverColor(ds.borderColor), 1);
+        }
+        ctx.restore();
+      }
+    };
+  }
+
   // src/renderer/chart/pluginStageNames.ts
   var FONT_FAMILY2 = "'Fira Code', monospace";
   var FONT_SIZE_SS = 11;
@@ -1322,8 +1368,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         chart.update("none");
       },
       setHoveredKey(key) {
+        if (key === hoveredDsKey) return;
         hoveredDsKey = key;
-        chart?.update("none");
+        chart?.render();
       },
       setOnPinChange(cb) {
         onPinChange = cb;
@@ -1419,7 +1466,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
               }
               if (newIdx !== hoveredDsIdx) {
                 hoveredDsIdx = newIdx;
-                chart.update("none");
+                chart.render();
               }
             },
             plugins: {
@@ -1437,6 +1484,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             scales: buildScales(() => effectiveYMode() !== "abs")
           },
           plugins: [
+            buildPointsPlugin(),
             buildHoverDimPlugin(
               () => hoveredDsKey,
               () => pinnedIdxs,
@@ -1471,19 +1519,19 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           canvas.style.cursor = newBandIdx !== null ? "pointer" : "";
           if (newBandIdx !== hoveredBandIdx) {
             hoveredBandIdx = newBandIdx;
-            chart.update("none");
+            chart.render();
           }
         };
         mouseleaveHandler = () => {
           document.getElementById("chart-tooltip").style.display = "none";
           if (hoveredDsIdx !== null) {
             hoveredDsIdx = null;
-            chart?.update("none");
+            chart?.render();
           }
           if (hoveredBandIdx !== null) {
             hoveredBandIdx = null;
             canvas.style.cursor = "";
-            chart?.update("none");
+            chart?.render();
           }
         };
         canvas.addEventListener("click", clickHandler);

@@ -10,14 +10,18 @@ export interface IChartDataset {
     borderColor:         string;
     backgroundColor:     string;
     borderWidth:         number;
-    pointStyle:          string[];
-    pointRadius:         number[];
-    pointBackgroundColor:string[];
+    pointRadius:         number;
+    pointBackgroundColor:string;
     pointHoverRadius:    number;
+    /** Точки рисует pluginPoints — см. пояснение там */
+    _ptStyle:            string[];
+    _ptRadius:           number[];
+    _ptColor:            string[];
+    _ptHoverRadius:      number;
     tension:             number;
     spanGaps:            boolean;
     hidden:              boolean;
-    segment:             { borderDash: (ctx: any) => number[] | undefined };
+    segment?:            { borderDash: (ctx: any) => number[] | undefined };
     _cumPen:             number[];
     _cumSP:              number[];
     _cumSR:              number[];
@@ -64,17 +68,24 @@ export function buildDatasets(
             borderColor:         color,
             backgroundColor:     color + '22',
             borderWidth:         BORDER_WIDTH,
-            pointStyle:          pts.pointStyles,
-            pointRadius:         pts.pointRadii,
-            pointBackgroundColor:pts.pointColors,
-            pointHoverRadius:    POINT_HOVER_RADIUS,
+            pointRadius:         0,
+            pointBackgroundColor:color,
+            pointHoverRadius:    0,
+            _ptHoverRadius:      POINT_HOVER_RADIUS,
+            _ptStyle:            pts.pointStyles,
+            _ptRadius:           pts.pointRadii,
+            _ptColor:            pts.pointColors,
             tension:             0,
             spanGaps:            false,
             hidden:              !activeDriverKeys.has(drv.username) || !grpOk || !carOk,
-            segment: {
-                borderDash: (ctx: any) =>
-                    pts.hasSR[ctx.p1DataIndex] || ctx.p1DataIndex === dnfCommentPtIdx ? [DASH_ON, DASH_OFF] : undefined,
-            },
+            // Функция стиля отрезков вызывается на каждый отрезок при каждом update(),
+            // поэтому подключаем её только линиям, где пунктир действительно есть
+            segment: pts.hasSR.some(Boolean) || dnfCommentPtIdx !== null
+                ? {
+                    borderDash: (ctx: any) =>
+                        pts.hasSR[ctx.p1DataIndex] || ctx.p1DataIndex === dnfCommentPtIdx ? [DASH_ON, DASH_OFF] : undefined,
+                }
+                : undefined,
             _cumPen:      pts.cumPen,
             _cumSP:       pts.cumSP,
             _cumSR:       pts.cumSR,
