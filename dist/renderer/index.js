@@ -2236,7 +2236,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/rallyName.ts
-  var RALLY_NAME_ENDPOINT = "";
+  var RALLY_NAME_ENDPOINT = "https://script.google.com/macros/s/AKfycbwv4wdJpWe-Zpuwm9_CW34_r4002VgWxB_u3yxm2LgEbR-KvFNhWhwPQwuJ3T9plpY7pQ/exec";
   var STORAGE_PREFIX = "rsf-rally-name:";
   var TIMEOUT_MS = 8e3;
   var MAX_NAME_LEN = 120;

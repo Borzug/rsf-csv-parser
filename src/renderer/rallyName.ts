@@ -9,7 +9,8 @@
  */
 
 /** Адрес развёрнутого веб-приложения (…/exec). Пусто — функция выключена. */
-export const RALLY_NAME_ENDPOINT = '';
+export const RALLY_NAME_ENDPOINT =
+    'https://script.google.com/macros/s/AKfycbwv4wdJpWe-Zpuwm9_CW34_r4002VgWxB_u3yxm2LgEbR-KvFNhWhwPQwuJ3T9plpY7pQ/exec';
 
 const STORAGE_PREFIX = 'rsf-rally-name:';
 const TIMEOUT_MS     = 8000;
