@@ -9,12 +9,14 @@ import { buildDnfLinePlugin } from "./pluginDnfLine";
 import { buildHoverDimPlugin } from "./pluginHoverDim";
 import { buildPinnedCommentsPlugin } from "./pluginPinnedComments";
 import { buildPointsPlugin } from "./pluginPoints";
-import { buildStageNamesPlugin } from "./pluginStageNames";
+import {
+    buildStageNamesPlugin,
+    ROTATE_45_AT,
+    ROTATE_90_AT
+} from "./pluginStageNames";
 import { buildTooltipHandler } from "./tooltip";
 
 const HOVER_DIST_PX  = 40;
-const ROTATE_45_AT   = 9;
-const ROTATE_90_AT   = 20;
 const BOT_PAD_NORMAL = 46;
 const BOT_PAD_45     = 90;
 const BOT_PAD_90     = 110;
@@ -252,9 +254,25 @@ export function createChartController(): IChartController {
             );
             datasets.forEach((ds: any) => { ds._abs = ds.data.slice(); });
 
+            // Смена набора СУ: график переиспользуется — создание нового Chart (и первая
+            // отрисовка свежего холста) заметно дороже подмены данных.
+            // Плагины, подсказка и обработчики читают activeStages/currentBotPad при вызове.
+            if (chart) {
+                chart.data.labels   = labels;
+                chart.data.datasets = datasets;
+                chart.options.layout.padding.bottom = currentBotPad;
+                chart.setActiveElements([]);
+                hoveredDsIdx   = null;
+                hoveredBandIdx = null;
+                document.getElementById('chart-tooltip')!.style.display = 'none';
+                syncPinnedIdxs();
+                applyYMode();
+                chart.update('none');
+                return;
+            }
+
             canvas = document.getElementById('race-chart') as HTMLCanvasElement;
             removeCanvasListeners();
-            if (chart) { chart.destroy(); chart = null; hoveredDsIdx = null; }
 
             const Chart = (window as any).Chart;
             chart = new Chart(canvas, {
@@ -288,7 +306,7 @@ export function createChartController(): IChartController {
                         tooltip: {
                             enabled:  false,
                             external: buildTooltipHandler(
-                                stages,
+                                () => activeStages,
                                 () => chart,
                                 () => pinnedIdxs,
                                 effectiveYMode,
@@ -305,7 +323,7 @@ export function createChartController(): IChartController {
                         () => hoveredDsIdx,
                         dimAlpha,
                     ),
-                    buildStageNamesPlugin(stages, useRot45, useRot90, () => hoveredBandIdx),
+                    buildStageNamesPlugin(() => activeStages, () => hoveredBandIdx),
                     buildDnfLinePlugin(() => hoveredDsKey, () => pinnedIdxs, () => hoveredDsIdx, dimAlpha),
                     buildPinnedCommentsPlugin(() => pinnedIdxs),
                 ],
@@ -319,7 +337,7 @@ export function createChartController(): IChartController {
 
             clickHandler = (e: MouseEvent) => {
                 const additive = e.ctrlKey || e.metaKey || e.shiftKey;
-                const hit = handleCanvasClick(e, chart, canvas!, stages, currentBotPad);
+                const hit = handleCanvasClick(e, chart, canvas!, activeStages, currentBotPad);
                 if (hit === 'ignore') return;
                 if (hit === null) {
                     if (!additive && pinnedKeys.length) { pinnedKeys = []; notifyPinChange(); }
@@ -330,7 +348,7 @@ export function createChartController(): IChartController {
             };
 
             mousemoveHandler = (e: MouseEvent) => {
-                const newBandIdx = resolveHoveredBandIdx(e, chart, canvas!, stages, currentBotPad);
+                const newBandIdx = resolveHoveredBandIdx(e, chart, canvas!, activeStages, currentBotPad);
                 canvas!.style.cursor = newBandIdx !== null ? 'pointer' : '';
                 if (newBandIdx !== hoveredBandIdx) {
                     hoveredBandIdx = newBandIdx;

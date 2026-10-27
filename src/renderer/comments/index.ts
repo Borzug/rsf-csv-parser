@@ -10,7 +10,23 @@ const STYLES_ID    = 'comments-module-styles';
 const CARD_WIDTH   = 220;
 const DRIVER_COL_W = 190;
 
+/** Данные, для которых построен текущий вид; null — вид устарел (смена языка). */
+let renderedFor: IParsedRallyData | null = null;
+let lastData:    IParsedRallyData | null = null;
+
+/** Перестраивает вид, только если он устарел (другой файл или смена языка). */
+export function ensureCommentsRendered(data: IParsedRallyData): void {
+    if (renderedFor !== data) renderCommentsView(data);
+}
+
+export function invalidateComments(): void {
+    renderedFor = null;
+}
+
 export function renderCommentsView(data: IParsedRallyData): void {
+    // Вкладка сохраняет прокрутку между переходами; для другого файла начинаем сверху
+    const isNewData = data !== lastData;
+    renderedFor = lastData = data;
     injectStyles();
     renderSidebarSearch();
 
@@ -36,6 +52,7 @@ export function renderCommentsView(data: IParsedRallyData): void {
     }
 
     container.appendChild(list);
+    if (isNewData) container.scrollTop = 0;
 }
 
 // ── Sidebar search ────────────────────────────────────────────────────────────
@@ -110,9 +127,16 @@ function buildCommentsData(data: IParsedRallyData): IDriverComments[] {
     const positions   = buildPositions(data, recordMap);
     const result: IDriverComments[] = [];
 
+    // Записи с комментарием по участникам — один проход вместо фильтра всех записей на каждого
+    const commented = new Map<string, ILapRecord[]>();
+    for (const r of data.records) {
+        if (!r.comment.trim()) continue;
+        const list = commented.get(r.username);
+        if (list) list.push(r); else commented.set(r.username, [r]);
+    }
+
     for (const driver of data.drivers) {
-        const entries: ICommentEntry[] = data.records
-            .filter(r => r.username === driver.username && r.comment.trim())
+        const entries: ICommentEntry[] = (commented.get(driver.username) ?? [])
             .sort((a, b) => a.stageNum - b.stageNum)
             .map(r => ({
                 stageNum:       r.stageNum,
@@ -404,6 +428,10 @@ function injectStyles(): void {
             padding: 18px 0;
             border-bottom: 1px solid rgba(255,255,255,0.12);
             transition: background 0.15s;
+            /* Строки за пределами экрана не раскладываются — на больших ралли их сотни.
+               auto запоминает настоящую высоту, когда строка хоть раз показана */
+            content-visibility: auto;
+            contain-intrinsic-size: auto 400px;
         }
         .cmt-row:last-child { border-bottom: none; }
         .cmt-row--highlighted {

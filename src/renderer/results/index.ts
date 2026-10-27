@@ -23,6 +23,10 @@ let _recordMap:  Map<string, Map<number, any>> = new Map();
 let _allStats:   IDriverStats[] = [];
 let _selectedRows = new Set<string>();
 let _searchActive = false;
+/** Таблица не соответствует данным/языку и будет перестроена при открытии вкладки. */
+let _dirty = true;
+/** Новый файл: прокрутку прошлой таблицы (вкладка теперь её сохраняет) сбрасываем. */
+let _resetScroll = true;
 
 let _filterState: IResultsFilterState = {
     stageFilter:      new Set(),
@@ -42,6 +46,8 @@ export function initResultsModule(
     _recordMap  = recordMap;
     _allStats   = allStats;
     _selectedRows = new Set();
+    _dirty        = true;
+    _resetScroll  = true;
     _filterState = {
         stageFilter:      new Set(data.stages.map(s => s.num)),
         groupFilter:      new Set(data.groups),
@@ -61,8 +67,18 @@ export function buildResultsFilters(onChange: () => void): void {
     );
 }
 
+/** Перестраивает таблицу, только если она устарела (смена файла или языка). */
+export function ensureResultsRendered(): void {
+    if (_dirty) renderResultsTable();
+}
+
+export function invalidateResults(): void {
+    _dirty = true;
+}
+
 export function renderResultsTable(): void {
     if (!_data) return;
+    _dirty = false;
     const stats   = getFilteredStats();
     const results = computeDriverResults(stats);
     const stages  = _data.stages
@@ -74,6 +90,11 @@ export function renderResultsTable(): void {
 
     const tbody = document.getElementById('results-tbody')!;
     renderResultsRows(tbody, results, computeStageRanks(results, stages.length), _selectedRows, toggleRowSelection);
+
+    if (_resetScroll) {
+        _resetScroll = false;
+        document.querySelector('.results-wrap')?.scrollTo(0, 0);
+    }
 }
 
 export function setResultsGroupFilter(groups: Set<string>): void {

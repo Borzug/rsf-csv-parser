@@ -28,7 +28,19 @@ export function updateLegendPanel(
     const visibleWithTime = buildSortedVisibleDrivers(data, chart, activeStages, recordMap);
     // Порядок легенды повторяет порядок линий на графике сверху вниз
     if (leaderFirst) visibleWithTime.reverse();
-    renderLegendItems(itemsEl, visibleWithTime, data, pinnedKeys, callbacks);
+
+    currentCallbacks = callbacks;
+    bindLegendEvents(itemsEl);
+    // Тот же список в том же порядке (закрепление, смена языка) — меняем только отметки,
+    // а не пересоздаём сотни кнопок
+    const order = visibleWithTime.map(v => v.drv.username).join('\n');
+    if (data === renderedData && order === renderedOrder && itemsEl.children.length === visibleWithTime.length) {
+        updatePinnedState(itemsEl, pinnedKeys);
+    } else {
+        renderLegendItems(itemsEl, visibleWithTime, data, pinnedKeys);
+        renderedData  = data;
+        renderedOrder = order;
+    }
 
     panel.classList.toggle('expanded', isExpanded);
     expandBtn.textContent = isExpanded ? '›' : '‹';
@@ -46,8 +58,10 @@ function buildSortedVisibleDrivers(
     activeStages: IStageInfo[],
     recordMap:    Map<string, Map<number, any>>,
 ): Array<{ drv: any; cum: number | null }> {
+    const dsByKey = new Map<string, any>();
+    for (const ds of chart?.data.datasets ?? []) dsByKey.set(ds.driverKey, ds);
     const visibleDrvs = data.drivers.filter(drv => {
-        const ds = chart?.data.datasets.find((d: any) => d.driverKey === drv.username);
+        const ds = dsByKey.get(drv.username);
         return ds && !ds.hidden;
     });
 
@@ -72,20 +86,74 @@ function buildSortedVisibleDrivers(
     return withTime;
 }
 
+/** Порядок и данные, по которым построен текущий список кнопок. */
+let renderedData:  IParsedRallyData | null = null;
+let renderedOrder  = '';
+let currentCallbacks: ILegendPanelCallbacks | undefined;
+let boundContainer: HTMLElement | null = null;
+
+function updatePinnedState(container: HTMLElement, pinnedKeys: string[]): void {
+    for (const item of Array.from(container.children) as HTMLElement[]) {
+        const pinned = pinnedKeys.includes(item.dataset['driverKey']!);
+        item.setAttribute('aria-pressed', String(pinned));
+        item.classList.toggle('pinned-highlight', pinned);
+    }
+}
+
+/** Один набор обработчиков на весь список вместо пяти на каждую кнопку. */
+function bindLegendEvents(container: HTMLElement): void {
+    if (boundContainer === container) return;
+    boundContainer = container;
+
+    const itemOf = (e: Event): HTMLElement | null =>
+        (e.target as HTMLElement | null)?.closest<HTMLElement>('.legend-item') ?? null;
+    const keyOf  = (item: HTMLElement | null): string | null => item?.dataset['driverKey'] ?? null;
+
+    // mouseenter/mouseleave не всплывают — используем mouseover/mouseout и отсекаем
+    // переходы между элементами внутри одной кнопки
+    container.addEventListener('mouseover', e => {
+        const item = itemOf(e);
+        if (!item || item.contains(e.relatedTarget as Node | null)) return;
+        item.classList.add('legend-item-hover');
+        currentCallbacks?.onDriverHover(keyOf(item));
+    });
+    container.addEventListener('mouseout', e => {
+        const item = itemOf(e);
+        if (!item || item.contains(e.relatedTarget as Node | null)) return;
+        item.classList.remove('legend-item-hover');
+        currentCallbacks?.onDriverHover(null);
+    });
+    container.addEventListener('focusin',  e => {
+        const key = keyOf(itemOf(e));
+        if (key) currentCallbacks?.onDriverHover(key);
+    });
+    container.addEventListener('focusout', e => {
+        if (itemOf(e)) currentCallbacks?.onDriverHover(null);
+    });
+    container.addEventListener('click', e => {
+        const key = keyOf(itemOf(e));
+        if (!key) return;
+        // На сенсорных экранах нет Ctrl/Shift — там касание в легенде всегда добавляет к сравнению
+        const additive = e.ctrlKey || e.metaKey || e.shiftKey || isCoarsePointer();
+        currentCallbacks?.onDriverClick(key, additive);
+    });
+}
+
 function renderLegendItems(
     container:       HTMLElement,
     items:           Array<{ drv: any; cum: number | null }>,
     data:            IParsedRallyData,
     pinnedKeys:      string[],
-    callbacks?:      ILegendPanelCallbacks,
 ): void {
     // Легенда перерисовывается целиком — возвращаем фокус клавиатуры на тот же пункт
     const focusedKey = (document.activeElement as HTMLElement | null)
         ?.closest<HTMLElement>('.legend-item')?.dataset['driverKey'] ?? null;
+    const colorIdx = new Map(data.drivers.map((d, i) => [d, i]));
     container.innerHTML = '';
-    items.forEach(({ drv }) => {
-        const gi    = data.drivers.indexOf(drv);
-        const color = driverColor(gi);
+    const frag = document.createDocumentFragment();
+    let focusItem: HTMLElement | null = null;
+    for (const { drv } of items) {
+        const color = driverColor(colorIdx.get(drv)!);
         const item  = createElement('button', 'legend-item');
         item.type = 'button';
         item.dataset['driverKey'] = drv.username;
@@ -103,26 +171,9 @@ function renderLegendItems(
         );
         item.appendChild(dot);
         item.appendChild(name);
-
-        if (callbacks) {
-            item.addEventListener('mouseenter', () => {
-                callbacks.onDriverHover(drv.username);
-                item.classList.add('legend-item-hover');
-            });
-            item.addEventListener('mouseleave', () => {
-                callbacks.onDriverHover(null);
-                item.classList.remove('legend-item-hover');
-            });
-            item.addEventListener('focus', () => callbacks.onDriverHover(drv.username));
-            item.addEventListener('blur',  () => callbacks.onDriverHover(null));
-            item.addEventListener('click', (e: MouseEvent) => {
-                // На сенсорных экранах нет Ctrl/Shift — там касание в легенде всегда добавляет к сравнению
-                const additive = e.ctrlKey || e.metaKey || e.shiftKey || isCoarsePointer();
-                callbacks.onDriverClick(drv.username, additive);
-            });
-        }
-
-        container.appendChild(item);
-        if (drv.username === focusedKey) item.focus({ preventScroll: true });
-    });
+        frag.appendChild(item);
+        if (drv.username === focusedKey) focusItem = item;
+    }
+    container.appendChild(frag);
+    focusItem?.focus({ preventScroll: true });
 }

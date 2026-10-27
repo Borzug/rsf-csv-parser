@@ -258,10 +258,15 @@ body {
 .tab-btn.active { background: var(--red); color: #fff; border-color: var(--red); }
 
 /* Content row: chart view + legend panel side by side */
-.content-row { flex: 1; display: flex; overflow: hidden; }
+.content-row { flex: 1; display: flex; overflow: hidden; position: relative; }
 
 /* ── Chart view ──────────────────────────────────────────────── */
 .view { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+/* Спрятанная тяжёлая вкладка: вне потока, не рисуется, но раскладка сохраняется (см. setHeavyViewShown) */
+.view.view-parked {
+    position: absolute; inset: 0;
+    visibility: hidden; content-visibility: hidden; pointer-events: none;
+}
 
 /* Pinned bar */
 .pinned-bar {

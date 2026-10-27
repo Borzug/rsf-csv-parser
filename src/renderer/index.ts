@@ -12,7 +12,10 @@ import {
 } from "./chart/legendPanel";
 import { buildRallyLookups } from "./chart/lookups";
 import { updatePinnedBar } from "./chart/pinnedBar";
-import { renderCommentsView } from "./comments/index";
+import {
+    ensureCommentsRendered,
+    invalidateComments
+} from "./comments/index";
 import { qs } from "./dom";
 import {
     fetchRallyName,
@@ -31,8 +34,9 @@ import { applyDomTranslations } from "./i18n-dom";
 import {
     buildResultsFilters,
     computeAllDriverStats,
+    ensureResultsRendered,
     initResultsModule,
-    renderResultsTable
+    invalidateResults
 } from "./results/index";
 import { nullableCompare } from "./utils";
 
@@ -84,8 +88,11 @@ window.addEventListener('DOMContentLoaded', () => {
             afterFilterChange();
             buildResultsFilters(() => {});
             updateHeaderStats();
-            renderResultsTable();
-            renderCommentsView(data);
+            // Скрытые вкладки перестроятся при открытии
+            invalidateResults();
+            invalidateComments();
+            if (currentTab === 'results')  ensureResultsRendered();
+            if (currentTab === 'comments') ensureCommentsRendered(data);
             chartCtrl.refreshLabels();
             onPinsChanged(chartCtrl.getPinnedKeys());
         }
@@ -426,8 +433,8 @@ function switchTab(tab: TTab): void {
     }
 
     document.getElementById('view-chart')!.style.display    = tab === 'chart'    ? 'flex' : 'none';
-    document.getElementById('view-results')!.style.display  = tab === 'results'  ? 'flex' : 'none';
-    document.getElementById('view-comments')!.style.display = tab === 'comments' ? 'flex' : 'none';
+    setHeavyViewShown('view-results',  tab === 'results');
+    setHeavyViewShown('view-comments', tab === 'comments');
     document.getElementById('chart-toolbar')!.style.display = tab === 'chart'    ? ''     : 'none';
 
     document.getElementById('sidebar-chart-filters')!.style.display    = tab === 'chart'    ? '' : 'none';
@@ -438,9 +445,22 @@ function switchTab(tab: TTab): void {
 
     if (tab === 'chart' && !chartCtrl.getChart()) rebuildChart();
     if (tab === 'chart' && chartCtrl.getChart())  refreshLegend();
-    if (tab === 'results')  renderResultsTable();
-    if (tab === 'comments') renderCommentsView(data!);
+    if (tab === 'results')  ensureResultsRendered();
+    if (tab === 'comments') ensureCommentsRendered(data!);
     writeUrlState();
+}
+
+/**
+ * Таблица результатов и комментарии на больших ралли — десятки тысяч элементов.
+ * display:none сбрасывает их раскладку, и каждое возвращение на вкладку стоило бы
+ * сотни миллисекунд. Поэтому однажды показанная вкладка дальше прячется классом
+ * .view-parked (content-visibility: hidden) — браузер сохраняет её раскладку.
+ */
+function setHeavyViewShown(id: string, shown: boolean): void {
+    const el = document.getElementById(id)!;
+    if (!shown && el.style.display === 'none') return;   // ещё ни разу не показывалась
+    el.style.display = 'flex';
+    el.classList.toggle('view-parked', !shown);
 }
 
 // ── Filter callbacks ──────────────────────────────────────────────────────────
@@ -449,8 +469,7 @@ function makeFilterCallbacks(): IChartFilterCallbacks {
     return {
         onStagesChanged: () => {
             updateDriverItemsByStageAndFilter(data!, chartState, lookups.recordMap);
-            rebuildChart();
-            afterFilterChange();
+            rebuildChart();   // вызывает afterFilterChange
         },
         onDriversChanged: () => {
             syncDatasetVisibility();
@@ -539,8 +558,7 @@ function handleStageBandClick(stageNum: number): void {
 
     syncStageCheckboxes(chartState.activeStageNums);
     updateDriverItemsByStageAndFilter(data!, chartState, lookups.recordMap);
-    rebuildChart();
-    afterFilterChange();
+    rebuildChart();   // вызывает afterFilterChange
 }
 
 // ── Chart rebuild ─────────────────────────────────────────────────────────────

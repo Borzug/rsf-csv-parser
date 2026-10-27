@@ -1046,11 +1046,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var HOVER_BG_EVEN = "#262626";
   var HOVER_BG_ODD = "#222222";
   var HOVER_BORDER = "#c0392b";
-  function buildStageNamesPlugin(stages, rot45, rot90, getHoveredIdx) {
+  var ROTATE_45_AT = 9;
+  var ROTATE_90_AT = 20;
+  function buildStageNamesPlugin(getStages, getHoveredIdx) {
     return {
       id: "stageNames",
       afterDraw(ch) {
+        const stages = getStages();
         if (!stages.length) return;
+        const rot45 = stages.length > ROTATE_45_AT && stages.length <= ROTATE_90_AT;
+        const rot90 = stages.length > ROTATE_90_AT;
         const { ctx, chartArea, scales } = ch;
         const xs = scales.x;
         const bot = chartArea.bottom;
@@ -1133,7 +1138,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   // src/renderer/chart/tooltip.ts
   var TOOLTIP_MARGIN_PX = 16;
   var TOOLTIP_OFFSET_Y = 12;
-  function buildTooltipHandler(stages, getChart, getPinnedIdxs, getYMode) {
+  function buildTooltipHandler(getStages, getChart, getPinnedIdxs, getYMode) {
     return function handler(context) {
       const el = document.getElementById("chart-tooltip");
       const tooltip = context.tooltip;
@@ -1157,7 +1162,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const xIdx = dp.dataIndex;
       const y0 = dp.raw;
       const chart = getChart();
-      const stageInfo = resolveStageFromIndex(xIdx, stages);
+      const stageInfo = resolveStageFromIndex(xIdx, getStages());
       el.innerHTML = pinnedIdxs.length > 1 && onPinned ? buildCompareHtml(chart, pinnedIdxs, xIdx, stageInfo) : buildTooltipHtml(
         collectMatchingDatasets(chart, xIdx, y0, fieldTips ? [] : pinnedIdxs),
         xIdx,
@@ -1251,8 +1256,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
 
   // src/renderer/chart/controller.ts
   var HOVER_DIST_PX = 40;
-  var ROTATE_45_AT = 9;
-  var ROTATE_90_AT = 20;
   var BOT_PAD_NORMAL = 46;
   var BOT_PAD_45 = 90;
   var BOT_PAD_90 = 110;
@@ -1429,13 +1432,21 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         datasets.forEach((ds) => {
           ds._abs = ds.data.slice();
         });
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets = datasets;
+          chart.options.layout.padding.bottom = currentBotPad;
+          chart.setActiveElements([]);
+          hoveredDsIdx = null;
+          hoveredBandIdx = null;
+          document.getElementById("chart-tooltip").style.display = "none";
+          syncPinnedIdxs();
+          applyYMode();
+          chart.update("none");
+          return;
+        }
         canvas = document.getElementById("race-chart");
         removeCanvasListeners();
-        if (chart) {
-          chart.destroy();
-          chart = null;
-          hoveredDsIdx = null;
-        }
         const Chart = window.Chart;
         chart = new Chart(canvas, {
           type: "line",
@@ -1474,7 +1485,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
               tooltip: {
                 enabled: false,
                 external: buildTooltipHandler(
-                  stages,
+                  () => activeStages,
                   () => chart,
                   () => pinnedIdxs,
                   effectiveYMode
@@ -1491,7 +1502,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
               () => hoveredDsIdx,
               dimAlpha
             ),
-            buildStageNamesPlugin(stages, useRot45, useRot90, () => hoveredBandIdx),
+            buildStageNamesPlugin(() => activeStages, () => hoveredBandIdx),
             buildDnfLinePlugin(() => hoveredDsKey, () => pinnedIdxs, () => hoveredDsIdx, dimAlpha),
             buildPinnedCommentsPlugin(() => pinnedIdxs)
           ]
@@ -1502,7 +1513,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         chart.update("none");
         clickHandler = (e) => {
           const additive = e.ctrlKey || e.metaKey || e.shiftKey;
-          const hit = handleCanvasClick(e, chart, canvas, stages, currentBotPad);
+          const hit = handleCanvasClick(e, chart, canvas, activeStages, currentBotPad);
           if (hit === "ignore") return;
           if (hit === null) {
             if (!additive && pinnedKeys.length) {
@@ -1515,7 +1526,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           if (key) togglePin(key, additive);
         };
         mousemoveHandler = (e) => {
-          const newBandIdx = resolveHoveredBandIdx(e, chart, canvas, stages, currentBotPad);
+          const newBandIdx = resolveHoveredBandIdx(e, chart, canvas, activeStages, currentBotPad);
           canvas.style.cursor = newBandIdx !== null ? "pointer" : "";
           if (newBandIdx !== hoveredBandIdx) {
             hoveredBandIdx = newBandIdx;
@@ -1658,7 +1669,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const expandBtn = document.getElementById("legend-expand-btn");
     const visibleWithTime = buildSortedVisibleDrivers(data2, chart, activeStages, recordMap);
     if (leaderFirst) visibleWithTime.reverse();
-    renderLegendItems(itemsEl, visibleWithTime, data2, pinnedKeys, callbacks);
+    currentCallbacks = callbacks;
+    bindLegendEvents(itemsEl);
+    const order = visibleWithTime.map((v) => v.drv.username).join("\n");
+    if (data2 === renderedData && order === renderedOrder && itemsEl.children.length === visibleWithTime.length) {
+      updatePinnedState(itemsEl, pinnedKeys);
+    } else {
+      renderLegendItems(itemsEl, visibleWithTime, data2, pinnedKeys);
+      renderedData = data2;
+      renderedOrder = order;
+    }
     panel.classList.toggle("expanded", isExpanded);
     expandBtn.textContent = isExpanded ? "\u203A" : "\u2039";
     const inner = document.getElementById("legend-inner");
@@ -1668,8 +1688,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     });
   }
   function buildSortedVisibleDrivers(data2, chart, activeStages, recordMap) {
+    const dsByKey = /* @__PURE__ */ new Map();
+    for (const ds of chart?.data.datasets ?? []) dsByKey.set(ds.driverKey, ds);
     const visibleDrvs = data2.drivers.filter((drv) => {
-      const ds = chart?.data.datasets.find((d) => d.driverKey === drv.username);
+      const ds = dsByKey.get(drv.username);
       return ds && !ds.hidden;
     });
     const withTime = visibleDrvs.map((drv) => {
@@ -1692,12 +1714,56 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     });
     return withTime;
   }
-  function renderLegendItems(container, items, data2, pinnedKeys, callbacks) {
+  var renderedData = null;
+  var renderedOrder = "";
+  var currentCallbacks;
+  var boundContainer = null;
+  function updatePinnedState(container, pinnedKeys) {
+    for (const item of Array.from(container.children)) {
+      const pinned = pinnedKeys.includes(item.dataset["driverKey"]);
+      item.setAttribute("aria-pressed", String(pinned));
+      item.classList.toggle("pinned-highlight", pinned);
+    }
+  }
+  function bindLegendEvents(container) {
+    if (boundContainer === container) return;
+    boundContainer = container;
+    const itemOf = (e) => e.target?.closest(".legend-item") ?? null;
+    const keyOf = (item) => item?.dataset["driverKey"] ?? null;
+    container.addEventListener("mouseover", (e) => {
+      const item = itemOf(e);
+      if (!item || item.contains(e.relatedTarget)) return;
+      item.classList.add("legend-item-hover");
+      currentCallbacks?.onDriverHover(keyOf(item));
+    });
+    container.addEventListener("mouseout", (e) => {
+      const item = itemOf(e);
+      if (!item || item.contains(e.relatedTarget)) return;
+      item.classList.remove("legend-item-hover");
+      currentCallbacks?.onDriverHover(null);
+    });
+    container.addEventListener("focusin", (e) => {
+      const key = keyOf(itemOf(e));
+      if (key) currentCallbacks?.onDriverHover(key);
+    });
+    container.addEventListener("focusout", (e) => {
+      if (itemOf(e)) currentCallbacks?.onDriverHover(null);
+    });
+    container.addEventListener("click", (e) => {
+      const key = keyOf(itemOf(e));
+      if (!key) return;
+      const additive = e.ctrlKey || e.metaKey || e.shiftKey || isCoarsePointer();
+      currentCallbacks?.onDriverClick(key, additive);
+    });
+  }
+  function renderLegendItems(container, items, data2, pinnedKeys) {
     const focusedKey = document.activeElement?.closest(".legend-item")?.dataset["driverKey"] ?? null;
+    const colorIdx = new Map(data2.drivers.map((d, i) => [d, i]));
     container.innerHTML = "";
-    items.forEach(({ drv }) => {
-      const gi = data2.drivers.indexOf(drv);
-      const color = driverColor(gi);
+    const frag = document.createDocumentFragment();
+    let focusItem = null;
+    for (const { drv } of items) {
+      const color = driverColor(colorIdx.get(drv));
       const item = createElement("button", "legend-item");
       item.type = "button";
       item.dataset["driverKey"] = drv.username;
@@ -1714,25 +1780,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       );
       item.appendChild(dot);
       item.appendChild(name);
-      if (callbacks) {
-        item.addEventListener("mouseenter", () => {
-          callbacks.onDriverHover(drv.username);
-          item.classList.add("legend-item-hover");
-        });
-        item.addEventListener("mouseleave", () => {
-          callbacks.onDriverHover(null);
-          item.classList.remove("legend-item-hover");
-        });
-        item.addEventListener("focus", () => callbacks.onDriverHover(drv.username));
-        item.addEventListener("blur", () => callbacks.onDriverHover(null));
-        item.addEventListener("click", (e) => {
-          const additive = e.ctrlKey || e.metaKey || e.shiftKey || isCoarsePointer();
-          callbacks.onDriverClick(drv.username, additive);
-        });
-      }
-      container.appendChild(item);
-      if (drv.username === focusedKey) item.focus({ preventScroll: true });
-    });
+      frag.appendChild(item);
+      if (drv.username === focusedKey) focusItem = item;
+    }
+    container.appendChild(frag);
+    focusItem?.focus({ preventScroll: true });
   }
 
   // src/renderer/chart/lookups.ts
@@ -1805,7 +1857,17 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var STYLES_ID = "comments-module-styles";
   var CARD_WIDTH = 220;
   var DRIVER_COL_W = 190;
+  var renderedFor = null;
+  var lastData = null;
+  function ensureCommentsRendered(data2) {
+    if (renderedFor !== data2) renderCommentsView(data2);
+  }
+  function invalidateComments() {
+    renderedFor = null;
+  }
   function renderCommentsView(data2) {
+    const isNewData = data2 !== lastData;
+    renderedFor = lastData = data2;
     injectStyles();
     renderSidebarSearch();
     const container = document.getElementById("view-comments");
@@ -1825,6 +1887,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       list.appendChild(buildDriverRow(driver));
     }
     container.appendChild(list);
+    if (isNewData) container.scrollTop = 0;
   }
   function renderSidebarSearch() {
     const target = document.getElementById("filter-comments-search");
@@ -1881,8 +1944,15 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const totalTimes = buildTotalTimes(data2, recordMap);
     const positions = buildPositions(data2, recordMap);
     const result = [];
+    const commented = /* @__PURE__ */ new Map();
+    for (const r of data2.records) {
+      if (!r.comment.trim()) continue;
+      const list = commented.get(r.username);
+      if (list) list.push(r);
+      else commented.set(r.username, [r]);
+    }
     for (const driver of data2.drivers) {
-      const entries = data2.records.filter((r) => r.username === driver.username && r.comment.trim()).sort((a, b) => a.stageNum - b.stageNum).map((r) => ({
+      const entries = (commented.get(driver.username) ?? []).sort((a, b) => a.stageNum - b.stageNum).map((r) => ({
         stageNum: r.stageNum,
         stageName: r.stageName,
         time3: r.time3,
@@ -2123,6 +2193,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             padding: 18px 0;
             border-bottom: 1px solid rgba(255,255,255,0.12);
             transition: background 0.15s;
+            /* \u0421\u0442\u0440\u043E\u043A\u0438 \u0437\u0430 \u043F\u0440\u0435\u0434\u0435\u043B\u0430\u043C\u0438 \u044D\u043A\u0440\u0430\u043D\u0430 \u043D\u0435 \u0440\u0430\u0441\u043A\u043B\u0430\u0434\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u2014 \u043D\u0430 \u0431\u043E\u043B\u044C\u0448\u0438\u0445 \u0440\u0430\u043B\u043B\u0438 \u0438\u0445 \u0441\u043E\u0442\u043D\u0438.
+               auto \u0437\u0430\u043F\u043E\u043C\u0438\u043D\u0430\u0435\u0442 \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0443\u044E \u0432\u044B\u0441\u043E\u0442\u0443, \u043A\u043E\u0433\u0434\u0430 \u0441\u0442\u0440\u043E\u043A\u0430 \u0445\u043E\u0442\u044C \u0440\u0430\u0437 \u043F\u043E\u043A\u0430\u0437\u0430\u043D\u0430 */
+            content-visibility: auto;
+            contain-intrinsic-size: auto 400px;
         }
         .cmt-row:last-child { border-bottom: none; }
         .cmt-row--highlighted {
@@ -3232,6 +3306,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var _allStats = [];
   var _selectedRows = /* @__PURE__ */ new Set();
   var _searchActive = false;
+  var _dirty = true;
+  var _resetScroll = true;
   var _filterState = {
     stageFilter: /* @__PURE__ */ new Set(),
     groupFilter: /* @__PURE__ */ new Set(),
@@ -3243,6 +3319,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     _recordMap = recordMap;
     _allStats = allStats;
     _selectedRows = /* @__PURE__ */ new Set();
+    _dirty = true;
+    _resetScroll = true;
     _filterState = {
       stageFilter: new Set(data2.stages.map((s) => s.num)),
       groupFilter: new Set(data2.groups),
@@ -3263,8 +3341,15 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       (selected) => applyRowSelectionAsFilter(selected)
     );
   }
+  function ensureResultsRendered() {
+    if (_dirty) renderResultsTable();
+  }
+  function invalidateResults() {
+    _dirty = true;
+  }
   function renderResultsTable() {
     if (!_data) return;
+    _dirty = false;
     const stats = getFilteredStats();
     const results = computeDriverResults(stats);
     const stages = _data.stages.filter((s) => _filterState.stageFilter.has(s.num)).sort((a, b) => a.num - b.num);
@@ -3272,6 +3357,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     buildResultsTableHeader(thead, stages, activateParticipantSearch);
     const tbody = document.getElementById("results-tbody");
     renderResultsRows(tbody, results, computeStageRanks(results, stages.length), _selectedRows, toggleRowSelection);
+    if (_resetScroll) {
+      _resetScroll = false;
+      document.querySelector(".results-wrap")?.scrollTo(0, 0);
+    }
   }
   function computeStageRanks(results, nStages) {
     const ranks = /* @__PURE__ */ new Map();
@@ -3402,8 +3491,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         buildResultsFilters(() => {
         });
         updateHeaderStats();
-        renderResultsTable();
-        renderCommentsView(data);
+        invalidateResults();
+        invalidateComments();
+        if (currentTab === "results") ensureResultsRendered();
+        if (currentTab === "comments") ensureCommentsRendered(data);
         chartCtrl.refreshLabels();
         onPinsChanged(chartCtrl.getPinnedKeys());
       }
@@ -3669,8 +3760,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       btn.setAttribute("aria-pressed", String(tab === t));
     }
     document.getElementById("view-chart").style.display = tab === "chart" ? "flex" : "none";
-    document.getElementById("view-results").style.display = tab === "results" ? "flex" : "none";
-    document.getElementById("view-comments").style.display = tab === "comments" ? "flex" : "none";
+    setHeavyViewShown("view-results", tab === "results");
+    setHeavyViewShown("view-comments", tab === "comments");
     document.getElementById("chart-toolbar").style.display = tab === "chart" ? "" : "none";
     document.getElementById("sidebar-chart-filters").style.display = tab === "chart" ? "" : "none";
     document.getElementById("sidebar-results-filters").style.display = tab === "results" ? "" : "none";
@@ -3678,16 +3769,21 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     document.getElementById("legend-panel").style.display = tab === "chart" ? "" : "none";
     if (tab === "chart" && !chartCtrl.getChart()) rebuildChart();
     if (tab === "chart" && chartCtrl.getChart()) refreshLegend();
-    if (tab === "results") renderResultsTable();
-    if (tab === "comments") renderCommentsView(data);
+    if (tab === "results") ensureResultsRendered();
+    if (tab === "comments") ensureCommentsRendered(data);
     writeUrlState();
+  }
+  function setHeavyViewShown(id, shown) {
+    const el = document.getElementById(id);
+    if (!shown && el.style.display === "none") return;
+    el.style.display = "flex";
+    el.classList.toggle("view-parked", !shown);
   }
   function makeFilterCallbacks() {
     return {
       onStagesChanged: () => {
         updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
         rebuildChart();
-        afterFilterChange();
       },
       onDriversChanged: () => {
         syncDatasetVisibility();
@@ -3761,7 +3857,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     syncStageCheckboxes(chartState.activeStageNums);
     updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
     rebuildChart();
-    afterFilterChange();
   }
   function rebuildChart() {
     if (!data) return;

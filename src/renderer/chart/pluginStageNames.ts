@@ -7,16 +7,21 @@ const HOVER_BG_EVEN   = '#262626';
 const HOVER_BG_ODD    = '#222222';
 const HOVER_BORDER    = '#c0392b';
 
+/** С какого числа СУ подписи под осью поворачиваются на 45° и на 90°. */
+export const ROTATE_45_AT = 9;
+export const ROTATE_90_AT = 20;
+
 export function buildStageNamesPlugin(
-    stages:         IStageInfo[],
-    rot45:          boolean,
-    rot90:          boolean,
+    getStages:      () => IStageInfo[],
     getHoveredIdx:  () => number | null,
 ): object {
     return {
         id: 'stageNames',
         afterDraw(ch: any): void {
+            const stages = getStages();
             if (!stages.length) return;
+            const rot45  = stages.length > ROTATE_45_AT && stages.length <= ROTATE_90_AT;
+            const rot90  = stages.length > ROTATE_90_AT;
             const { ctx, chartArea, scales } = ch;
             const xs         = scales.x;
             const bot        = chartArea.bottom;

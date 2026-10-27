@@ -11,7 +11,7 @@ const TOOLTIP_MARGIN_PX = 16;
 const TOOLTIP_OFFSET_Y  = 12;
 
 export function buildTooltipHandler(
-    stages:        IStageInfo[],
+    getStages:     () => IStageInfo[],
     getChart:      () => any,
     getPinnedIdxs: () => number[],
     getYMode:      () => TYMode,
@@ -38,7 +38,7 @@ export function buildTooltipHandler(
         const xIdx      = dp.dataIndex as number;
         const y0        = dp.raw as number | null;
         const chart     = getChart();
-        const stageInfo = resolveStageFromIndex(xIdx, stages);
+        const stageInfo = resolveStageFromIndex(xIdx, getStages());
 
         el.innerHTML = pinnedIdxs.length > 1 && onPinned
             ? buildCompareHtml(chart, pinnedIdxs, xIdx, stageInfo)
