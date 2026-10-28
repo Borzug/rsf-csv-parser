@@ -401,7 +401,7 @@ function resolveHoveredBandIdx(
 
 function buildScales(isGapMode: () => boolean): object {
     const yTickConfig = {
-        color:    '#555',
+        color:    '#8a8a8a',
         font:     { size: 11, family: "'Fira Code', monospace" },
         callback: (v: any) => {
             const sec = v as number;
@@ -432,7 +432,7 @@ function buildScales(isGapMode: () => boolean): object {
             title: {
                 display: true,
                 text:    i18n.t().axisTimeTitle,
-                color:   '#3c3c3c',
+                color:   '#8a8a8a',
                 font:    { size: 11, family: "'Fira Code', monospace" },
             },
         },
@@ -445,7 +445,7 @@ function buildScales(isGapMode: () => boolean): object {
             title: {
                 display: true,
                 text:    i18n.t().axisTimeTitle,
-                color:   '#3c3c3c',
+                color:   '#8a8a8a',
                 font:    { size: 11, family: "'Fira Code', monospace" },
             },
         },

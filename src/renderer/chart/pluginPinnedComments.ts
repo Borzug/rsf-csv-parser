@@ -223,7 +223,7 @@ function renderBoxes(ctx: CanvasRenderingContext2D, boxes: ICommentBox[]): void 
         let textY = box.y + PAD_Y;
 
         if (box.stage) {
-            ctx.fillStyle = '#888';
+            ctx.fillStyle = '#9a9a9a';
             ctx.font      = `${STAGE_FONT_SZ}px ${FONT_FAMILY}`;
             ctx.fillText(box.stage, box.x + PAD_X, textY);
             textY += LINE_H;

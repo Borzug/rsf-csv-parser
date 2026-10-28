@@ -107,21 +107,25 @@ function buildResultRow(
         noPace ? '—' : formatTimeSigned(r.avgGapFromLeader),
         t.colAvgGapLeaderTitle,
         noPace ? null : r.avgGapFromLeader,
+        'leader',
     ));
     row.appendChild(buildGapWithTooltip(
         noPace ? '—' : formatTimeSigned(r.avgGapFromPrev),
         t.colAvgGapPrevTitle,
         noPace ? null : r.avgGapFromPrev,
+        'prev',
     ));
     row.appendChild(buildCleanGapCell(
         noPace ? null : r.cleanGapFromLeader,
         noPace ? 0 : r.cleanCountLeader,
         r.totalStageCount,
+        'leader',
     ));
     row.appendChild(buildCleanGapCell(
         noPace ? null : r.cleanGapFromPrev,
         noPace ? 0 : r.cleanCountPrev,
         r.totalStageCount,
+        'prev',
     ));
     row.appendChild(createTd('td-total-gap',
         r.position === 1 ? '—' : (r.totalGap !== null ? formatTimeSigned(r.totalGap) : '—')));
@@ -182,11 +186,12 @@ function buildGapWithTooltip(
     text: string,
     tip:  string,
     val:  number | null,
+    vs:   TGapRef,
 ): HTMLTableCellElement {
     const td    = createTd();
     const inner = createElement('span', 'td-clean', text);
     inner.dataset['tooltip'] = tip;
-    if (val !== null) inner.style.color = gapColor(val);
+    colorGap(inner, val, vs);
     td.appendChild(inner);
     return td;
 }
@@ -195,6 +200,7 @@ function buildCleanGapCell(
     val:        number | null,
     cleanCount: number,
     totalCount: number,
+    vs:         TGapRef,
 ): HTMLTableCellElement {
     const td = createTd();
     if (val === null && cleanCount === 0) {
@@ -204,7 +210,7 @@ function buildCleanGapCell(
     const inner = createElement('span', 'td-clean',
         val !== null ? formatTimeSigned(val) : '—');
     inner.dataset['tooltip'] = i18n.t().cleanGapCellTooltip(cleanCount, totalCount);
-    if (val !== null) inner.style.color = gapColor(val);
+    colorGap(inner, val, vs);
     td.appendChild(inner);
     return td;
 }
@@ -221,8 +227,21 @@ function buildSRCell(srCount: number): HTMLTableCellElement {
     return td;
 }
 
+/** С кем сравнивается отставание: с лидером или с предыдущим местом. */
+type TGapRef = 'leader' | 'prev';
+
+/**
+ * Отставание от лидера есть почти у всех, и красным оно лишь «шумит» — оставляем нейтральным.
+ * Красный/зелёный — только для сравнения с соседом, где знак действительно разный.
+ */
+function colorGap(el: HTMLElement, val: number | null, vs: TGapRef): void {
+    if (val === null) return;
+    if (vs === 'leader') el.classList.add('td-gap-leader');
+    else el.style.color = gapColor(val);
+}
+
 function gapColor(val: number): string {
-    if (val > 0) return 'var(--red-hi)';
+    if (val > 0) return 'var(--red-text)';
     if (val < 0) return 'var(--green)';
     return '#888';
 }

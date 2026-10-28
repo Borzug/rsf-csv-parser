@@ -984,7 +984,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       ctx.textAlign = "left";
       let textY = box.y + PAD_Y;
       if (box.stage) {
-        ctx.fillStyle = "#888";
+        ctx.fillStyle = "#9a9a9a";
         ctx.font = `${STAGE_FONT_SZ}px ${FONT_FAMILY}`;
         ctx.fillText(box.stage, box.x + PAD_X, textY);
         textY += LINE_H;
@@ -1105,12 +1105,12 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const xMid = (xL + xR) / 2;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillStyle = hovered ? "#e74c3c" : "#c0392b";
+    ctx.fillStyle = hovered ? "#ff7a6b" : "#ef5b4c";
     ctx.font = `bold ${FONT_SIZE_SS}px ${FONT_FAMILY2}`;
     ctx.fillText(`SS${stage.num}`, xMid, bot + 6);
     const maxChars = Math.max(4, Math.floor((xR - xL - 4) / 7));
     const name = stage.name.length > maxChars ? stage.name.slice(0, maxChars - 1) + "\u2026" : stage.name;
-    ctx.fillStyle = hovered ? "#888" : "#666";
+    ctx.fillStyle = hovered ? "#c8c8c8" : "#8a8a8a";
     ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY2}`;
     ctx.fillText(name, xMid, bot + 21);
   }
@@ -1123,13 +1123,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     ctx.rotate(angle);
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillStyle = hovered ? "#e74c3c" : "#c0392b";
+    ctx.fillStyle = hovered ? "#ff7a6b" : "#ef5b4c";
     ctx.font = `bold ${FONT_SIZE_NM}px ${FONT_FAMILY2}`;
     const ssLabel = `SS${stage.num} `;
     ctx.fillText(ssLabel, 0, 0);
     const ssW = ctx.measureText(ssLabel).width;
     const name = stage.name.length > MAX_CHARS ? stage.name.slice(0, MAX_CHARS - 1) + "\u2026" : stage.name;
-    ctx.fillStyle = hovered ? "#888" : "#666";
+    ctx.fillStyle = hovered ? "#c8c8c8" : "#8a8a8a";
     ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY2}`;
     ctx.fillText(name, ssW, 0);
     ctx.restore();
@@ -1568,7 +1568,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
   function buildScales(isGapMode) {
     const yTickConfig = {
-      color: "#555",
+      color: "#8a8a8a",
       font: { size: 11, family: "'Fira Code', monospace" },
       callback: (v) => {
         const sec = v;
@@ -1598,7 +1598,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         title: {
           display: true,
           text: i18n.t().axisTimeTitle,
-          color: "#3c3c3c",
+          color: "#8a8a8a",
           font: { size: 11, family: "'Fira Code', monospace" }
         }
       },
@@ -1611,7 +1611,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         title: {
           display: true,
           text: i18n.t().axisTimeTitle,
-          color: "#3c3c3c",
+          color: "#8a8a8a",
           font: { size: 11, family: "'Fira Code', monospace" }
         }
       }
@@ -2166,7 +2166,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         :root {
             --font-mono:                var(--ff);
             --color-text-primary:       var(--text);
-            --color-text-secondary:     #aaa;
+            --color-text-secondary:     var(--text-2);
             --color-text-tertiary:      var(--muted);
             --color-background-secondary: var(--surface);
             --color-border-tertiary:    var(--border);
@@ -2253,7 +2253,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             margin-top: 8px;
             font-family: var(--font-mono);
             font-size: 10px;
-            color: #888;
+            color: var(--muted);
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--color-border-tertiary);
             border-radius: 4px;
@@ -2309,7 +2309,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             font-family: var(--font-mono);
             font-size: 10px;
             font-weight: 700;
-            color: #cc2222;
+            color: var(--red-text);
             background: rgba(204,34,34,0.12);
             border: 1px solid rgba(204,34,34,0.25);
             padding: 1px 6px;
@@ -2319,7 +2319,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             font-family: var(--font-mono);
             font-size: 10px;
             font-weight: 700;
-            color: #cc2222;
+            color: var(--red-text);
             background: rgba(204,34,34,0.07);
             border: 1px solid rgba(204,34,34,0.18);
             padding: 1px 6px;
@@ -3193,22 +3193,26 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     row.appendChild(buildGapWithTooltip(
       noPace ? "\u2014" : formatTimeSigned(r.avgGapFromLeader),
       t.colAvgGapLeaderTitle,
-      noPace ? null : r.avgGapFromLeader
+      noPace ? null : r.avgGapFromLeader,
+      "leader"
     ));
     row.appendChild(buildGapWithTooltip(
       noPace ? "\u2014" : formatTimeSigned(r.avgGapFromPrev),
       t.colAvgGapPrevTitle,
-      noPace ? null : r.avgGapFromPrev
+      noPace ? null : r.avgGapFromPrev,
+      "prev"
     ));
     row.appendChild(buildCleanGapCell(
       noPace ? null : r.cleanGapFromLeader,
       noPace ? 0 : r.cleanCountLeader,
-      r.totalStageCount
+      r.totalStageCount,
+      "leader"
     ));
     row.appendChild(buildCleanGapCell(
       noPace ? null : r.cleanGapFromPrev,
       noPace ? 0 : r.cleanCountPrev,
-      r.totalStageCount
+      r.totalStageCount,
+      "prev"
     ));
     row.appendChild(createTd(
       "td-total-gap",
@@ -3259,15 +3263,15 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       penalty > 0 ? `+${formatTime(penalty)}` : "\u2014"
     );
   }
-  function buildGapWithTooltip(text, tip, val) {
+  function buildGapWithTooltip(text, tip, val, vs) {
     const td = createTd();
     const inner = createElement("span", "td-clean", text);
     inner.dataset["tooltip"] = tip;
-    if (val !== null) inner.style.color = gapColor(val);
+    colorGap(inner, val, vs);
     td.appendChild(inner);
     return td;
   }
-  function buildCleanGapCell(val, cleanCount, totalCount) {
+  function buildCleanGapCell(val, cleanCount, totalCount, vs) {
     const td = createTd();
     if (val === null && cleanCount === 0) {
       td.textContent = "\u2014";
@@ -3279,7 +3283,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       val !== null ? formatTimeSigned(val) : "\u2014"
     );
     inner.dataset["tooltip"] = i18n.t().cleanGapCellTooltip(cleanCount, totalCount);
-    if (val !== null) inner.style.color = gapColor(val);
+    colorGap(inner, val, vs);
     td.appendChild(inner);
     return td;
   }
@@ -3294,8 +3298,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     return td;
   }
+  function colorGap(el, val, vs) {
+    if (val === null) return;
+    if (vs === "leader") el.classList.add("td-gap-leader");
+    else el.style.color = gapColor(val);
+  }
   function gapColor(val) {
-    if (val > 0) return "var(--red-hi)";
+    if (val > 0) return "var(--red-text)";
     if (val < 0) return "var(--green)";
     return "#888";
   }

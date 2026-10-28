@@ -11,8 +11,12 @@
     --red-dark: #922b21;
     --red-hi:   #e74c3c;
     --text:     #e0e0e0;
-    --muted:    #888;       /* bumped from #666 for readability */
-    --dim:      #555;
+    /* Вторичный, приглушённый и третичный текст — все не ниже 4.5:1 на --surface */
+    --text-2:   #b0b0b0;
+    --muted:    #888;
+    --dim:      #858585;
+    /* Красный для текста на тёмном фоне (--red как цвет текста даёт лишь 3:1) */
+    --red-text: #ef5b4c;
     --green:    #2ecc71;
     --radius:   6px;
     --ff:       'Fira Code', 'Consolas', monospace;
@@ -84,7 +88,7 @@ body {
     outline: none; transition: border-color 0.15s;
 }
 .form-group input:focus        { border-color: var(--red); }
-.form-group input::placeholder { color: #444; }
+.form-group input::placeholder { color: var(--dim); }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
 .btn {
@@ -145,19 +149,20 @@ body {
 .filter-group { border-bottom: 1px solid var(--border); }
 .filter-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 7px 10px 7px 12px; user-select: none; cursor: pointer;
+    padding: 0 10px 0 0; user-select: none;
     transition: background 0.12s;
 }
 .filter-header:hover { background: #202020; }
+/* Сворачивает группу только эта кнопка — растягиваем её на всю высоту строки */
 .filter-header-left  {
-    display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0;
-    background: none; border: none; padding: 0; color: inherit; font: inherit;
+    display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; align-self: stretch;
+    background: none; border: none; padding: 7px 8px 7px 12px; color: inherit; font: inherit;
     text-align: left; cursor: pointer;
 }
 .filter-header-right { display: flex; gap: 3px; flex-shrink: 0; }
 
 .collapse-icon {
-    font-size: 9px; color: #555; transition: transform 0.2s ease;
+    font-size: 9px; color: var(--dim); transition: transform 0.2s ease;
     flex-shrink: 0; width: 10px; line-height: 1;
 }
 .filter-group:not(.collapsed) .collapse-icon { transform: rotate(90deg); }
@@ -168,7 +173,7 @@ body {
     text-transform: uppercase; letter-spacing: 0.6px;
     font-family: var(--ff); white-space: nowrap;
 }
-.filter-counter { font-size: 10px; color: #777; font-family: var(--ff); flex-shrink: 0; white-space: nowrap; }
+.filter-counter { font-size: 10px; color: var(--muted); font-family: var(--ff); flex-shrink: 0; white-space: nowrap; }
 
 /* visibility — чтобы Tab не заходил в чекбоксы свёрнутой группы */
 .filter-body { max-height: 0; overflow: hidden; visibility: hidden; transition: max-height 0.22s ease, visibility 0.22s; }
@@ -180,13 +185,13 @@ body {
 
 /* Все/Никого */
 .btn-fa {
-    padding: 2px 8px; font-size: 10px; font-weight: 500; cursor: pointer;
+    min-height: 24px; padding: 3px 9px; font-size: 11px; font-weight: 500; cursor: pointer;
     border: 1px solid var(--border); border-radius: 4px;
-    background: transparent; color: #666;
+    background: transparent; color: var(--text-2);
     font-family: var(--ff); transition: all 0.12s; white-space: nowrap;
 }
 .btn-fa:hover         { background: var(--red); color: #fff; border-color: var(--red); }
-.btn-fa.btn-fa-active { background: rgba(192,57,43,0.18); color: var(--red-hi); border-color: rgba(192,57,43,0.5); }
+.btn-fa.btn-fa-active { background: rgba(192,57,43,0.18); color: var(--red-text); border-color: rgba(192,57,43,0.5); }
 
 /* Driver search */
 .filter-search-wrap {
@@ -201,10 +206,10 @@ body {
     background: transparent; border: none; outline: none;
     font-family: var(--ff); font-size: 11px; color: var(--text);
 }
-.filter-search::placeholder { color: #444; }
+.filter-search::placeholder { color: var(--dim); }
 .filter-search-clear {
-    width: 22px; flex-shrink: 0; padding: 0 4px;
-    background: transparent; border: none; color: #555;
+    width: 26px; flex-shrink: 0; padding: 0 4px;
+    background: transparent; border: none; color: var(--dim);
     font-size: 15px; line-height: 1; cursor: pointer; transition: color 0.12s;
     display: flex; align-items: center; justify-content: center;
 }
@@ -221,19 +226,19 @@ body {
 .filter-item.hover-highlighted { background: rgba(192,57,43,0.08); }
 .filter-item input[type="checkbox"] { margin-top: 3px; flex-shrink: 0; accent-color: var(--red); cursor: pointer; }
 
-.filter-ss           { font-size: 11px; font-weight: 600; color: var(--red-hi); font-family: var(--ff); white-space: nowrap; flex-shrink: 0; }
+.filter-ss           { font-size: 11px; font-weight: 600; color: var(--red-text); font-family: var(--ff); white-space: nowrap; flex-shrink: 0; }
 .filter-name         { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
 
 /* 2-line driver item */
 .filter-driver-content { display: flex; flex-direction: column; min-width: 0; }
 .filter-driver-rank    {
-    font-size: 10px; color: #777; font-family: var(--ff);
+    font-size: 10px; color: var(--muted); font-family: var(--ff);
     min-width: 22px; text-align: right; margin-top: 2px; flex-shrink: 0;
 }
-.filter-driver-rank.dnf { color: #5a5a5a; font-size: 9px; }
+.filter-driver-rank.dnf { color: var(--dim); font-size: 9px; }
 .filter-presets { display: flex; gap: 4px; padding: 0 10px 6px; }
 .filter-driver-name    { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
-.filter-driver-car     { font-size: 10px; color: #5a5a5a; font-family: var(--ff); word-break: break-word; line-height: 1.4; }
+.filter-driver-car     { font-size: 10px; color: var(--dim); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
 
 .filter-group-label  { font-size: 11px; color: var(--text); font-family: var(--ff); }
 .filter-car-label    { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
@@ -251,7 +256,7 @@ body {
 .tab-btn {
     padding: 5px 14px; font-size: 12px; font-weight: 600;
     cursor: pointer; border: 1px solid transparent; border-radius: var(--radius);
-    background: transparent; color: #666; font-family: var(--ff);
+    background: transparent; color: var(--text-2); font-family: var(--ff);
     transition: all 0.15s; white-space: nowrap;
 }
 .tab-btn:hover  { color: var(--text); background: var(--surface2); }
@@ -281,20 +286,21 @@ body {
     background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
 }
 .pinned-chip-x {
-    background: transparent; border: none; color: #777; cursor: pointer;
-    font-size: 14px; line-height: 1; padding: 0 5px; border-radius: 8px;
+    min-width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: none; color: var(--muted); cursor: pointer;
+    font-size: 15px; line-height: 1; padding: 0 5px; border-radius: 10px;
 }
-.pinned-chip-x:hover { color: var(--red-hi); }
-.pinned-hint { font-size: 10px; color: #777; font-family: var(--ff); white-space: nowrap; flex-shrink: 0; }
+.pinned-chip-x:hover { color: var(--red-text); }
+.pinned-hint { font-size: 11px; color: var(--muted); font-family: var(--ff); white-space: nowrap; flex-shrink: 0; }
 .pinned-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .pinned-name { font-family: var(--ff); font-size: 12px; color: #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pinned-close {
-    width: 20px; height: 20px; background: transparent; border: none;
-    color: #666; font-size: 18px; line-height: 1; cursor: pointer;
+    width: 26px; height: 26px; background: transparent; border: none;
+    color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     border-radius: 4px; transition: color 0.12s, background 0.12s; flex-shrink: 0;
 }
-.pinned-close:hover { color: var(--red-hi); background: rgba(231,76,60,0.1); }
+.pinned-close:hover { color: var(--red-text); background: rgba(231,76,60,0.1); }
 
 /* Chart canvas area — fills remaining space */
 .chart-area { flex: 1; position: relative; min-height: 0; min-width: 0; }
@@ -302,7 +308,7 @@ body {
 
 /* ── Legend panel ────────────────────────────────────────────── */
 .legend-panel {
-    width: 150px; flex-shrink: 0;
+    width: 180px; flex-shrink: 0;
     background: var(--surface); border-left: 1px solid var(--border);
     display: flex; flex-direction: column;
     overflow: hidden; position: relative;
@@ -312,12 +318,12 @@ body {
 
 /* Expand button on the left edge */
 .legend-expand-btn {
-    position: absolute; left: -13px; top: 50%;
+    position: absolute; left: -20px; top: 50%;
     transform: translateY(-50%);
-    width: 13px; height: 40px;
+    width: 20px; height: 48px;
     background: var(--surface); border: 1px solid var(--border);
     border-right: none; border-radius: 4px 0 0 4px;
-    color: #555; font-size: 12px; cursor: pointer;
+    color: var(--muted); font-size: 14px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     z-index: 10; transition: color 0.12s, background 0.12s;
 }
@@ -337,7 +343,7 @@ body {
 
 /* Items container */
 .legend-items {
-    display: flex; flex-direction: column; gap: 3px;
+    display: flex; flex-direction: column; gap: 1px;
     width: 100%;
     margin-block: auto;
 }
@@ -347,8 +353,8 @@ body {
 }
 
 .legend-item {
-    display: flex; align-items: center; gap: 6px;
-    padding: 2px 6px; border-radius: 4px;
+    display: flex; align-items: center; gap: 7px;
+    min-height: 24px; padding: 3px 6px; border-radius: 4px;
     cursor: pointer; white-space: nowrap;
     transition: background 0.1s;
     background: none; border: none; font: inherit; color: inherit;
@@ -361,7 +367,7 @@ body {
     outline: 1px solid rgba(192,57,43,0.4);
 }
 .legend-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.legend-name { font-family: var(--ff); font-size: 10px; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
+.legend-name { font-family: var(--ff); font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Results view ────────────────────────────────────────────── */
 /* Левый отступ перенесён в первую (закреплённую) колонку, иначе под ним видно прокручиваемые ячейки */
@@ -371,13 +377,13 @@ body {
     position: sticky; top: 0; z-index: 2;
     background: #1a1a1a; border-bottom: 2px solid var(--border);
     padding: 8px 10px; text-align: left; white-space: nowrap;
-    color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 0.4px;
+    color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: 0.4px;
     cursor: pointer; user-select: none; transition: color 0.12s, background 0.12s;
 }
 .results-table th:hover   { color: var(--text); background: #202020; }
 .results-table th.sort-active { color: var(--text); }
 .sort-icon { display: inline-block; margin-left: 4px; opacity: 0.5; font-style: normal; }
-.results-table th.sort-active .sort-icon { opacity: 1; color: var(--red-hi); }
+.results-table th.sort-active .sort-icon { opacity: 1; color: var(--red-text); }
 .results-table td { padding: 6px 10px; border-bottom: 1px solid #1e1e1e; white-space: nowrap; }
 .results-table tr:hover td { background: rgba(255,255,255,0.025); }
 
@@ -403,21 +409,24 @@ body {
 .th-stage       { text-align: right !important; }
 .td-stage       { color: #aaa; text-align: right; }
 .td-stage-rank  { display: inline-block; min-width: 22px; margin-left: 6px; color: var(--dim); font-size: 10px; text-align: left; }
-.td-stage-sr    { margin-left: 2px; color: var(--red-hi); font-size: 9px; font-weight: 700; }
+.td-stage-sr    { margin-left: 2px; color: var(--red-text); font-size: 9px; font-weight: 700; }
 .td-name-user   { color: var(--text); font-weight: 500; }
 .td-name-real   { color: var(--muted); font-size: 11px; }
 .td-time        { color: #aaa; }
 .td-leader      { color: #888; }
-.td-gap-pos     { color: var(--red-hi); }
+.td-gap-pos     { color: var(--red-text); }
 .td-gap-neg     { color: var(--green); }
 .td-gap-zero    { color: #888; }
-.td-clean       { cursor: help; border-bottom: 1px dashed #444; display: inline-block; }
-.td-sr          { color: var(--red-hi); font-weight: 600; }
-.td-total-gap   { color: #888; }
+.td-clean       { cursor: help; border-bottom: 1px dashed #555; display: inline-block; }
+/* Отставание от лидера есть почти у всех — нейтральный цвет; красный/зелёный только для сравнения с соседом */
+.td-gap-leader  { color: var(--text-2); }
+.td-sr          { color: var(--red-text); font-weight: 600; }
+.td-total-gap   { color: var(--text-2); }
 .badge-group    {
     display: inline-block; padding: 2px 7px; border-radius: 3px;
     font-size: 10px; font-weight: 600; white-space: nowrap;
-    background: rgba(192,57,43,0.15); color: #c66; border: 1px solid rgba(192,57,43,0.3);
+    /* Нейтральная плашка: красный в интерфейсе — акцент и «хуже», а не категория */
+    background: rgba(255,255,255,0.06); color: #ccc; border: 1px solid rgba(255,255,255,0.14);
 }
 
 /* ── Chart HTML tooltip ──────────────────────────────────────── */
@@ -497,7 +506,7 @@ body {
 .chart-type-legend { display: flex; align-items: center; gap: 12px; }
 .ctl-item {
     display: flex; align-items: center; gap: 6px;
-    font-family: var(--ff); font-size: 10px; color: #777; white-space: nowrap;
+    font-family: var(--ff); font-size: 11px; color: var(--muted); white-space: nowrap;
 }
 .ctl-line {
     display: inline-block; width: 18px; height: 2px; flex-shrink: 0;
@@ -515,13 +524,15 @@ body {
     overflow: hidden; flex-shrink: 0;
 }
 .seg-btn {
-    padding: 4px 10px; font-size: 11px; font-family: var(--ff);
-    background: transparent; color: #777; border: none; cursor: pointer;
+    min-height: 26px; padding: 4px 11px; font-size: 11px; font-family: var(--ff);
+    background: transparent; color: var(--text-2); border: none; cursor: pointer;
     white-space: nowrap; transition: background 0.12s, color 0.12s;
 }
 .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
 .seg-btn:hover:not(:disabled) { color: var(--text); background: var(--surface2); }
-.seg-btn.active { background: rgba(192,57,43,0.25); color: #fff; }
+/* Активный пункт — светлая заливка и красная черта снизу */
+.seg-btn.active { background: #3a3a3a; color: #fff; font-weight: 600; box-shadow: inset 0 -2px 0 var(--red-hi); }
+.seg-btn.active:hover { background: #3a3a3a; }
 .seg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── Scrollbar ───────────────────────────────────────────────── */
@@ -556,7 +567,8 @@ body {
     color: rgba(255,255,255,0.8);
     font-family: 'Fira Code', monospace;
     font-size: 11px;
-    padding: 3px 7px;
+    min-height: 26px;
+    padding: 4px 8px;
     cursor: pointer;
     border-radius: 3px;
     transition: background 0.15s, color 0.15s, border-color 0.15s;
@@ -620,9 +632,9 @@ body {
     #sidebar-filters-label { margin-right: auto; }
 
     /* Крупнее цели касания */
-    .filter-header { padding: 10px 10px 10px 12px; }
+    .filter-header-left { padding: 10px 8px 10px 12px; }
     .filter-item   { padding: 6px 10px 6px 12px; }
-    .btn-fa        { padding: 5px 10px; }
+    .btn-fa        { min-height: 32px; padding: 5px 12px; }
 
     .main-toolbar { flex-wrap: wrap; gap: 6px; padding: 6px 10px; }
     .tab-btn      { padding: 6px 10px; }
@@ -643,8 +655,8 @@ body {
     .legend-expand-btn { display: none !important; }
     .legend-inner { align-items: flex-start; }
     .legend-items { flex-direction: row; flex-wrap: wrap; gap: 2px 4px; margin-block: 0; }
-    .legend-item  { padding: 4px 8px; max-width: 48%; }
-    .legend-name  { font-size: 11px; }
+    .legend-item  { min-height: 32px; padding: 4px 8px; max-width: 48%; }
+    .legend-name  { font-size: 12px; }
 
     .results-wrap { padding-right: 8px; }
 }

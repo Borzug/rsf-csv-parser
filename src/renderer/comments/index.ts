@@ -401,7 +401,7 @@ function injectStyles(): void {
         :root {
             --font-mono:                var(--ff);
             --color-text-primary:       var(--text);
-            --color-text-secondary:     #aaa;
+            --color-text-secondary:     var(--text-2);
             --color-text-tertiary:      var(--muted);
             --color-background-secondary: var(--surface);
             --color-border-tertiary:    var(--border);
@@ -488,7 +488,7 @@ function injectStyles(): void {
             margin-top: 8px;
             font-family: var(--font-mono);
             font-size: 10px;
-            color: #888;
+            color: var(--muted);
             background: rgba(255,255,255,0.05);
             border: 1px solid var(--color-border-tertiary);
             border-radius: 4px;
@@ -544,7 +544,7 @@ function injectStyles(): void {
             font-family: var(--font-mono);
             font-size: 10px;
             font-weight: 700;
-            color: #cc2222;
+            color: var(--red-text);
             background: rgba(204,34,34,0.12);
             border: 1px solid rgba(204,34,34,0.25);
             padding: 1px 6px;
@@ -554,7 +554,7 @@ function injectStyles(): void {
             font-family: var(--font-mono);
             font-size: 10px;
             font-weight: 700;
-            color: #cc2222;
+            color: var(--red-text);
             background: rgba(204,34,34,0.07);
             border: 1px solid rgba(204,34,34,0.18);
             padding: 1px 6px;

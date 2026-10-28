@@ -95,7 +95,7 @@ function drawHorizontalLabel(
     const xMid = (xL + xR) / 2;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillStyle    = hovered ? '#e74c3c' : '#c0392b';
+    ctx.fillStyle    = hovered ? '#ff7a6b' : '#ef5b4c';
     ctx.font         = `bold ${FONT_SIZE_SS}px ${FONT_FAMILY}`;
     ctx.fillText(`SS${stage.num}`, xMid, bot + 6);
 
@@ -103,7 +103,7 @@ function drawHorizontalLabel(
     const name     = stage.name.length > maxChars
         ? stage.name.slice(0, maxChars - 1) + '…'
         : stage.name;
-    ctx.fillStyle = hovered ? '#888' : '#666';
+    ctx.fillStyle = hovered ? '#c8c8c8' : '#8a8a8a';
     ctx.font      = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
     ctx.fillText(name, xMid, bot + 21);
 }
@@ -132,7 +132,7 @@ function drawRotatedLabel(
     ctx.textAlign    = 'left';
     ctx.textBaseline = 'top';
 
-    ctx.fillStyle = hovered ? '#e74c3c' : '#c0392b';
+    ctx.fillStyle = hovered ? '#ff7a6b' : '#ef5b4c';
     ctx.font      = `bold ${FONT_SIZE_NM}px ${FONT_FAMILY}`;
     const ssLabel = `SS${stage.num} `;
     ctx.fillText(ssLabel, 0, 0);
@@ -141,7 +141,7 @@ function drawRotatedLabel(
     const name = stage.name.length > MAX_CHARS
         ? stage.name.slice(0, MAX_CHARS - 1) + '…'
         : stage.name;
-    ctx.fillStyle = hovered ? '#888' : '#666';
+    ctx.fillStyle = hovered ? '#c8c8c8' : '#8a8a8a';
     ctx.font      = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
     ctx.fillText(name, ssW, 0);
     ctx.restore();
