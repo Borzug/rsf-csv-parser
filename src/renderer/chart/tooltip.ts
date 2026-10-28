@@ -45,6 +45,7 @@ export function buildTooltipHandler(
             : buildTooltipHtml(
                 collectMatchingDatasets(chart, xIdx, y0, fieldTips ? [] : pinnedIdxs),
                 xIdx, stageInfo, yMode,
+                yMode === 'position' ? leaderAbsAt(chart, xIdx) : null,
             );
         el.style.display = 'block';
 
@@ -113,11 +114,23 @@ function buildCompareHtml(
     return html;
 }
 
+/** Лучшее накопленное время среди показанных участников в точке сплита. */
+function leaderAbsAt(chart: any, xIdx: number): number | null {
+    let best: number | null = null;
+    for (const ds of chart?.data.datasets ?? []) {
+        if (ds.hidden) continue;
+        const v = (ds._abs as (number | null)[])[xIdx];
+        if (v !== null && v !== undefined && (best === null || v < best)) best = v;
+    }
+    return best;
+}
+
 function buildTooltipHtml(
     matches:   IDatasetMatch[],
     xIdx:      number,
     stageInfo: { label: string } | null,
     yMode:     TYMode,
+    leaderAbs: number | null,
 ): string {
     const t = i18n.t();
 
@@ -139,7 +152,11 @@ function buildTooltipHtml(
         html += isDnf || abs === null
             ? `<span class="tt-red">DNF</span>`
             : `<span class="tt-row">⏱ ${formatTime(abs)}</span>`;
-        if (!isDnf && y !== null && yMode !== 'abs')
+        if (!isDnf && y !== null && yMode === 'position') {
+            html += `<span class="tt-row">${t.tooltipPosition}: ${y}</span>`;
+            if (abs !== null && leaderAbs !== null && abs > leaderAbs)
+                html += `<span class="tt-row">${t.tooltipGapLeader}: ${formatTimeSigned(abs - leaderAbs)}</span>`;
+        } else if (!isDnf && y !== null && yMode !== 'abs')
             html += `<span class="tt-row">${yMode === 'leader' ? t.tooltipGapLeader : t.tooltipGapPinned}: ${formatTimeSigned(y)}</span>`;
         if (pen > 0) html += `<span class="tt-red">${t.tooltipPenalty}: +${formatTime(pen)}</span>`;
         if (sp  > 0) html += `<span class="tt-red">${t.tooltipServicePenalty}: +${formatTime(sp)}</span>`;

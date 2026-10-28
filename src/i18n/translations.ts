@@ -26,13 +26,17 @@ export const ru: ITranslations = {
     chartLegendComment:     'Комментарий',
 
     axisTimeTitle:          'Время',
+    axisPositionTitle:      'Место',
     axisTimeUnits:          { h: 'ч', m: 'м', s: 'с' },
 
     yModeAbs:               'Время',
     yModeLeader:            'От лидера',
     yModePinned:            'От выбранного',
+    yModePosition:          'Позиция',
+    yModePositionTitle:     'Место в общем зачёте на каждом сплите среди показанных участников',
     yModePinnedDisabled:    'Выберите участника на графике или в легенде',
     tooltipGapLeader:       'К лидеру',
+    tooltipPosition:        'Место',
     tooltipGapPinned:       'К выбранному',
 
     dropHint:               'или перетащите файл в окно',
@@ -140,13 +144,17 @@ export const en: ITranslations = {
     chartLegendComment:     'Comment',
 
     axisTimeTitle:          'Time',
+    axisPositionTitle:      'Position',
     axisTimeUnits:          { h: 'h', m: 'm', s: 's' },
 
     yModeAbs:               'Time',
     yModeLeader:            'Gap to leader',
     yModePinned:            'Gap to selected',
+    yModePosition:          'Position',
+    yModePositionTitle:     'Overall position at each split among the shown drivers',
     yModePinnedDisabled:    'Select a driver on the chart or in the legend',
     tooltipGapLeader:       'To leader',
+    tooltipPosition:        'Position',
     tooltipGapPinned:       'To selected',
 
     dropHint:               'or drop the file into the window',
@@ -250,13 +258,17 @@ export const hu: ITranslations = {
     chartLegendComment:     'Megjegyzés',
 
     axisTimeTitle:          'Idő',
+    axisPositionTitle:      'Helyezés',
     axisTimeUnits:          { h: 'ó', m: 'p', s: 'mp' },
 
     yModeAbs:               'Idő',
     yModeLeader:            'Hátrány a vezetőtől',
     yModePinned:            'Hátrány a kijelölttől',
+    yModePosition:          'Helyezés',
+    yModePositionTitle:     'Összetett helyezés minden részidőnél a megjelenített versenyzők között',
     yModePinnedDisabled:    'Válassz versenyzőt a grafikonon vagy a jelmagyarázatban',
     tooltipGapLeader:       'Vezetőhöz',
+    tooltipPosition:        'Helyezés',
     tooltipGapPinned:       'Kijelölthöz',
 
     dropHint:               'vagy húzd a fájlt az ablakba',

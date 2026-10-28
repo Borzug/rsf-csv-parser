@@ -342,7 +342,7 @@ function readUrlState(): IUrlState | null {
     const y    = p.get('y');
     return {
         tab:    tab === 'chart' || tab === 'results' || tab === 'comments' ? tab : null,
-        yMode:  y === 'abs' || y === 'leader' || y === 'pinned' ? y : null,
+        yMode:  y === 'abs' || y === 'leader' || y === 'position' || y === 'pinned' ? y : null,
         stages: list('ss')?.map(Number).filter(n => !isNaN(n)) ?? null,
         groups: list('cls'),
         pins:   list('pin') ?? [],

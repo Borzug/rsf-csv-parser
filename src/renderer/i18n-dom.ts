@@ -20,6 +20,8 @@ export function applyDomTranslations(): void {
     setTextById('ymode-abs',               t.yModeAbs);
     setTextById('ymode-leader',            t.yModeLeader);
     setTextById('ymode-pinned',            t.yModePinned);
+    setTextById('ymode-position',          t.yModePosition);
+    setAttrById('ymode-position',          'title', t.yModePositionTitle);
     setAttrById('legend-search',           'placeholder', t.legendSearchPlaceholder);
     setAttrById('legend-search',           'aria-label',  t.legendSearchPlaceholder);
     setAttrById('legend-search',           'title',       t.legendSearchHint);

@@ -32,14 +32,18 @@ export interface ITranslations {
 
     // Ось Y графика
     axisTimeTitle:          string;
+    axisPositionTitle:      string;
     axisTimeUnits:          { h: string; m: string; s: string };
 
     // Режим оси Y
     yModeAbs:               string;
     yModeLeader:            string;
     yModePinned:            string;
+    yModePosition:          string;
+    yModePositionTitle:     string;
     yModePinnedDisabled:    string;
     tooltipGapLeader:       string;
+    tooltipPosition:        string;
     tooltipGapPinned:       string;
 
     // Стартовый экран — файл и возврат к анализу

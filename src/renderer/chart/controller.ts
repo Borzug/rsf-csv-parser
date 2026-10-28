@@ -25,9 +25,14 @@ const DIM_ALPHA      = 0.06;
 const DIM_ALPHA_SOFT = 0.35;
 const BORDER_WIDTH        = 1.8;
 const BORDER_WIDTH_PINNED = 2.8;
+/** Шаг делений оси в режиме «Позиция» — первый, при котором делений не больше 12. */
+const POSITION_STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
 
-/** Режим оси Y: накопленное время, отставание от лидера, отставание от первого закреплённого. */
-export type TYMode = 'abs' | 'leader' | 'pinned';
+/**
+ * Режим оси Y: накопленное время, отставание от лидера, место в общем зачёте на каждом
+ * сплите, отставание от первого закреплённого.
+ */
+export type TYMode = 'abs' | 'leader' | 'position' | 'pinned';
 
 export interface IChartController {
     build(
@@ -114,6 +119,11 @@ export function createChartController(): IChartController {
         const mode = effectiveYMode();
         const nPts = chart.data.labels.length;
 
+        const title = mode === 'position' ? i18n.t().axisPositionTitle : i18n.t().axisTimeTitle;
+        chart.options.scales.y.title.text  = title;
+        chart.options.scales.y2.title.text = title;
+        if (mode === 'position') { applyPositionMode(nPts); return; }
+
         let ref: (number | null)[] | null = null;
         if (mode === 'leader') {
             ref = new Array(nPts).fill(null);
@@ -160,6 +170,46 @@ export function createChartController(): IChartController {
         }
     }
 
+    /**
+     * Место по накопленному времени на каждом сплите среди показанных участников
+     * (как и «от лидера», учитывает фильтры). Сошедший выпадает, остальные поднимаются.
+     */
+    function applyPositionMode(nPts: number): void {
+        const dss = chart.data.datasets as any[];
+        const shown = dss.filter(ds => !ds.hidden);
+        const ranks = new Map<any, (number | null)[]>(dss.map(ds => [ds, new Array(nPts).fill(null)]));
+        let maxRank = 1;
+        for (let i = 1; i < nPts; i++) {
+            const at = shown
+                .filter(ds => ds._abs[i] !== null)
+                .sort((a, b) => a._abs[i] - b._abs[i]);
+            // Равное время — равное место (1, 2, 2, 4)
+            at.forEach((ds, k) => {
+                const prev = at[k - 1];
+                const r = prev && prev._abs[i] === ds._abs[i] ? ranks.get(prev)![i]! : k + 1;
+                ranks.get(ds)![i] = r;
+            });
+            maxRank = Math.max(maxRank, at.length);
+        }
+        dss.forEach((ds, di) => {
+            const r = ranks.get(ds)!;
+            // На старте у всех ноль — начинаем линию с места на первом сплите, без «веера» из точки 1
+            r[0] = r[1];
+            ds.data        = r;
+            ds.borderWidth = pinnedIdxs.includes(di) ? BORDER_WIDTH_PINNED : BORDER_WIDTH;
+            ds.order       = pinnedIdxs.includes(di) ? -1 : 0;
+        });
+
+        const step = POSITION_STEPS.find(s => maxRank / s <= 12) ?? POSITION_STEPS[POSITION_STEPS.length - 1];
+        for (const id of ['y', 'y2']) {
+            const s = chart.options.scales[id];
+            s.min            = 1;
+            s.max            = Math.max(maxRank, 2);
+            s.reverse        = true;
+            s.ticks.stepSize = step;
+        }
+    }
+
     function notifyPinChange(): void {
         syncPinnedIdxs();
         applyYMode();
@@ -186,9 +236,7 @@ export function createChartController(): IChartController {
 
         refreshLabels(): void {
             if (!chart) return;
-            const title = i18n.t().axisTimeTitle;
-            chart.options.scales.y.title.text  = title;
-            chart.options.scales.y2.title.text = title;
+            applyYMode();   // заодно переводит заголовок оси
             chart.update('none');
         },
 
@@ -314,7 +362,7 @@ export function createChartController(): IChartController {
                             ),
                         },
                     },
-                    scales: buildScales(() => effectiveYMode() !== 'abs'),
+                    scales: buildScales(effectiveYMode),
                 },
                 plugins: [
                     buildPointsPlugin(),
@@ -400,14 +448,29 @@ function resolveHoveredBandIdx(
     return null;
 }
 
-function buildScales(isGapMode: () => boolean): object {
+function buildScales(getMode: () => TYMode): object {
+    const isGapMode = () => getMode() === 'leader' || getMode() === 'pinned';
     const yTickConfig = {
         color:    '#8a8a8a',
         font:     { size: 11, family: "'Fira Code', monospace" },
         callback: (v: any) => {
-            const sec = v as number;
-            return (isGapMode() && sec > 0 ? '+' : '') + formatYAxisTick(sec, i18n.t().axisTimeUnits);
+            const n = v as number;
+            // Деления считаются в дробных числах (100.00000001) — округляем, дробные места не подписываем
+            if (getMode() === 'position') return Math.abs(n - Math.round(n)) < 1e-6 ? String(Math.round(n)) : '';
+            return (isGapMode() && n > 0 ? '+' : '') + formatYAxisTick(n, i18n.t().axisTimeUnits);
         },
+    };
+
+    // Места: деления 1, шаг, 2·шаг… (Chart.js при min=1 и max, не кратном шагу,
+    // делит ось на равные дробные части). Последнее место — если не налезает на соседнее
+    const positionTicks = (scale: any): void => {
+        if (getMode() !== 'position') return;
+        const step = scale.options.ticks.stepSize as number;
+        const max  = scale.max as number;
+        const vals = [1];
+        for (let v = step; v <= max; v += step) if (v > 1) vals.push(v);
+        if (max - vals[vals.length - 1] >= step / 2) vals.push(max);
+        scale.ticks = vals.map(value => ({ value }));
     };
 
     return {
@@ -425,6 +488,7 @@ function buildScales(isGapMode: () => boolean): object {
             type:     'linear',
             position: 'left',
             ticks:    { ...yTickConfig },
+            afterBuildTicks: positionTicks,
             grid:     {
                 color:     (ctx: any) => isGapMode() && ctx.tick?.value === 0 ? '#3a3a3a' : '#1c1c1c',
                 lineWidth: 1,
@@ -441,6 +505,7 @@ function buildScales(isGapMode: () => boolean): object {
             type:      'linear',
             position:  'right',
             ticks:     { ...yTickConfig },
+            afterBuildTicks: positionTicks,
             grid:      { drawOnChartArea: false },
             border:    { color: '#3a3a3a' },
             title: {

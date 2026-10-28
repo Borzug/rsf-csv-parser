@@ -174,12 +174,16 @@
     chartLegendSuperRally: "Super Rally",
     chartLegendComment: "\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0439",
     axisTimeTitle: "\u0412\u0440\u0435\u043C\u044F",
+    axisPositionTitle: "\u041C\u0435\u0441\u0442\u043E",
     axisTimeUnits: { h: "\u0447", m: "\u043C", s: "\u0441" },
     yModeAbs: "\u0412\u0440\u0435\u043C\u044F",
     yModeLeader: "\u041E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430",
     yModePinned: "\u041E\u0442 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u0433\u043E",
+    yModePosition: "\u041F\u043E\u0437\u0438\u0446\u0438\u044F",
+    yModePositionTitle: "\u041C\u0435\u0441\u0442\u043E \u0432 \u043E\u0431\u0449\u0435\u043C \u0437\u0430\u0447\u0451\u0442\u0435 \u043D\u0430 \u043A\u0430\u0436\u0434\u043E\u043C \u0441\u043F\u043B\u0438\u0442\u0435 \u0441\u0440\u0435\u0434\u0438 \u043F\u043E\u043A\u0430\u0437\u0430\u043D\u043D\u044B\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432",
     yModePinnedDisabled: "\u0412\u044B\u0431\u0435\u0440\u0438\u0442\u0435 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430 \u043D\u0430 \u0433\u0440\u0430\u0444\u0438\u043A\u0435 \u0438\u043B\u0438 \u0432 \u043B\u0435\u0433\u0435\u043D\u0434\u0435",
     tooltipGapLeader: "\u041A \u043B\u0438\u0434\u0435\u0440\u0443",
+    tooltipPosition: "\u041C\u0435\u0441\u0442\u043E",
     tooltipGapPinned: "\u041A \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u043E\u043C\u0443",
     dropHint: "\u0438\u043B\u0438 \u043F\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u0435 \u0444\u0430\u0439\u043B \u0432 \u043E\u043A\u043D\u043E",
     dropOverlay: "\u041E\u0442\u043F\u0443\u0441\u0442\u0438\u0442\u0435 CSV-\u0444\u0430\u0439\u043B",
@@ -268,12 +272,16 @@
     chartLegendSuperRally: "Super Rally",
     chartLegendComment: "Comment",
     axisTimeTitle: "Time",
+    axisPositionTitle: "Position",
     axisTimeUnits: { h: "h", m: "m", s: "s" },
     yModeAbs: "Time",
     yModeLeader: "Gap to leader",
     yModePinned: "Gap to selected",
+    yModePosition: "Position",
+    yModePositionTitle: "Overall position at each split among the shown drivers",
     yModePinnedDisabled: "Select a driver on the chart or in the legend",
     tooltipGapLeader: "To leader",
+    tooltipPosition: "Position",
     tooltipGapPinned: "To selected",
     dropHint: "or drop the file into the window",
     dropOverlay: "Drop the CSV file",
@@ -358,12 +366,16 @@ Only stages without SR for both drivers`,
     chartLegendSuperRally: "Super Rally",
     chartLegendComment: "Megjegyz\xE9s",
     axisTimeTitle: "Id\u0151",
+    axisPositionTitle: "Helyez\xE9s",
     axisTimeUnits: { h: "\xF3", m: "p", s: "mp" },
     yModeAbs: "Id\u0151",
     yModeLeader: "H\xE1tr\xE1ny a vezet\u0151t\u0151l",
     yModePinned: "H\xE1tr\xE1ny a kijel\xF6ltt\u0151l",
+    yModePosition: "Helyez\xE9s",
+    yModePositionTitle: "\xD6sszetett helyez\xE9s minden r\xE9szid\u0151n\xE9l a megjelen\xEDtett versenyz\u0151k k\xF6z\xF6tt",
     yModePinnedDisabled: "V\xE1lassz versenyz\u0151t a grafikonon vagy a jelmagyar\xE1zatban",
     tooltipGapLeader: "Vezet\u0151h\xF6z",
+    tooltipPosition: "Helyez\xE9s",
     tooltipGapPinned: "Kijel\xF6lth\xF6z",
     dropHint: "vagy h\xFAzd a f\xE1jlt az ablakba",
     dropOverlay: "Engedd el a CSV f\xE1jlt",
@@ -1176,7 +1188,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         collectMatchingDatasets(chart, xIdx, y0, fieldTips ? [] : pinnedIdxs),
         xIdx,
         stageInfo,
-        yMode
+        yMode,
+        yMode === "position" ? leaderAbsAt(chart, xIdx) : null
       );
       el.style.display = "block";
       positionTooltip(el, context, TOOLTIP_MARGIN_PX, TOOLTIP_OFFSET_Y);
@@ -1212,7 +1225,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     html += "</table></div>";
     return html;
   }
-  function buildTooltipHtml(matches2, xIdx, stageInfo, yMode) {
+  function leaderAbsAt(chart, xIdx) {
+    let best = null;
+    for (const ds of chart?.data.datasets ?? []) {
+      if (ds.hidden) continue;
+      const v = ds._abs[xIdx];
+      if (v !== null && v !== void 0 && (best === null || v < best)) best = v;
+    }
+    return best;
+  }
+  function buildTooltipHtml(matches2, xIdx, stageInfo, yMode, leaderAbs) {
     const t = i18n.t();
     return matches2.map(({ ds, y, isDnf }, mi) => {
       const divider = mi > 0 ? '<div class="tt-divider"></div>' : "";
@@ -1229,7 +1251,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       html += `<span class="tt-sep"></span>`;
       const abs = ds._abs[xIdx] ?? null;
       html += isDnf || abs === null ? `<span class="tt-red">DNF</span>` : `<span class="tt-row">\u23F1 ${formatTime(abs)}</span>`;
-      if (!isDnf && y !== null && yMode !== "abs")
+      if (!isDnf && y !== null && yMode === "position") {
+        html += `<span class="tt-row">${t.tooltipPosition}: ${y}</span>`;
+        if (abs !== null && leaderAbs !== null && abs > leaderAbs)
+          html += `<span class="tt-row">${t.tooltipGapLeader}: ${formatTimeSigned(abs - leaderAbs)}</span>`;
+      } else if (!isDnf && y !== null && yMode !== "abs")
         html += `<span class="tt-row">${yMode === "leader" ? t.tooltipGapLeader : t.tooltipGapPinned}: ${formatTimeSigned(y)}</span>`;
       if (pen > 0) html += `<span class="tt-red">${t.tooltipPenalty}: +${formatTime(pen)}</span>`;
       if (sp > 0) html += `<span class="tt-red">${t.tooltipServicePenalty}: +${formatTime(sp)}</span>`;
@@ -1273,6 +1299,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var DIM_ALPHA_SOFT = 0.35;
   var BORDER_WIDTH2 = 1.8;
   var BORDER_WIDTH_PINNED = 2.8;
+  var POSITION_STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1e3];
   function createChartController() {
     let chart = null;
     let canvas = null;
@@ -1315,6 +1342,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const dss = chart.data.datasets;
       const mode = effectiveYMode();
       const nPts = chart.data.labels.length;
+      const title = mode === "position" ? i18n.t().axisPositionTitle : i18n.t().axisTimeTitle;
+      chart.options.scales.y.title.text = title;
+      chart.options.scales.y2.title.text = title;
+      if (mode === "position") {
+        applyPositionMode(nPts);
+        return;
+      }
       let ref = null;
       if (mode === "leader") {
         ref = new Array(nPts).fill(null);
@@ -1351,6 +1385,36 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         s.ticks.stepSize = step;
       }
     }
+    function applyPositionMode(nPts) {
+      const dss = chart.data.datasets;
+      const shown = dss.filter((ds) => !ds.hidden);
+      const ranks = new Map(dss.map((ds) => [ds, new Array(nPts).fill(null)]));
+      let maxRank = 1;
+      for (let i = 1; i < nPts; i++) {
+        const at = shown.filter((ds) => ds._abs[i] !== null).sort((a, b) => a._abs[i] - b._abs[i]);
+        at.forEach((ds, k) => {
+          const prev = at[k - 1];
+          const r = prev && prev._abs[i] === ds._abs[i] ? ranks.get(prev)[i] : k + 1;
+          ranks.get(ds)[i] = r;
+        });
+        maxRank = Math.max(maxRank, at.length);
+      }
+      dss.forEach((ds, di) => {
+        const r = ranks.get(ds);
+        r[0] = r[1];
+        ds.data = r;
+        ds.borderWidth = pinnedIdxs.includes(di) ? BORDER_WIDTH_PINNED : BORDER_WIDTH2;
+        ds.order = pinnedIdxs.includes(di) ? -1 : 0;
+      });
+      const step = POSITION_STEPS.find((s) => maxRank / s <= 12) ?? POSITION_STEPS[POSITION_STEPS.length - 1];
+      for (const id of ["y", "y2"]) {
+        const s = chart.options.scales[id];
+        s.min = 1;
+        s.max = Math.max(maxRank, 2);
+        s.reverse = true;
+        s.ticks.stepSize = step;
+      }
+    }
     function notifyPinChange() {
       syncPinnedIdxs();
       applyYMode();
@@ -1374,9 +1438,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       getActiveStages: () => activeStages,
       refreshLabels() {
         if (!chart) return;
-        const title = i18n.t().axisTimeTitle;
-        chart.options.scales.y.title.text = title;
-        chart.options.scales.y2.title.text = title;
+        applyYMode();
         chart.update("none");
       },
       setHoveredKey(key) {
@@ -1501,7 +1563,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
                 )
               }
             },
-            scales: buildScales(() => effectiveYMode() !== "abs")
+            scales: buildScales(effectiveYMode)
           },
           plugins: [
             buildPointsPlugin(),
@@ -1575,14 +1637,25 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     return null;
   }
-  function buildScales(isGapMode) {
+  function buildScales(getMode) {
+    const isGapMode = () => getMode() === "leader" || getMode() === "pinned";
     const yTickConfig = {
       color: "#8a8a8a",
       font: { size: 11, family: "'Fira Code', monospace" },
       callback: (v) => {
-        const sec = v;
-        return (isGapMode() && sec > 0 ? "+" : "") + formatYAxisTick(sec, i18n.t().axisTimeUnits);
+        const n = v;
+        if (getMode() === "position") return Math.abs(n - Math.round(n)) < 1e-6 ? String(Math.round(n)) : "";
+        return (isGapMode() && n > 0 ? "+" : "") + formatYAxisTick(n, i18n.t().axisTimeUnits);
       }
+    };
+    const positionTicks = (scale) => {
+      if (getMode() !== "position") return;
+      const step = scale.options.ticks.stepSize;
+      const max = scale.max;
+      const vals = [1];
+      for (let v = step; v <= max; v += step) if (v > 1) vals.push(v);
+      if (max - vals[vals.length - 1] >= step / 2) vals.push(max);
+      scale.ticks = vals.map((value) => ({ value }));
     };
     return {
       x: {
@@ -1599,6 +1672,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         type: "linear",
         position: "left",
         ticks: { ...yTickConfig },
+        afterBuildTicks: positionTicks,
         grid: {
           color: (ctx) => isGapMode() && ctx.tick?.value === 0 ? "#3a3a3a" : "#1c1c1c",
           lineWidth: 1
@@ -1615,6 +1689,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         type: "linear",
         position: "right",
         ticks: { ...yTickConfig },
+        afterBuildTicks: positionTicks,
         grid: { drawOnChartArea: false },
         border: { color: "#3a3a3a" },
         title: {
@@ -2884,6 +2959,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     setTextById("ymode-abs", t.yModeAbs);
     setTextById("ymode-leader", t.yModeLeader);
     setTextById("ymode-pinned", t.yModePinned);
+    setTextById("ymode-position", t.yModePosition);
+    setAttrById("ymode-position", "title", t.yModePositionTitle);
     setAttrById("legend-search", "placeholder", t.legendSearchPlaceholder);
     setAttrById("legend-search", "aria-label", t.legendSearchPlaceholder);
     setAttrById("legend-search", "title", t.legendSearchHint);
@@ -3771,7 +3848,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const y = p.get("y");
     return {
       tab: tab === "chart" || tab === "results" || tab === "comments" ? tab : null,
-      yMode: y === "abs" || y === "leader" || y === "pinned" ? y : null,
+      yMode: y === "abs" || y === "leader" || y === "position" || y === "pinned" ? y : null,
       stages: list("ss")?.map(Number).filter((n) => !isNaN(n)) ?? null,
       groups: list("cls"),
       pins: list("pin") ?? []
