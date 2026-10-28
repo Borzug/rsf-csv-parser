@@ -1,45 +1,30 @@
-import type { IParsedRallyData } from '../../shared/types.js';
 import { i18n } from "../../i18n/index.js";
 import { qsa } from "../dom.js";
-import {
-    IChartFilterState,
-    refreshVisibleDriverKeys
-} from "./filterState";
 
 const DEBOUNCE_MS = 200;
 const MIN_CHARS   = 2;
 
 let _searchTimer: number | null = null;
 
-export function applyDriverSearch(
-    q:     string,
-    body:  HTMLElement,
-    data:  IParsedRallyData,
-    state: IChartFilterState,
-): void {
+/**
+ * Поиск только помогает найти строку: прячет несовпавшие классом .search-hidden и не
+ * меняет style.display, которым список сужают фильтры класса/машины/СУ. Поэтому
+ * «Все»/«Ничего», пресеты и счётчик (state.visibleDriverKeys) поиска не учитывают —
+ * иначе «Ничего» при активном поиске снимало бы отметку только с найденных.
+ */
+export function applyDriverSearch(q: string, body: HTMLElement): void {
     const s = q.trim().toLowerCase();
     qsa<HTMLElement>('.filter-item[data-driver-key]', body).forEach(item => {
-        const grp   = item.dataset['group'] ?? '';
-        const car   = item.dataset['car']   ?? '';
-        const grpOk = !data.groups.length || state.activeGroups.has(grp);
-        const carOk = !state.activeCars.size || state.activeCars.has(car);
-        if (!grpOk || !carOk) { item.style.display = 'none'; return; }
-        if (s.length < MIN_CHARS) { item.style.display = ''; return; }
-        item.style.display = (item.textContent ?? '').toLowerCase().includes(s) ? '' : 'none';
+        const miss = s.length >= MIN_CHARS && !(item.textContent ?? '').toLowerCase().includes(s);
+        item.classList.toggle('search-hidden', miss);
     });
-    refreshVisibleDriverKeys(body, state);
 }
 
+/** Повторно применяет поиск после перестройки или фильтрации списка. */
 export function reapplyDriverSearch(body: HTMLElement): void {
     const sv = (document.getElementById('driver-search-input') as HTMLInputElement | null)
         ?.value ?? '';
-    if (sv.length < MIN_CHARS) return;
-    const q = sv.toLowerCase();
-    qsa<HTMLElement>('.filter-item[data-driver-key]', body).forEach(item => {
-        if (item.style.display !== 'none'
-            && !(item.textContent ?? '').toLowerCase().includes(q))
-            item.style.display = 'none';
-    });
+    applyDriverSearch(sv, body);
 }
 
 export function buildSearchBox(

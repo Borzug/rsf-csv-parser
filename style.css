@@ -224,6 +224,8 @@ body {
 }
 .filter-item:hover  { background: var(--surface2); }
 .filter-item.hover-highlighted { background: rgba(192,57,43,0.08); }
+/* Скрыта поиском (не фильтром) — см. applyDriverSearch */
+.filter-item.search-hidden { display: none; }
 .filter-item input[type="checkbox"] { margin-top: 3px; flex-shrink: 0; accent-color: var(--red); cursor: pointer; }
 
 .filter-ss           { font-size: 11px; font-weight: 600; color: var(--red-text); font-family: var(--ff); white-space: nowrap; flex-shrink: 0; }

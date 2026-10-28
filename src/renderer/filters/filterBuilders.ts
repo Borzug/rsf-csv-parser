@@ -94,10 +94,8 @@ export function buildDriverFilterUI(
         callbacks.onDriversChanged();
     });
 
-    buildSearchBox(body, (q) => {
-        applyDriverSearch(q, body, data, state);
-        callbacks.onDriversChanged();
-    });
+    // Поиск только прячет строки — выбор участников и график не меняются
+    buildSearchBox(body, (q) => applyDriverSearch(q, body));
 
     /** Оставляет выбранными только видимых (с учётом класса/поиска), прошедших отбор pick. */
     const applyPreset = (pick: (rank: number) => boolean) => {

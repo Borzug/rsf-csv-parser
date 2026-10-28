@@ -2555,33 +2555,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var DEBOUNCE_MS = 200;
   var MIN_CHARS = 2;
   var _searchTimer = null;
-  function applyDriverSearch(q, body, data2, state) {
+  function applyDriverSearch(q, body) {
     const s = q.trim().toLowerCase();
     qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      const grp = item.dataset["group"] ?? "";
-      const car = item.dataset["car"] ?? "";
-      const grpOk = !data2.groups.length || state.activeGroups.has(grp);
-      const carOk = !state.activeCars.size || state.activeCars.has(car);
-      if (!grpOk || !carOk) {
-        item.style.display = "none";
-        return;
-      }
-      if (s.length < MIN_CHARS) {
-        item.style.display = "";
-        return;
-      }
-      item.style.display = (item.textContent ?? "").toLowerCase().includes(s) ? "" : "none";
+      const miss = s.length >= MIN_CHARS && !(item.textContent ?? "").toLowerCase().includes(s);
+      item.classList.toggle("search-hidden", miss);
     });
-    refreshVisibleDriverKeys(body, state);
   }
   function reapplyDriverSearch(body) {
     const sv = document.getElementById("driver-search-input")?.value ?? "";
-    if (sv.length < MIN_CHARS) return;
-    const q = sv.toLowerCase();
-    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      if (item.style.display !== "none" && !(item.textContent ?? "").toLowerCase().includes(q))
-        item.style.display = "none";
-    });
+    applyDriverSearch(sv, body);
   }
   function buildSearchBox(body, onSearch) {
     const sw = document.createElement("div");
@@ -2695,10 +2678,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       syncVisibleCheckboxes(body, false);
       callbacks2.onDriversChanged();
     });
-    buildSearchBox(body, (q) => {
-      applyDriverSearch(q, body, data2, state);
-      callbacks2.onDriversChanged();
-    });
+    buildSearchBox(body, (q) => applyDriverSearch(q, body));
     const applyPreset = (pick) => {
       const visible = sorted.filter((d) => state.visibleDriverKeys.has(d.username));
       const finishers = visible.filter((d) => rankOf(d) !== null);
