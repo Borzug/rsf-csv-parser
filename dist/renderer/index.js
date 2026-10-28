@@ -3670,10 +3670,12 @@ ${hit.ptIdx}` : null;
   function buildStageCell(snap, rank) {
     if (snap.time3 === null) return createTd("td-stage td-gap-zero", "\u2014");
     const td = createTd("td-stage", formatTime(snap.time3));
+    const tail = createElement("span", "td-stage-tail");
     const rk = createElement("span", "td-stage-rank", `${rank ?? ""}`);
     if (rank === 1) rk.classList.add("pos-gold");
-    td.appendChild(rk);
-    if (snap.hasSR) td.appendChild(createElement("span", "td-stage-sr", "SR"));
+    tail.appendChild(rk);
+    if (snap.hasSR) tail.appendChild(createElement("span", "td-stage-sr", "SR"));
+    td.appendChild(tail);
     return td;
   }
   function buildPositionCell(pos) {

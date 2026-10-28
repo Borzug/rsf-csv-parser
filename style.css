@@ -426,10 +426,15 @@ body {
 .results-table .row-selected td.sticky-col         { background: #2a1917 !important; }
 .results-table .row-search-highlight td.sticky-col { background: #162a1e !important; }
 
-.th-stage       { text-align: right !important; }
+/* Справа от времени — хвост фиксированной ширины (место + SR), поэтому время во всех строках
+   кончается в одной точке; заголовок и «—» выровнены по ней же. */
+.results-table { --stage-tail: 36px; }
+.results-table th.th-stage   { text-align: right; padding-right: calc(10px + 6px + var(--stage-tail)); }
 .td-stage       { color: #aaa; text-align: right; }
-.td-stage-rank  { display: inline-block; min-width: 22px; margin-left: 6px; color: var(--dim); font-size: 10px; text-align: left; }
-.td-stage-sr    { margin-left: 2px; color: var(--red-text); font-size: 9px; font-weight: 700; }
+.td-stage.td-gap-zero { padding-right: calc(10px + 6px + var(--stage-tail)); }
+.td-stage-tail  { display: inline-block; width: var(--stage-tail); margin-left: 6px; text-align: left; }
+.td-stage-rank  { color: var(--dim); font-size: 10px; }
+.td-stage-sr    { margin-left: 3px; color: var(--red-text); font-size: 9px; font-weight: 700; }
 .td-name-user   { color: var(--text); font-weight: 500; }
 .td-name-real   { color: var(--muted); font-size: 11px; }
 .td-time        { color: #aaa; }
