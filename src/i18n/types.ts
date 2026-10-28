@@ -53,6 +53,9 @@ export interface ITranslations {
     // Сравнение закреплённых
     pinnedHint:             string;
     pinnedHintTouch:        string;
+    legendSearchPlaceholder: string;
+    legendSearchHint:       string;
+    legendSearchNone:       string;
 
     // Доступность и мобильная вёрстка
     chartAriaLabel:         string;

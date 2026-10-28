@@ -44,6 +44,9 @@ export const ru: ITranslations = {
 
     pinnedHint:             'Ctrl/Shift + клик — добавить к сравнению',
     pinnedHintTouch:        'Нажмите имя в легенде, чтобы добавить к сравнению',
+    legendSearchPlaceholder: 'Найти участника',
+    legendSearchHint:       'Enter — добавить к сравнению или убрать, ↑↓ — следующее совпадение, Esc — очистить, / — перейти к поиску',
+    legendSearchNone:       'нет',
     chartAriaLabel:         'График хода гонки: накопленное время участников по сплитам',
     closeLabel:             'Закрыть',
     pinnedChipRemove:       'Убрать из сравнения',
@@ -155,6 +158,9 @@ export const en: ITranslations = {
 
     pinnedHint:             'Ctrl/Shift + click to add to comparison',
     pinnedHintTouch:        'Tap a name in the legend to add it to the comparison',
+    legendSearchPlaceholder: 'Find driver',
+    legendSearchHint:       'Enter — add to or remove from comparison, ↑↓ — next match, Esc — clear, / — jump to search',
+    legendSearchNone:       'none',
     chartAriaLabel:         'Race progress chart: cumulative time of each driver by split',
     closeLabel:             'Close',
     pinnedChipRemove:       'Remove from comparison',
@@ -262,6 +268,9 @@ export const hu: ITranslations = {
 
     pinnedHint:             'Ctrl/Shift + kattintás — hozzáadás az összehasonlításhoz',
     pinnedHintTouch:        'Koppints egy névre a jelmagyarázatban az összehasonlításhoz',
+    legendSearchPlaceholder: 'Versenyző keresése',
+    legendSearchHint:       'Enter — hozzáadás az összehasonlításhoz vagy eltávolítás, ↑↓ — következő találat, Esc — törlés, / — ugrás a keresőhöz',
+    legendSearchNone:       'nincs',
     chartAriaLabel:         'A verseny alakulása: a versenyzők összesített ideje részidőnként',
     closeLabel:             'Bezárás',
     pinnedChipRemove:       'Eltávolítás az összehasonlításból',

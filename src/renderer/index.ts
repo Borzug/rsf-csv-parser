@@ -11,6 +11,11 @@ import {
     updateLegendPanel
 } from "./chart/legendPanel";
 import { buildRallyLookups } from "./chart/lookups";
+import {
+    focusLegendSearch,
+    initLegendSearch,
+    refreshLegendSearch
+} from "./chart/legendSearch";
 import { updatePinnedBar } from "./chart/pinnedBar";
 import {
     ensureCommentsRendered,
@@ -121,12 +126,22 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     chartCtrl.setOnPinChange(onPinsChanged);
+    initLegendSearch({
+        onPreview: key => chartCtrl.setHoveredKey(key),
+        onToggle:  key => chartCtrl.togglePin(key, true),
+    });
 
     qs<HTMLButtonElement>('#btn-filters').addEventListener('click', () => setSidebarOpen(true));
     qs<HTMLButtonElement>('#btn-sidebar-close').addEventListener('click', () => setSidebarOpen(false));
     qs<HTMLElement>('#sidebar-backdrop').addEventListener('click', () => setSidebarOpen(false));
 
     document.addEventListener('keydown', (e: KeyboardEvent) => {
+        // «/» — к поиску по легенде, если не набираем текст в другом поле
+        if (e.key === '/' && currentTab === 'chart' && data && !isTextInput(e.target)) {
+            e.preventDefault();
+            focusLegendSearch();
+            return;
+        }
         if (e.key !== 'Escape') return;
         if (isSidebarOpen()) setSidebarOpen(false);
         else if (chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
@@ -365,7 +380,7 @@ function writeUrlState(): void {
     if (rallyId) p.set('r', rallyId);
     if (currentTab !== 'chart') p.set('tab', currentTab);
     const yMode = chartCtrl.getYMode();
-    if (yMode !== 'abs') p.set('y', yMode);
+    if (yMode !== 'leader') p.set('y', yMode);   // режим по умолчанию в ссылку не пишем
     if (chartState.activeStageNums.size !== data.stages.length)
         p.set('ss', [...chartState.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
     if (data.groups.length && chartState.activeGroups.size !== data.groups.length)
@@ -603,11 +618,14 @@ function refreshLegend(): void {
         chartCtrl.getYMode() !== 'abs',
         callbacks,
     );
+    refreshLegendSearch();
 }
 
 function scrollLegendTo(driverKey: string | null): void {
     const inner = document.getElementById('legend-inner');
     if (!inner || !driverKey) return;
+    // Идёт поиск по легенде — она уже стоит на найденном, не уводим её к другому закреплённому
+    if (document.activeElement?.id === 'legend-search') return;
 
     const items = inner.querySelectorAll<HTMLElement>('.legend-item');
     for (const item of items) {
@@ -619,6 +637,11 @@ function scrollLegendTo(driverKey: string | null): void {
             break;
         }
     }
+}
+
+function isTextInput(target: EventTarget | null): boolean {
+    const el = target as HTMLElement | null;
+    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
 }
 
 // ── Cell tooltip ──────────────────────────────────────────────────────────────

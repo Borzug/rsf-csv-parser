@@ -92,8 +92,8 @@
                         <span class="ctl-item"><span class="ctl-diamond">◆</span><span id="chart-legend-comment">Комментарий</span></span>
                     </div>
                     <div class="seg-switch" id="ymode-switch" role="group">
-                        <button class="seg-btn active" data-ymode="abs" id="ymode-abs">Время</button>
-                        <button class="seg-btn" data-ymode="leader" id="ymode-leader">От лидера</button>
+                        <button class="seg-btn active" data-ymode="leader" id="ymode-leader">От лидера</button>
+                        <button class="seg-btn" data-ymode="abs" id="ymode-abs">Время</button>
                         <button class="seg-btn" data-ymode="pinned" id="ymode-pinned">От выбранного</button>
                     </div>
                 </div>
@@ -117,6 +117,11 @@
                 <!-- ── LEGEND PANEL ── -->
                 <div id="legend-panel" class="legend-panel" style="display:none">
                     <button id="legend-expand-btn" class="legend-expand-btn" style="display:none" title="Развернуть">‹</button>
+                    <!-- Быстрый переход к участнику; список не фильтруется (см. legendSearch.ts) -->
+                    <div class="legend-search">
+                        <input id="legend-search" class="legend-search-input" type="text" autocomplete="off" spellcheck="false" placeholder="Найти участника">
+                        <span id="legend-search-count" class="legend-search-count" aria-live="polite"></span>
+                    </div>
                     <div class="legend-inner" id="legend-inner">
                         <div class="legend-items" id="legend-items"></div>
                     </div>

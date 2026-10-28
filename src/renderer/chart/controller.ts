@@ -68,7 +68,8 @@ export function createChartController(): IChartController {
     let hoveredDsKey:       string | null = null;
     let pinnedKeys:         string[]      = [];
     let pinnedIdxs:         number[]      = [];
-    let yMode:              TYMode        = 'abs';
+    // По умолчанию — отставание от лидера: в накопленном времени борьба за места не видна
+    let yMode:              TYMode        = 'leader';
     let hoveredBandIdx:     number | null = null;
     let activeStages:       IStageInfo[]  = [];
     let currentBotPad       = BOT_PAD_NORMAL;

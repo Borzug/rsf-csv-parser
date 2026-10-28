@@ -39,7 +39,7 @@
   }
   function splitRow(row, delimiter) {
     const result = [];
-    let current = "";
+    let current2 = "";
     let inQuote = false;
     let quoteChar = "";
     for (let i = 0; i < row.length; i++) {
@@ -49,17 +49,17 @@
         quoteChar = ch;
       } else if (inQuote && ch === quoteChar) {
         if (row[i + 1] === quoteChar) {
-          current += ch;
+          current2 += ch;
           i++;
         } else inQuote = false;
       } else if (!inQuote && ch === delimiter) {
-        result.push(current.trim());
-        current = "";
+        result.push(current2.trim());
+        current2 = "";
       } else {
-        current += ch;
+        current2 += ch;
       }
     }
-    result.push(current.trim());
+    result.push(current2.trim());
     return result;
   }
   function parseSecondsOrNull(raw) {
@@ -189,6 +189,9 @@
     rallyLinkTitle: "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0440\u0430\u043B\u043B\u0438 \u043D\u0430 rallysimfans.hu",
     pinnedHint: "Ctrl/Shift + \u043A\u043B\u0438\u043A \u2014 \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043A \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044E",
     pinnedHintTouch: "\u041D\u0430\u0436\u043C\u0438\u0442\u0435 \u0438\u043C\u044F \u0432 \u043B\u0435\u0433\u0435\u043D\u0434\u0435, \u0447\u0442\u043E\u0431\u044B \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043A \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044E",
+    legendSearchPlaceholder: "\u041D\u0430\u0439\u0442\u0438 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430",
+    legendSearchHint: "Enter \u2014 \u0434\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u043A \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044E \u0438\u043B\u0438 \u0443\u0431\u0440\u0430\u0442\u044C, \u2191\u2193 \u2014 \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0435 \u0441\u043E\u0432\u043F\u0430\u0434\u0435\u043D\u0438\u0435, Esc \u2014 \u043E\u0447\u0438\u0441\u0442\u0438\u0442\u044C, / \u2014 \u043F\u0435\u0440\u0435\u0439\u0442\u0438 \u043A \u043F\u043E\u0438\u0441\u043A\u0443",
+    legendSearchNone: "\u043D\u0435\u0442",
     chartAriaLabel: "\u0413\u0440\u0430\u0444\u0438\u043A \u0445\u043E\u0434\u0430 \u0433\u043E\u043D\u043A\u0438: \u043D\u0430\u043A\u043E\u043F\u043B\u0435\u043D\u043D\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432 \u043F\u043E \u0441\u043F\u043B\u0438\u0442\u0430\u043C",
     closeLabel: "\u0417\u0430\u043A\u0440\u044B\u0442\u044C",
     pinnedChipRemove: "\u0423\u0431\u0440\u0430\u0442\u044C \u0438\u0437 \u0441\u0440\u0430\u0432\u043D\u0435\u043D\u0438\u044F",
@@ -280,6 +283,9 @@
     rallyLinkTitle: "Open the rally on rallysimfans.hu",
     pinnedHint: "Ctrl/Shift + click to add to comparison",
     pinnedHintTouch: "Tap a name in the legend to add it to the comparison",
+    legendSearchPlaceholder: "Find driver",
+    legendSearchHint: "Enter \u2014 add to or remove from comparison, \u2191\u2193 \u2014 next match, Esc \u2014 clear, / \u2014 jump to search",
+    legendSearchNone: "none",
     chartAriaLabel: "Race progress chart: cumulative time of each driver by split",
     closeLabel: "Close",
     pinnedChipRemove: "Remove from comparison",
@@ -367,6 +373,9 @@ Only stages without SR for both drivers`,
     rallyLinkTitle: "Rally megnyit\xE1sa a rallysimfans.hu oldalon",
     pinnedHint: "Ctrl/Shift + kattint\xE1s \u2014 hozz\xE1ad\xE1s az \xF6sszehasonl\xEDt\xE1shoz",
     pinnedHintTouch: "Koppints egy n\xE9vre a jelmagyar\xE1zatban az \xF6sszehasonl\xEDt\xE1shoz",
+    legendSearchPlaceholder: "Versenyz\u0151 keres\xE9se",
+    legendSearchHint: "Enter \u2014 hozz\xE1ad\xE1s az \xF6sszehasonl\xEDt\xE1shoz vagy elt\xE1vol\xEDt\xE1s, \u2191\u2193 \u2014 k\xF6vetkez\u0151 tal\xE1lat, Esc \u2014 t\xF6rl\xE9s, / \u2014 ugr\xE1s a keres\u0151h\xF6z",
+    legendSearchNone: "nincs",
     chartAriaLabel: "A verseny alakul\xE1sa: a versenyz\u0151k \xF6sszes\xEDtett ideje r\xE9szid\u0151nk\xE9nt",
     closeLabel: "Bez\xE1r\xE1s",
     pinnedChipRemove: "Elt\xE1vol\xEDt\xE1s az \xF6sszehasonl\xEDt\xE1sb\xF3l",
@@ -868,13 +877,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   function wrapText(ctx, text, maxWidth) {
     const words = text.split(" ");
     const lines = [];
-    let current = "";
+    let current2 = "";
     for (const word of words) {
-      const candidate = current ? `${current} ${word}` : word;
+      const candidate = current2 ? `${current2} ${word}` : word;
       if (ctx.measureText(candidate).width <= maxWidth) {
-        current = candidate;
+        current2 = candidate;
       } else {
-        if (current) lines.push(current);
+        if (current2) lines.push(current2);
         if (ctx.measureText(word).width > maxWidth) {
           let chunk = "";
           for (const ch of word) {
@@ -885,13 +894,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
               chunk += ch;
             }
           }
-          current = chunk;
+          current2 = chunk;
         } else {
-          current = word;
+          current2 = word;
         }
       }
     }
-    if (current) lines.push(current);
+    if (current2) lines.push(current2);
     return lines.length ? lines : [""];
   }
   function measureBoxWidth(ctx, cmtLines, stageLabel) {
@@ -1174,16 +1183,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     };
   }
   function collectMatchingDatasets(chart, xIdx, y0, pinnedIdxs) {
-    const matches = [];
-    if (!chart || y0 === null) return matches;
+    const matches2 = [];
+    if (!chart || y0 === null) return matches2;
     chart.data.datasets.forEach((ds, di) => {
       if (ds.hidden) return;
       if (pinnedIdxs.length && !pinnedIdxs.includes(di)) return;
       const yv = ds.data[xIdx];
       const isDnf = xIdx === ds._dnfCommentPtIdx;
-      if (yv !== null && Math.abs(yv - y0) < 1) matches.push({ ds, y: yv, isDnf });
+      if (yv !== null && Math.abs(yv - y0) < 1) matches2.push({ ds, y: yv, isDnf });
     });
-    return matches;
+    return matches2;
   }
   function buildCompareHtml(chart, pinnedIdxs, xIdx, stageInfo) {
     const rows = pinnedIdxs.map((di) => chart.data.datasets[di]).filter((ds) => ds && !ds.hidden).map((ds) => ({ ds, abs: ds._abs[xIdx] ?? null })).sort((a, b) => {
@@ -1203,9 +1212,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     html += "</table></div>";
     return html;
   }
-  function buildTooltipHtml(matches, xIdx, stageInfo, yMode) {
+  function buildTooltipHtml(matches2, xIdx, stageInfo, yMode) {
     const t = i18n.t();
-    return matches.map(({ ds, y, isDnf }, mi) => {
+    return matches2.map(({ ds, y, isDnf }, mi) => {
       const divider = mi > 0 ? '<div class="tt-divider"></div>' : "";
       const name = escapeHtml(ds._displayName || ds.driverKey);
       const car = escapeHtml(ds._car ?? "");
@@ -1271,7 +1280,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     let hoveredDsKey = null;
     let pinnedKeys = [];
     let pinnedIdxs = [];
-    let yMode = "abs";
+    let yMode = "leader";
     let hoveredBandIdx = null;
     let activeStages = [];
     let currentBotPad = BOT_PAD_NORMAL;
@@ -1663,13 +1672,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/chart/legendPanel.ts
-  function updateLegendPanel(data2, chart, activeStages, recordMap, isExpanded, pinnedKeys, leaderFirst, callbacks) {
+  function updateLegendPanel(data2, chart, activeStages, recordMap, isExpanded, pinnedKeys, leaderFirst, callbacks2) {
     const panel = document.getElementById("legend-panel");
     const itemsEl = document.getElementById("legend-items");
     const expandBtn = document.getElementById("legend-expand-btn");
     const visibleWithTime = buildSortedVisibleDrivers(data2, chart, activeStages, recordMap);
     if (leaderFirst) visibleWithTime.reverse();
-    currentCallbacks = callbacks;
+    currentCallbacks = callbacks2;
     bindLegendEvents(itemsEl);
     const order = visibleWithTime.map((v) => v.drv.username).join("\n");
     if (data2 === renderedData && order === renderedOrder && itemsEl.children.length === visibleWithTime.length) {
@@ -1756,13 +1765,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       currentCallbacks?.onDriverClick(key, additive);
     });
   }
-  function renderLegendItems(container, items, data2, pinnedKeys) {
+  function renderLegendItems(container, items2, data2, pinnedKeys) {
     const focusedKey = document.activeElement?.closest(".legend-item")?.dataset["driverKey"] ?? null;
     const colorIdx = new Map(data2.drivers.map((d, i) => [d, i]));
     container.innerHTML = "";
     const frag = document.createDocumentFragment();
     let focusItem = null;
-    for (const { drv } of items) {
+    for (const { drv } of items2) {
       const color = driverColor(colorIdx.get(drv));
       const item = createElement("button", "legend-item");
       item.type = "button";
@@ -1819,6 +1828,88 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cumSRMap.set(drv.username, rm);
     }
     return { recordMap, cumPenMap, cumSPMap, cumSRMap };
+  }
+
+  // src/renderer/chart/legendSearch.ts
+  var callbacks = null;
+  var matches = [];
+  var current = 0;
+  var inputEl = () => document.getElementById("legend-search");
+  var countEl = () => document.getElementById("legend-search-count");
+  var items = () => Array.from(document.querySelectorAll("#legend-items .legend-item"));
+  function initLegendSearch(cb) {
+    callbacks = cb;
+    const input = inputEl();
+    input.addEventListener("input", () => {
+      current = 0;
+      update(true);
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (!matches.length) return;
+        const step = e.key === "ArrowDown" ? 1 : -1;
+        current = (current + step + matches.length) % matches.length;
+        update(true);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const key = matches[current];
+        if (key) callbacks?.onToggle(key);
+      } else if (e.key === "Escape") {
+        e.stopPropagation();
+        if (input.value) {
+          input.value = "";
+          update(true);
+        } else input.blur();
+      }
+    });
+    input.addEventListener("focus", () => callbacks?.onPreview(matches[current] ?? null));
+    input.addEventListener("blur", () => callbacks?.onPreview(null));
+  }
+  function focusLegendSearch() {
+    const input = inputEl();
+    input.focus();
+    input.select();
+  }
+  function refreshLegendSearch() {
+    const key = matches[current];
+    update(false);
+    const idx = key ? matches.indexOf(key) : -1;
+    if (idx >= 0 && idx !== current) {
+      current = idx;
+      update(false);
+    }
+  }
+  function update(jump) {
+    const q = inputEl().value.trim().toLowerCase();
+    const all = items();
+    matches = [];
+    for (const item2 of all) {
+      const hit = !!q && (item2.textContent ?? "").toLowerCase().includes(q);
+      item2.classList.toggle("search-hit", hit);
+      item2.classList.remove("search-current");
+      if (hit) matches.push(item2.dataset["driverKey"]);
+    }
+    if (current >= matches.length) current = 0;
+    const count = countEl();
+    count.textContent = !q ? "" : matches.length ? `${current + 1}/${matches.length}` : i18n.t().legendSearchNone;
+    count.classList.toggle("none", !!q && !matches.length);
+    const key = matches[current] ?? null;
+    const item = key ? all.find((i) => i.dataset["driverKey"] === key) : void 0;
+    item?.classList.add("search-current");
+    if (!jump) return;
+    if (item) scrollIntoLegend(item);
+    if (document.activeElement === inputEl()) callbacks?.onPreview(key);
+  }
+  function scrollIntoLegend(item) {
+    const inner = document.getElementById("legend-inner");
+    const ir = inner.getBoundingClientRect();
+    const r = item.getBoundingClientRect();
+    inner.scrollBy({
+      top: r.top - ir.top - ir.height / 2 + r.height / 2,
+      left: r.left - ir.left - ir.width / 2 + r.width / 2,
+      behavior: "smooth"
+    });
   }
 
   // src/renderer/chart/pinnedBar.ts
@@ -2405,9 +2496,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       }
     });
   }
-  function setCounterText(id, current, total) {
+  function setCounterText(id, current2, total) {
     const el = document.getElementById(id);
-    if (el) el.textContent = `(${current}/${total})`;
+    if (el) el.textContent = `(${current2}/${total})`;
   }
   function setToggleActive(selector, active) {
     document.querySelector(selector)?.classList.toggle("btn-fa-active", active);
@@ -2550,19 +2641,19 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/filters/filterBuilders.ts
-  function buildStageFilterUI(stages, state, callbacks) {
+  function buildStageFilterUI(stages, state, callbacks2) {
     const cont = document.getElementById("filter-stages");
     cont.innerHTML = "";
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterChartStages, "counter-stages");
     btnAll.addEventListener("click", () => {
       stages.forEach((s) => state.activeStageNums.add(s.num));
       setAllCheckboxes(body, true);
-      callbacks.onStagesChanged();
+      callbacks2.onStagesChanged();
     });
     btnNone.addEventListener("click", () => {
       state.activeStageNums.clear();
       setAllCheckboxes(body, false);
-      callbacks.onStagesChanged();
+      callbacks2.onStagesChanged();
     });
     for (const s of stages) {
       const lbl = createElement("label", "filter-item");
@@ -2572,7 +2663,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.checked = state.activeStageNums.has(s.num);
       cb.addEventListener("change", () => {
         cb.checked ? state.activeStageNums.add(s.num) : state.activeStageNums.delete(s.num);
-        callbacks.onStagesChanged();
+        callbacks2.onStagesChanged();
       });
       lbl.appendChild(cb);
       lbl.appendChild(createElement("span", "filter-ss", `SS${s.num}`));
@@ -2581,7 +2672,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     cont.appendChild(group);
   }
-  function buildDriverFilterUI(drivers, data2, state, callbacks, rankMap2) {
+  function buildDriverFilterUI(drivers, data2, state, callbacks2, rankMap2) {
     const wrap = document.getElementById("filter-drivers-wrap");
     wrap.innerHTML = "";
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterParticipants, "counter-drivers");
@@ -2597,16 +2688,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     btnAll.addEventListener("click", () => {
       drivers.filter((d) => state.visibleDriverKeys.has(d.username)).forEach((d) => state.activeDriverKeys.add(d.username));
       syncVisibleCheckboxes(body, true);
-      callbacks.onDriversChanged();
+      callbacks2.onDriversChanged();
     });
     btnNone.addEventListener("click", () => {
       drivers.filter((d) => state.visibleDriverKeys.has(d.username)).forEach((d) => state.activeDriverKeys.delete(d.username));
       syncVisibleCheckboxes(body, false);
-      callbacks.onDriversChanged();
+      callbacks2.onDriversChanged();
     });
     buildSearchBox(body, (q) => {
       applyDriverSearch(q, body, data2, state);
-      callbacks.onDriversChanged();
+      callbacks2.onDriversChanged();
     });
     const applyPreset = (pick) => {
       const visible = sorted.filter((d) => state.visibleDriverKeys.has(d.username));
@@ -2619,7 +2710,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         const cb = item.querySelector('input[type="checkbox"]');
         if (cb) cb.checked = state.activeDriverKeys.has(item.dataset["driverKey"]);
       });
-      callbacks.onDriversChanged();
+      callbacks2.onDriversChanged();
     };
     const presets = createElement("div", "filter-presets");
     const addPreset = (label, title, pick) => {
@@ -2642,7 +2733,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.checked = state.activeDriverKeys.has(drv.username);
       cb.addEventListener("change", () => {
         cb.checked ? state.activeDriverKeys.add(drv.username) : state.activeDriverKeys.delete(drv.username);
-        callbacks.onDriversChanged();
+        callbacks2.onDriversChanged();
       });
       const rank = rankOf(drv);
       const place = createElement(
@@ -2660,11 +2751,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       if (drv.car) content.appendChild(createElement("span", "filter-driver-car", drv.car));
       lbl.addEventListener("mouseenter", () => {
         lbl.classList.add("hover-highlighted");
-        callbacks.onDriverHover(drv.username);
+        callbacks2.onDriverHover(drv.username);
       });
       lbl.addEventListener("mouseleave", () => {
         lbl.classList.remove("hover-highlighted");
-        callbacks.onDriverHover(null);
+        callbacks2.onDriverHover(null);
       });
       lbl.appendChild(cb);
       lbl.appendChild(place);
@@ -2673,7 +2764,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     wrap.appendChild(group);
   }
-  function buildGroupFilterUI(groups, data2, state, callbacks, onRefilterDrivers) {
+  function buildGroupFilterUI(groups, data2, state, callbacks2, onRefilterDrivers) {
     const cont = document.getElementById("filter-groups");
     cont.innerHTML = "";
     if (!groups.length) {
@@ -2685,13 +2776,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       groups.forEach((g) => state.activeGroups.add(g));
       setAllCheckboxes(body, true);
       onRefilterDrivers();
-      callbacks.onGroupsChanged();
+      callbacks2.onGroupsChanged();
     });
     btnNone.addEventListener("click", () => {
       state.activeGroups.clear();
       setAllCheckboxes(body, false);
       onRefilterDrivers();
-      callbacks.onGroupsChanged();
+      callbacks2.onGroupsChanged();
     });
     for (const grp of groups) {
       const lbl = createElement("label", "filter-item");
@@ -2701,7 +2792,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.addEventListener("change", () => {
         cb.checked ? state.activeGroups.add(grp) : state.activeGroups.delete(grp);
         onRefilterDrivers();
-        callbacks.onGroupsChanged();
+        callbacks2.onGroupsChanged();
       });
       lbl.appendChild(cb);
       lbl.appendChild(createElement("span", "filter-group-label", grp));
@@ -2709,7 +2800,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     cont.appendChild(group);
   }
-  function buildCarFilterUI(drivers, state, callbacks, onRefilterDrivers) {
+  function buildCarFilterUI(drivers, state, callbacks2, onRefilterDrivers) {
     const cont = document.getElementById("filter-cars");
     cont.innerHTML = "";
     const cars = [...new Set(drivers.map((d) => d.car).filter(Boolean))].sort();
@@ -2722,13 +2813,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cars.forEach((c) => state.activeCars.add(c));
       setAllCheckboxes(body, true);
       onRefilterDrivers();
-      callbacks.onCarsChanged();
+      callbacks2.onCarsChanged();
     });
     btnNone.addEventListener("click", () => {
       state.activeCars.clear();
       setAllCheckboxes(body, false);
       onRefilterDrivers();
-      callbacks.onCarsChanged();
+      callbacks2.onCarsChanged();
     });
     for (const car of cars) {
       const lbl = createElement("label", "filter-item");
@@ -2738,7 +2829,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.addEventListener("change", () => {
         cb.checked ? state.activeCars.add(car) : state.activeCars.delete(car);
         onRefilterDrivers();
-        callbacks.onCarsChanged();
+        callbacks2.onCarsChanged();
       });
       lbl.appendChild(cb);
       lbl.appendChild(createElement("span", "filter-car-label", car));
@@ -2777,20 +2868,20 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/filters/chartFilters.ts
-  function buildChartFilterPanel(data2, state, callbacks, rankMap2) {
-    buildStageFilterUI(data2.stages, state, callbacks);
-    buildDriverFilterUI(data2.drivers, data2, state, callbacks, rankMap2);
+  function buildChartFilterPanel(data2, state, callbacks2, rankMap2) {
+    buildStageFilterUI(data2.stages, state, callbacks2);
+    buildDriverFilterUI(data2.drivers, data2, state, callbacks2, rankMap2);
     buildGroupFilterUI(
       data2.groups,
       data2,
       state,
-      callbacks,
+      callbacks2,
       () => applyGroupOrCarFilterToDriverList(data2, state)
     );
     buildCarFilterUI(
       data2.drivers,
       state,
-      callbacks,
+      callbacks2,
       () => applyGroupOrCarFilterToDriverList(data2, state)
     );
   }
@@ -2813,6 +2904,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     setTextById("ymode-abs", t.yModeAbs);
     setTextById("ymode-leader", t.yModeLeader);
     setTextById("ymode-pinned", t.yModePinned);
+    setAttrById("legend-search", "placeholder", t.legendSearchPlaceholder);
+    setAttrById("legend-search", "aria-label", t.legendSearchPlaceholder);
+    setAttrById("legend-search", "title", t.legendSearchHint);
     setTextById("drop-hint", t.dropHint);
     setTextById("drop-overlay-text", t.dropOverlay);
     setTextById("welcome-help", t.welcomeHelp);
@@ -3116,9 +3210,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.checked = value;
     });
   }
-  function setCounter(id, current, total) {
+  function setCounter(id, current2, total) {
     const el = document.getElementById(id);
-    if (el) el.textContent = `(${current}/${total})`;
+    if (el) el.textContent = `(${current2}/${total})`;
   }
 
   // src/renderer/results/tableRenderer.ts
@@ -3406,11 +3500,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
   function updateApplyBar() {
     const bar = document.getElementById("apply-filter-bar");
-    const countEl = document.getElementById("apply-filter-count");
+    const countEl2 = document.getElementById("apply-filter-count");
     if (!bar) return;
     if (_selectedRows.size > 0) {
       bar.classList.add("visible");
-      if (countEl) countEl.textContent = i18n.t().selectedCount(_selectedRows.size);
+      if (countEl2) countEl2.textContent = i18n.t().selectedCount(_selectedRows.size);
     } else {
       bar.classList.remove("visible");
     }
@@ -3528,10 +3622,19 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       btn.addEventListener("click", () => setYMode(btn.dataset["ymode"]));
     });
     chartCtrl.setOnPinChange(onPinsChanged);
+    initLegendSearch({
+      onPreview: (key) => chartCtrl.setHoveredKey(key),
+      onToggle: (key) => chartCtrl.togglePin(key, true)
+    });
     qs("#btn-filters").addEventListener("click", () => setSidebarOpen(true));
     qs("#btn-sidebar-close").addEventListener("click", () => setSidebarOpen(false));
     qs("#sidebar-backdrop").addEventListener("click", () => setSidebarOpen(false));
     document.addEventListener("keydown", (e) => {
+      if (e.key === "/" && currentTab === "chart" && data && !isTextInput(e.target)) {
+        e.preventDefault();
+        focusLegendSearch();
+        return;
+      }
       if (e.key !== "Escape") return;
       if (isSidebarOpen()) setSidebarOpen(false);
       else if (chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
@@ -3720,7 +3823,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     if (rallyId) p.set("r", rallyId);
     if (currentTab !== "chart") p.set("tab", currentTab);
     const yMode = chartCtrl.getYMode();
-    if (yMode !== "abs") p.set("y", yMode);
+    if (yMode !== "leader") p.set("y", yMode);
     if (chartState.activeStageNums.size !== data.stages.length)
       p.set("ss", [...chartState.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
     if (data.groups.length && chartState.activeGroups.size !== data.groups.length)
@@ -3891,7 +3994,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
   function refreshLegend() {
     if (!data || !chartCtrl.getChart()) return;
-    const callbacks = {
+    const callbacks2 = {
       onDriverHover: (key) => chartCtrl.setHoveredKey(key),
       onDriverClick: (key, additive) => chartCtrl.togglePin(key, additive)
     };
@@ -3903,14 +4006,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       legendExpanded,
       chartCtrl.getPinnedKeys(),
       chartCtrl.getYMode() !== "abs",
-      callbacks
+      callbacks2
     );
+    refreshLegendSearch();
   }
   function scrollLegendTo(driverKey) {
     const inner = document.getElementById("legend-inner");
     if (!inner || !driverKey) return;
-    const items = inner.querySelectorAll(".legend-item");
-    for (const item of items) {
+    if (document.activeElement?.id === "legend-search") return;
+    const items2 = inner.querySelectorAll(".legend-item");
+    for (const item of items2) {
       if (item.dataset["driverKey"] === driverKey) {
         const itemRect = item.getBoundingClientRect();
         const innerRect = inner.getBoundingClientRect();
@@ -3919,6 +4024,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         break;
       }
     }
+  }
+  function isTextInput(target) {
+    const el = target;
+    return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
   }
   function onCellTooltipMove(e) {
     const tipEl = document.getElementById("cell-tooltip");
