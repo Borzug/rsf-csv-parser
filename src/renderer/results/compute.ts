@@ -72,8 +72,13 @@ export function recalculateStatsForStages(
     return { ...stats, totalTime: total, totalPenalty: totalPen, srCount: sr, snaps };
 }
 
-export function computeDriverResults(stats: IDriverStats[]): IDriverResult[] {
+/**
+ * stageKm — длины СУ в порядке snaps: темп считается как отставание на километр
+ * (сумма отставаний / сумма км). Без длин — среднее отставание за СУ.
+ */
+export function computeDriverResults(stats: IDriverStats[], stageKm: number[] | null = null): IDriverResult[] {
     const n      = stats[0]?.snaps.length ?? 0;
+    const weight = (s: number): number => stageKm ? stageKm[s] : 1;
     const sorted = [...stats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
 
     return sorted.map((cur, i) => {
@@ -83,23 +88,24 @@ export function computeDriverResults(stats: IDriverStats[]): IDriverResult[] {
             ? cur.totalTime - leader.totalTime
             : null;
 
-        const glArr:    number[] = [];
-        const ppArr:    number[] = [];
-        const clArr:    number[] = [];
-        const cpArr:    number[] = [];
+        const gl = new PaceAcc();
+        const pp = new PaceAcc();
+        const cl = new PaceAcc();
+        const cp = new PaceAcc();
 
         for (let s = 0; s < n; s++) {
+            const w  = weight(s);
             const ct = cur.snaps[s].time3;
             const lt = leader.snaps[s].time3;
             if (ct !== null && lt !== null) {
-                glArr.push(ct - lt);
-                if (!cur.snaps[s].hasSR && !leader.snaps[s].hasSR) clArr.push(ct - lt);
+                gl.add(ct - lt, w);
+                if (!cur.snaps[s].hasSR && !leader.snaps[s].hasSR) cl.add(ct - lt, w);
             }
             if (prev) {
                 const pt = prev.snaps[s].time3;
                 if (ct !== null && pt !== null) {
-                    ppArr.push(ct - pt);
-                    if (!cur.snaps[s].hasSR && !prev.snaps[s].hasSR) cpArr.push(ct - pt);
+                    pp.add(ct - pt, w);
+                    if (!cur.snaps[s].hasSR && !prev.snaps[s].hasSR) cp.add(ct - pt, w);
                 }
             }
         }
@@ -108,17 +114,30 @@ export function computeDriverResults(stats: IDriverStats[]): IDriverResult[] {
             stats:              cur,
             position:           i + 1,
             totalGap,
-            avgGapFromLeader:   glArr.length  ? avg(glArr)  : null,
-            avgGapFromPrev:     ppArr.length   ? avg(ppArr)  : null,
-            cleanGapFromLeader: clArr.length   ? avg(clArr)  : null,
-            cleanGapFromPrev:   cpArr.length   ? avg(cpArr)  : null,
-            cleanCountLeader:   clArr.length,
-            cleanCountPrev:     cpArr.length,
+            avgGapFromLeader:   gl.value(),
+            avgGapFromPrev:     pp.value(),
+            cleanGapFromLeader: cl.value(),
+            cleanGapFromPrev:   cp.value(),
+            cleanCountLeader:   cl.count,
+            cleanCountPrev:     cp.count,
             totalStageCount:    n,
         };
     });
 }
 
-function avg(arr: number[]): number {
-    return arr.reduce((a, b) => a + b, 0) / arr.length;
+/** Взвешенное среднее отставание: вес — длина СУ в км (или 1 — «за участок»). */
+class PaceAcc {
+    private gap    = 0;
+    private weight = 0;
+    count = 0;
+
+    add(gap: number, weight: number): void {
+        this.gap    += gap;
+        this.weight += weight;
+        this.count++;
+    }
+
+    value(): number | null {
+        return this.count ? this.gap / this.weight : null;
+    }
 }

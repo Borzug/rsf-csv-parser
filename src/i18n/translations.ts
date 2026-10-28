@@ -98,8 +98,19 @@ export const ru: ITranslations = {
     colAvgGapPrevTitle:     'Отставание по темпу от предыдущего места за участок с учётом SR',
     colCleanGapLeaderTitle: 'Чистое отставание по темпу от лидера за участок\nУчитываются только участки без SR для обоих участников',
     colCleanGapPrevTitle:   'Чистое отставание по темпу от предыдущего за участок\nУчитываются только участки без SR для обоих участников',
+    paceKm: {
+        colAvgGapLeader:        'Темп/км: лидер',
+        colAvgGapPrev:          'Темп/км: пред.',
+        colCleanGapLeader:      'Чист. темп/км: лидер',
+        colCleanGapPrev:        'Чист. темп/км: пред.',
+        colAvgGapLeaderTitle:   'Отставание от лидера в секундах на километр с учётом SR',
+        colAvgGapPrevTitle:     'Отставание от предыдущего места в секундах на километр с учётом SR',
+        colCleanGapLeaderTitle: 'Чистое отставание от лидера в секундах на километр\nУчитываются только участки без SR для обоих участников',
+        colCleanGapPrevTitle:   'Чистое отставание от предыдущего в секундах на километр\nУчитываются только участки без SR для обоих участников',
+    },
+    unitKm:                 'км',
     cleanGapCellTooltip:    (used, total) =>
-        `Отставание по темпу за участок\nРассчитано на основании прохождения ${used}/${total} этапов\n`
+        `Отставание по темпу\nРассчитано на основании прохождения ${used}/${total} этапов\n`
         + 'Учитываются только участки без SR для обоих участников',
 
     applyFilterButton:      'Применить фильтр по участникам',
@@ -220,8 +231,19 @@ export const en: ITranslations = {
     colAvgGapPrevTitle:     'Pace difference to previous position per stage (SR included)',
     colCleanGapLeaderTitle: 'Clean pace difference to leader\nOnly stages without SR for both drivers',
     colCleanGapPrevTitle:   'Clean pace difference to previous\nOnly stages without SR for both drivers',
+    paceKm: {
+        colAvgGapLeader:        'Pace/km: leader',
+        colAvgGapPrev:          'Pace/km: prev',
+        colCleanGapLeader:      'Clean pace/km: leader',
+        colCleanGapPrev:        'Clean pace/km: prev',
+        colAvgGapLeaderTitle:   'Gap to leader in seconds per kilometre (SR included)',
+        colAvgGapPrevTitle:     'Gap to previous position in seconds per kilometre (SR included)',
+        colCleanGapLeaderTitle: 'Clean gap to leader in seconds per kilometre\nOnly stages without SR for both drivers',
+        colCleanGapPrevTitle:   'Clean gap to previous in seconds per kilometre\nOnly stages without SR for both drivers',
+    },
+    unitKm:                 'km',
     cleanGapCellTooltip:    (used, total) =>
-        `Pace difference per stage\nCalculated from ${used}/${total} stages\n`
+        `Pace difference\nCalculated from ${used}/${total} stages\n`
         + 'Only stages without SR for both drivers',
 
     applyFilterButton:      'Apply Participant Filter',
@@ -338,6 +360,17 @@ export const hu: ITranslations = {
     colAvgGapPrevTitle:     'Átlagos hátrány az előző helyezettől szakaszonként (SR-rel)',
     colCleanGapLeaderTitle: 'Átlagos tiszta hátrány a vezértől\nCsak SR nélküli szakaszok mindkét versenyzőnél',
     colCleanGapPrevTitle:   'Átlagos tiszta hátrány az előzőtől\nCsak SR nélküli szakaszok mindkét versenyzőnél',
+    paceKm: {
+        colAvgGapLeader:        'Hátrány/km vez.',
+        colAvgGapPrev:          'Hátrány/km előző',
+        colCleanGapLeader:      'Tiszta hátrány/km vez.',
+        colCleanGapPrev:        'Tiszta hátrány/km előző',
+        colAvgGapLeaderTitle:   'Hátrány a vezértől másodperc/km-ben (SR-rel)',
+        colAvgGapPrevTitle:     'Hátrány az előző helyezettől másodperc/km-ben (SR-rel)',
+        colCleanGapLeaderTitle: 'Tiszta hátrány a vezértől másodperc/km-ben\nCsak SR nélküli szakaszok mindkét versenyzőnél',
+        colCleanGapPrevTitle:   'Tiszta hátrány az előzőtől másodperc/km-ben\nCsak SR nélküli szakaszok mindkét versenyzőnél',
+    },
+    unitKm:                 'km',
     cleanGapCellTooltip:    (used, total) =>
         `Számítva: ${used}/${total} szakasz alapján\n`
         + 'Csak SR nélküli szakaszok mindkét versenyzőnél',

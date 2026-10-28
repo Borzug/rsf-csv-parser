@@ -235,7 +235,18 @@
     colAvgGapPrevTitle: "\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043F\u043E \u0442\u0435\u043C\u043F\u0443 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E \u043C\u0435\u0441\u0442\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR",
     colCleanGapLeaderTitle: "\u0427\u0438\u0441\u0442\u043E\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043F\u043E \u0442\u0435\u043C\u043F\u0443 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A\n\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432",
     colCleanGapPrevTitle: "\u0427\u0438\u0441\u0442\u043E\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043F\u043E \u0442\u0435\u043C\u043F\u0443 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A\n\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432",
-    cleanGapCellTooltip: (used, total) => `\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043F\u043E \u0442\u0435\u043C\u043F\u0443 \u0437\u0430 \u0443\u0447\u0430\u0441\u0442\u043E\u043A
+    paceKm: {
+      colAvgGapLeader: "\u0422\u0435\u043C\u043F/\u043A\u043C: \u043B\u0438\u0434\u0435\u0440",
+      colAvgGapPrev: "\u0422\u0435\u043C\u043F/\u043A\u043C: \u043F\u0440\u0435\u0434.",
+      colCleanGapLeader: "\u0427\u0438\u0441\u0442. \u0442\u0435\u043C\u043F/\u043A\u043C: \u043B\u0438\u0434\u0435\u0440",
+      colCleanGapPrev: "\u0427\u0438\u0441\u0442. \u0442\u0435\u043C\u043F/\u043A\u043C: \u043F\u0440\u0435\u0434.",
+      colAvgGapLeaderTitle: "\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430 \u0432 \u0441\u0435\u043A\u0443\u043D\u0434\u0430\u0445 \u043D\u0430 \u043A\u0438\u043B\u043E\u043C\u0435\u0442\u0440 \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR",
+      colAvgGapPrevTitle: "\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E \u043C\u0435\u0441\u0442\u0430 \u0432 \u0441\u0435\u043A\u0443\u043D\u0434\u0430\u0445 \u043D\u0430 \u043A\u0438\u043B\u043E\u043C\u0435\u0442\u0440 \u0441 \u0443\u0447\u0451\u0442\u043E\u043C SR",
+      colCleanGapLeaderTitle: "\u0427\u0438\u0441\u0442\u043E\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043B\u0438\u0434\u0435\u0440\u0430 \u0432 \u0441\u0435\u043A\u0443\u043D\u0434\u0430\u0445 \u043D\u0430 \u043A\u0438\u043B\u043E\u043C\u0435\u0442\u0440\n\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432",
+      colCleanGapPrevTitle: "\u0427\u0438\u0441\u0442\u043E\u0435 \u043E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043E\u0442 \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0435\u0433\u043E \u0432 \u0441\u0435\u043A\u0443\u043D\u0434\u0430\u0445 \u043D\u0430 \u043A\u0438\u043B\u043E\u043C\u0435\u0442\u0440\n\u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432"
+    },
+    unitKm: "\u043A\u043C",
+    cleanGapCellTooltip: (used, total) => `\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435 \u043F\u043E \u0442\u0435\u043C\u043F\u0443
 \u0420\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u043D\u043E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0430\u043D\u0438\u0438 \u043F\u0440\u043E\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u044F ${used}/${total} \u044D\u0442\u0430\u043F\u043E\u0432
 \u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`,
     applyFilterButton: "\u041F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C \u0444\u0438\u043B\u044C\u0442\u0440 \u043F\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430\u043C",
@@ -337,7 +348,18 @@
     colAvgGapPrevTitle: "Pace difference to previous position per stage (SR included)",
     colCleanGapLeaderTitle: "Clean pace difference to leader\nOnly stages without SR for both drivers",
     colCleanGapPrevTitle: "Clean pace difference to previous\nOnly stages without SR for both drivers",
-    cleanGapCellTooltip: (used, total) => `Pace difference per stage
+    paceKm: {
+      colAvgGapLeader: "Pace/km: leader",
+      colAvgGapPrev: "Pace/km: prev",
+      colCleanGapLeader: "Clean pace/km: leader",
+      colCleanGapPrev: "Clean pace/km: prev",
+      colAvgGapLeaderTitle: "Gap to leader in seconds per kilometre (SR included)",
+      colAvgGapPrevTitle: "Gap to previous position in seconds per kilometre (SR included)",
+      colCleanGapLeaderTitle: "Clean gap to leader in seconds per kilometre\nOnly stages without SR for both drivers",
+      colCleanGapPrevTitle: "Clean gap to previous in seconds per kilometre\nOnly stages without SR for both drivers"
+    },
+    unitKm: "km",
+    cleanGapCellTooltip: (used, total) => `Pace difference
 Calculated from ${used}/${total} stages
 Only stages without SR for both drivers`,
     applyFilterButton: "Apply Participant Filter",
@@ -435,6 +457,17 @@ Only stages without SR for both drivers`,
     colAvgGapPrevTitle: "\xC1tlagos h\xE1tr\xE1ny az el\u0151z\u0151 helyezett\u0151l szakaszonk\xE9nt (SR-rel)",
     colCleanGapLeaderTitle: "\xC1tlagos tiszta h\xE1tr\xE1ny a vez\xE9rt\u0151l\nCsak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l",
     colCleanGapPrevTitle: "\xC1tlagos tiszta h\xE1tr\xE1ny az el\u0151z\u0151t\u0151l\nCsak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l",
+    paceKm: {
+      colAvgGapLeader: "H\xE1tr\xE1ny/km vez.",
+      colAvgGapPrev: "H\xE1tr\xE1ny/km el\u0151z\u0151",
+      colCleanGapLeader: "Tiszta h\xE1tr\xE1ny/km vez.",
+      colCleanGapPrev: "Tiszta h\xE1tr\xE1ny/km el\u0151z\u0151",
+      colAvgGapLeaderTitle: "H\xE1tr\xE1ny a vez\xE9rt\u0151l m\xE1sodperc/km-ben (SR-rel)",
+      colAvgGapPrevTitle: "H\xE1tr\xE1ny az el\u0151z\u0151 helyezett\u0151l m\xE1sodperc/km-ben (SR-rel)",
+      colCleanGapLeaderTitle: "Tiszta h\xE1tr\xE1ny a vez\xE9rt\u0151l m\xE1sodperc/km-ben\nCsak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l",
+      colCleanGapPrevTitle: "Tiszta h\xE1tr\xE1ny az el\u0151z\u0151t\u0151l m\xE1sodperc/km-ben\nCsak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l"
+    },
+    unitKm: "km",
     cleanGapCellTooltip: (used, total) => `Sz\xE1m\xEDtva: ${used}/${total} szakasz alapj\xE1n
 Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     applyFilterButton: "R\xE9sztvev\u0151 sz\u0171r\u0151 alkalmaz\xE1sa",
@@ -3344,29 +3377,31 @@ ${hit.ptIdx}` : null;
     }
     return { ...stats, totalTime: total, totalPenalty: totalPen, srCount: sr, snaps };
   }
-  function computeDriverResults(stats) {
+  function computeDriverResults(stats, stageKm = null) {
     const n = stats[0]?.snaps.length ?? 0;
+    const weight = (s) => stageKm ? stageKm[s] : 1;
     const sorted = [...stats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
     return sorted.map((cur, i) => {
       const leader = sorted[0];
       const prev = i > 0 ? sorted[i - 1] : null;
       const totalGap = cur.totalTime !== null && leader.totalTime !== null ? cur.totalTime - leader.totalTime : null;
-      const glArr = [];
-      const ppArr = [];
-      const clArr = [];
-      const cpArr = [];
+      const gl = new PaceAcc();
+      const pp = new PaceAcc();
+      const cl = new PaceAcc();
+      const cp = new PaceAcc();
       for (let s = 0; s < n; s++) {
+        const w = weight(s);
         const ct = cur.snaps[s].time3;
         const lt = leader.snaps[s].time3;
         if (ct !== null && lt !== null) {
-          glArr.push(ct - lt);
-          if (!cur.snaps[s].hasSR && !leader.snaps[s].hasSR) clArr.push(ct - lt);
+          gl.add(ct - lt, w);
+          if (!cur.snaps[s].hasSR && !leader.snaps[s].hasSR) cl.add(ct - lt, w);
         }
         if (prev) {
           const pt = prev.snaps[s].time3;
           if (ct !== null && pt !== null) {
-            ppArr.push(ct - pt);
-            if (!cur.snaps[s].hasSR && !prev.snaps[s].hasSR) cpArr.push(ct - pt);
+            pp.add(ct - pt, w);
+            if (!cur.snaps[s].hasSR && !prev.snaps[s].hasSR) cp.add(ct - pt, w);
           }
         }
       }
@@ -3374,19 +3409,31 @@ ${hit.ptIdx}` : null;
         stats: cur,
         position: i + 1,
         totalGap,
-        avgGapFromLeader: glArr.length ? avg(glArr) : null,
-        avgGapFromPrev: ppArr.length ? avg(ppArr) : null,
-        cleanGapFromLeader: clArr.length ? avg(clArr) : null,
-        cleanGapFromPrev: cpArr.length ? avg(cpArr) : null,
-        cleanCountLeader: clArr.length,
-        cleanCountPrev: cpArr.length,
+        avgGapFromLeader: gl.value(),
+        avgGapFromPrev: pp.value(),
+        cleanGapFromLeader: cl.value(),
+        cleanGapFromPrev: cp.value(),
+        cleanCountLeader: cl.count,
+        cleanCountPrev: cp.count,
         totalStageCount: n
       };
     });
   }
-  function avg(arr) {
-    return arr.reduce((a, b) => a + b, 0) / arr.length;
-  }
+  var PaceAcc = class {
+    constructor() {
+      this.gap = 0;
+      this.weight = 0;
+      this.count = 0;
+    }
+    add(gap, weight) {
+      this.gap += gap;
+      this.weight += weight;
+      this.count++;
+    }
+    value() {
+      return this.count ? this.gap / this.weight : null;
+    }
+  };
 
   // src/renderer/results/filterPanel.ts
   function buildResultsFilterPanel(data2, state, onChange, onApply) {
@@ -3574,41 +3621,50 @@ ${hit.ptIdx}` : null;
     { key: "car", label: () => i18n.t().colCar, title: () => "" },
     { key: "totalTime", label: () => i18n.t().colTotalTime, title: () => "" },
     { key: "totalPenalty", label: () => i18n.t().colPenalties, title: () => "" },
-    { key: "avgGapLeader", label: () => i18n.t().colAvgGapLeader, title: () => i18n.t().colAvgGapLeaderTitle },
-    { key: "avgGapPrev", label: () => i18n.t().colAvgGapPrev, title: () => i18n.t().colAvgGapPrevTitle },
-    { key: "cleanLeader", label: () => i18n.t().colCleanGapLeader, title: () => i18n.t().colCleanGapLeaderTitle },
-    { key: "cleanPrev", label: () => i18n.t().colCleanGapPrev, title: () => i18n.t().colCleanGapPrevTitle },
+    { key: "avgGapLeader", label: (km) => paceText(km).colAvgGapLeader, title: (km) => paceText(km).colAvgGapLeaderTitle },
+    { key: "avgGapPrev", label: (km) => paceText(km).colAvgGapPrev, title: (km) => paceText(km).colAvgGapPrevTitle },
+    { key: "cleanLeader", label: (km) => paceText(km).colCleanGapLeader, title: (km) => paceText(km).colCleanGapLeaderTitle },
+    { key: "cleanPrev", label: (km) => paceText(km).colCleanGapPrev, title: (km) => paceText(km).colCleanGapPrevTitle },
     { key: "totalGap", label: () => i18n.t().colTotalGap, title: () => "" },
     { key: "sr", label: () => i18n.t().colSuperRally, title: () => "" }
   ];
-  function buildResultsTableHeader(thead, stages, onSearchClick) {
+  function paceText(km) {
+    const t = i18n.t();
+    return km ? t.paceKm : t;
+  }
+  function formatPace(sec, km) {
+    if (sec === null || !km || Math.abs(sec) >= 60) return formatTimeSigned(sec);
+    return (sec >= 0 ? "+" : "-") + Math.abs(sec).toFixed(2);
+  }
+  function buildResultsTableHeader(thead, stages, lengths, km, onSearchClick) {
     thead.innerHTML = "";
     const tr = document.createElement("tr");
     COLUMNS.forEach((col) => {
       const th = document.createElement("th");
-      const titleText = col.title();
+      const titleText = col.title(km);
       if (titleText) th.title = titleText;
       if (col.key === "pos") th.className = "sticky-col sticky-col-1";
       if (col.special === "search") {
         th.className = "th-participant sticky-col sticky-col-2";
-        th.innerHTML = col.label();
+        th.innerHTML = col.label(km);
         th.addEventListener("click", () => onSearchClick(th));
       } else {
-        th.textContent = col.label();
+        th.textContent = col.label(km);
       }
       tr.appendChild(th);
     });
-    for (const st of stages) {
+    stages.forEach((st, i) => {
       const th = createElement("th", "th-stage", `SS${st.num}`);
-      th.title = st.name;
+      const len = lengths[i];
+      th.title = len !== null ? `${st.name} \xB7 ${len} ${i18n.t().unitKm}` : st.name;
       tr.appendChild(th);
-    }
+    });
     thead.appendChild(tr);
   }
-  function renderResultsRows(tbody, results, stageRanks, selectedRows, onRowClick) {
+  function renderResultsRows(tbody, results, stageRanks, km, selectedRows, onRowClick) {
     tbody.innerHTML = "";
     for (const r of results) {
-      const row = buildResultRow(r, stageRanks.get(r.stats.username) ?? [], selectedRows);
+      const row = buildResultRow(r, stageRanks.get(r.stats.username) ?? [], km, selectedRows);
       row.tabIndex = 0;
       row.addEventListener("click", () => onRowClick(r.stats.username, row));
       row.addEventListener("keydown", (e) => {
@@ -3619,12 +3675,12 @@ ${hit.ptIdx}` : null;
       tbody.appendChild(row);
     }
   }
-  function buildResultRow(r, stageRanks, selectedRows) {
+  function buildResultRow(r, stageRanks, km, selectedRows) {
     const row = document.createElement("tr");
     row.dataset["username"] = r.stats.username;
     if (selectedRows.has(r.stats.username)) row.classList.add("row-selected");
     row.setAttribute("aria-selected", String(selectedRows.has(r.stats.username)));
-    const t = i18n.t();
+    const t = paceText(km);
     const noPace = r.position === 1 || r.stats.totalTime === null;
     row.appendChild(buildPositionCell(r.stats.totalTime !== null ? r.position : null));
     row.appendChild(buildNameCell(r.stats));
@@ -3636,13 +3692,13 @@ ${hit.ptIdx}` : null;
     ));
     row.appendChild(buildPenaltyCell(r.stats.totalPenalty));
     row.appendChild(buildGapWithTooltip(
-      noPace ? "\u2014" : formatTimeSigned(r.avgGapFromLeader),
+      noPace ? "\u2014" : formatPace(r.avgGapFromLeader, km),
       t.colAvgGapLeaderTitle,
       noPace ? null : r.avgGapFromLeader,
       "leader"
     ));
     row.appendChild(buildGapWithTooltip(
-      noPace ? "\u2014" : formatTimeSigned(r.avgGapFromPrev),
+      noPace ? "\u2014" : formatPace(r.avgGapFromPrev, km),
       t.colAvgGapPrevTitle,
       noPace ? null : r.avgGapFromPrev,
       "prev"
@@ -3651,13 +3707,15 @@ ${hit.ptIdx}` : null;
       noPace ? null : r.cleanGapFromLeader,
       noPace ? 0 : r.cleanCountLeader,
       r.totalStageCount,
-      "leader"
+      "leader",
+      km
     ));
     row.appendChild(buildCleanGapCell(
       noPace ? null : r.cleanGapFromPrev,
       noPace ? 0 : r.cleanCountPrev,
       r.totalStageCount,
-      "prev"
+      "prev",
+      km
     ));
     row.appendChild(createTd(
       "td-total-gap",
@@ -3718,7 +3776,7 @@ ${hit.ptIdx}` : null;
     td.appendChild(inner);
     return td;
   }
-  function buildCleanGapCell(val, cleanCount, totalCount, vs) {
+  function buildCleanGapCell(val, cleanCount, totalCount, vs, km) {
     const td = createTd();
     if (val === null && cleanCount === 0) {
       td.textContent = "\u2014";
@@ -3727,7 +3785,7 @@ ${hit.ptIdx}` : null;
     const inner = createElement(
       "span",
       "td-clean",
-      val !== null ? formatTimeSigned(val) : "\u2014"
+      val !== null ? formatPace(val, km) : "\u2014"
     );
     inner.dataset["tooltip"] = i18n.t().cleanGapCellTooltip(cleanCount, totalCount);
     colorGap(inner, val, vs);
@@ -3754,6 +3812,540 @@ ${hit.ptIdx}` : null;
     if (val > 0) return "var(--red-text)";
     if (val < 0) return "var(--green)";
     return "#888";
+  }
+
+  // src/renderer/data/stages.json
+  var stages_default = [
+    { id: 10, name: "Kaihuavaara", km: 6.1 },
+    { id: 11, name: "Mustaselka", km: 7.9 },
+    { id: 12, name: "Sikakama", km: 10.2 },
+    { id: 13, name: "Autiovaara", km: 6.1 },
+    { id: 14, name: "Kaihuavaara II", km: 6.1 },
+    { id: 15, name: "Mustaselka II", km: 7.7 },
+    { id: 20, name: "Harwood Forest", km: 6.1 },
+    { id: 21, name: "Falstone", km: 6.6 },
+    { id: 22, name: "Chirdonhead", km: 7 },
+    { id: 23, name: "Shepherds Shield", km: 4.8 },
+    { id: 24, name: "Harwood Forest II", km: 5.9 },
+    { id: 25, name: "Chirdonhead II", km: 6.9 },
+    { id: 31, name: "NewBobs", km: 10.1 },
+    { id: 32, name: "Greenhills", km: 6 },
+    { id: 33, name: "Mineshaft", km: 8.2 },
+    { id: 34, name: "East-West", km: 9.5 },
+    { id: 35, name: "NewBobs II", km: 10 },
+    { id: 36, name: "East-West II", km: 9.6 },
+    { id: 41, name: "Cote D'Arbroz", km: 4.5 },
+    { id: 42, name: "Joux Verte", km: 7.9 },
+    { id: 43, name: "Bisanne", km: 5.6 },
+    { id: 44, name: "Joux Plane", km: 11.1 },
+    { id: 45, name: "Joux Verte II", km: 7.8 },
+    { id: 46, name: "Cote D'Arbroz II", km: 4.3 },
+    { id: 51, name: "Noiker", km: 13.8 },
+    { id: 52, name: "Sipirkakim", km: 8.7 },
+    { id: 53, name: "Pirka Menoko", km: 6.7 },
+    { id: 54, name: "Tanner", km: 3.9 },
+    { id: 55, name: "Noiker II", km: 13.7 },
+    { id: 56, name: "Tanner II", km: 4 },
+    { id: 61, name: "Fraizer Wells", km: 5 },
+    { id: 62, name: "Prospect Ridge", km: 7.8 },
+    { id: 63, name: "Diamond Creek", km: 7.1 },
+    { id: 64, name: "Hualapai Nation", km: 8.6 },
+    { id: 65, name: "Prospect Ridge II", km: 7.9 },
+    { id: 66, name: "Diamond Creek II", km: 6.8 },
+    { id: 71, name: "Rally School Stage", km: 2.2 },
+    { id: 101, name: "Autiovaara II", km: 6.1 },
+    { id: 102, name: "Sikakama II", km: 10.2 },
+    { id: 103, name: "Falstone II", km: 6.6 },
+    { id: 104, name: "Shepherds Shield II", km: 4.8 },
+    { id: 105, name: "Greenhills II", km: 6 },
+    { id: 106, name: "Mineshaft II", km: 8.2 },
+    { id: 107, name: "Joux Plane II", km: 11.1 },
+    { id: 108, name: "Bisanne II", km: 5.6 },
+    { id: 109, name: "Sipirkakim II", km: 8.7 },
+    { id: 110, name: "Pirka Menoko II", km: 6.7 },
+    { id: 111, name: "Fraizer Wells II", km: 5.1 },
+    { id: 112, name: "Hualapai Nation II", km: 8.6 },
+    { id: 113, name: "Rally School Stage II", km: 2.2 },
+    { id: 114, name: "Castrezzato", km: 8.1 },
+    { id: 115, name: "SS Daniel Bonara", km: 5.8 },
+    { id: 116, name: "Rally School Czech II", km: 3.1 },
+    { id: 117, name: "Courcelle Val d'Esnoms", km: 7.9 },
+    { id: 118, name: "Livadija", km: 5.6 },
+    { id: 119, name: "Karlstad II", km: 2 },
+    { id: 120, name: "Akagi 2", km: 3.5 },
+    { id: 121, name: "Sweet Lamb 2", km: 5.2 },
+    { id: 122, name: "Bruchsal Unter\xF6wisheim", km: 8.4 },
+    { id: 123, name: "Rally School Czech", km: 3 },
+    { id: 124, name: "Humalamaki 2", km: 4.6 },
+    { id: 125, name: "Sardian", km: 5.1 },
+    { id: 126, name: "Sardian Night", km: 5.1 },
+    { id: 127, name: "Loch Ard", km: 8.4 },
+    { id: 128, name: "Loch Ard 2", km: 8.4 },
+    { id: 129, name: "Peyregrosse Mandagout", km: 12.8 },
+    { id: 130, name: "Versme RallyCross", km: 3.3 },
+    { id: 131, name: "Peklo", km: 8.4 },
+    { id: 132, name: "Peklo R", km: 8.4 },
+    { id: 133, name: "Peklo Snow", km: 8.4 },
+    { id: 134, name: "Peklo Snow R", km: 8.4 },
+    { id: 135, name: "Mlynky", km: 7 },
+    { id: 136, name: "Mlynky Snow", km: 7 },
+    { id: 137, name: "Sweet Lamb", km: 5.1 },
+    { id: 138, name: "RSI 1", km: 1.5 },
+    { id: 139, name: "RSI 2", km: 1.1 },
+    { id: 140, name: "RSI 3", km: 1.9 },
+    { id: 141, name: "ROC 2008", km: 1.9 },
+    { id: 142, name: "PTD RallySprint", km: 5.1 },
+    { id: 143, name: "Portugal SS18 2007", km: 2.4 },
+    { id: 144, name: "Mlynky Snow R", km: 7.1 },
+    { id: 145, name: "Sorica", km: 15 },
+    { id: 146, name: "Shomaru Pass", km: 5.8 },
+    { id: 147, name: "Shomaru Pass II", km: 5.8 },
+    { id: 149, name: "Pribram", km: 9.1 },
+    { id: 150, name: "Pribram R", km: 9 },
+    { id: 151, name: "Bergheim", km: 7.8 },
+    { id: 152, name: "Mlynky R", km: 7 },
+    { id: 153, name: "RP 2009 Shakedown", km: 4.5 },
+    { id: 154, name: "RP 2009 Shakedown R", km: 4.6 },
+    { id: 155, name: "Puy Du Lac", km: 5.1 },
+    { id: 156, name: "Humalamaki", km: 4.6 },
+    { id: 157, name: "Gran Canaria ROC 2000", km: 3.8 },
+    { id: 158, name: "Swiss Gravel", km: 5.6 },
+    { id: 159, name: "Swiss Tarmac", km: 5.6 },
+    { id: 160, name: "Foron", km: 9.2 },
+    { id: 161, name: "Foron II", km: 9.2 },
+    { id: 162, name: "Karlstad", km: 2 },
+    { id: 163, name: "Sieversdorf", km: 8 },
+    { id: 164, name: "Stryckovy-Zadni Porici", km: 6.9 },
+    { id: 165, name: "Osli-Stryckovy", km: 10.7 },
+    { id: 166, name: "Hradek 1", km: 6 },
+    { id: 167, name: "Hradek 2", km: 6 },
+    { id: 168, name: "Liptakov 1", km: 6 },
+    { id: 169, name: "Liptakov 2", km: 5.9 },
+    { id: 172, name: "Joux Plane II Snow", km: 11.4 },
+    { id: 173, name: "Bisanne II Snow", km: 5.6 },
+    { id: 176, name: "Semetin 2009", km: 11.7 },
+    { id: 177, name: "Semetin 2010", km: 11.8 },
+    { id: 178, name: "Northumbria", km: 9 },
+    { id: 179, name: "Northumbria Tarmac", km: 9 },
+    { id: 180, name: "Joux Plane II Gravel", km: 11.4 },
+    { id: 181, name: "Bisanne II Gravel", km: 5.6 },
+    { id: 189, name: "Shepherds Shield II Tarmac", km: 4.8 },
+    { id: 190, name: "Rally School Stage II Tarmac", km: 2.2 },
+    { id: 191, name: "Greenhills II Tarmac", km: 6 },
+    { id: 193, name: "Sipirkakim II Tarmac", km: 8.7 },
+    { id: 196, name: "Shepherds Shield II Snow", km: 4.8 },
+    { id: 198, name: "Sipirkakim II Snow", km: 8.7 },
+    { id: 200, name: "Cote D'Arbroz Gravel", km: 4.5 },
+    { id: 201, name: "Joux Verte Gravel", km: 7.9 },
+    { id: 202, name: "Bisanne Gravel", km: 5.6 },
+    { id: 203, name: "Joux Plane Gravel", km: 11.2 },
+    { id: 204, name: "Joux Verte II Gravel", km: 7.8 },
+    { id: 205, name: "Cote D'Arbroz II Gravel", km: 4.5 },
+    { id: 220, name: "Diamond Creek Tarmac", km: 7.1 },
+    { id: 225, name: "Falstone Tarmac", km: 6.6 },
+    { id: 226, name: "Chirdonhead Tarmac", km: 7 },
+    { id: 227, name: "Shepherds Shield Tarmac", km: 4.8 },
+    { id: 230, name: "Rally School Stage Tarmac", km: 2.2 },
+    { id: 231, name: "NewBobs Tarmac", km: 10.1 },
+    { id: 232, name: "Greenhills Tarmac", km: 6 },
+    { id: 234, name: "East-West Tarmac", km: 9.5 },
+    { id: 235, name: "NewBobs II Tarmac", km: 10 },
+    { id: 236, name: "East-West II Tarmac", km: 9.6 },
+    { id: 239, name: "Pirka Menoko Tarmac", km: 6.7 },
+    { id: 243, name: "Harwood Forest Snow", km: 6.1 },
+    { id: 244, name: "Falstone Snow", km: 6.6 },
+    { id: 245, name: "Chirdonhead Snow", km: 7 },
+    { id: 246, name: "Shepherds Shield Snow", km: 4.8 },
+    { id: 247, name: "Harwood Forest II Snow", km: 5.9 },
+    { id: 248, name: "Chirdonhead II Snow", km: 6.9 },
+    { id: 250, name: "Noiker Snow", km: 13.8 },
+    { id: 251, name: "Sipirkakim Snow", km: 8.7 },
+    { id: 252, name: "Pirka Menoko Snow", km: 6.7 },
+    { id: 254, name: "Noiker II Snow", km: 13.7 },
+    { id: 256, name: "NewBobs Snow", km: 10.1 },
+    { id: 257, name: "Greenhills Snow", km: 6 },
+    { id: 259, name: "East-West Snow", km: 9.5 },
+    { id: 260, name: "NewBobs II Snow", km: 10 },
+    { id: 261, name: "East-West II Snow", km: 9.6 },
+    { id: 262, name: "Cote D'Arbroz Snow", km: 4.5 },
+    { id: 263, name: "Joux Verte Snow", km: 7.9 },
+    { id: 264, name: "Bisanne Snow", km: 5.6 },
+    { id: 265, name: "Joux Plane Snow", km: 11.2 },
+    { id: 266, name: "Joux Verte II Snow", km: 7.8 },
+    { id: 267, name: "Cote D'Arbroz II Snow", km: 4.5 },
+    { id: 268, name: "Fraizer Wells Snow", km: 5 },
+    { id: 269, name: "Prospect Ridge Snow", km: 7.8 },
+    { id: 280, name: "Jirkovicky", km: 3.5 },
+    { id: 281, name: "Jirkovicky II", km: 3.6 },
+    { id: 282, name: "Sourkov", km: 6.3 },
+    { id: 283, name: "Sourkov II", km: 6.3 },
+    { id: 294, name: "Rozmital 96 I", km: 6.9 },
+    { id: 295, name: "Rozmital 96 II", km: 6.9 },
+    { id: 296, name: "Sumburk 2007", km: 12.7 },
+    { id: 297, name: "Sosnova", km: 7.2 },
+    { id: 298, name: "Sosnova 2010", km: 4.2 },
+    { id: 299, name: "Kamenak", km: 7.5 },
+    { id: 300, name: "Kamenak 2", km: 7.4 },
+    { id: 301, name: "Karowa 2009 Again", km: 1.8 },
+    { id: 302, name: "Wisla Shakedown", km: 2.5 },
+    { id: 303, name: "Hyppyjulma Gravel", km: 6.2 },
+    { id: 304, name: "Hyppyjulma Gravel II", km: 6.1 },
+    { id: 305, name: "Hyppyjulma Tarmac", km: 6.2 },
+    { id: 306, name: "Hyppyjulma Tarmac II", km: 6.1 },
+    { id: 307, name: "Pikes Peak 2008", km: 19.9 },
+    { id: 308, name: "Livadija R", km: 5.6 },
+    { id: 309, name: "Monster HC", km: 2.5 },
+    { id: 310, name: "Maton I", km: 3.6 },
+    { id: 311, name: "Maton II", km: 3.6 },
+    { id: 312, name: "GB Sprint Extreme", km: 6.9 },
+    { id: 313, name: "Haguenau 2012", km: 5.5 },
+    { id: 314, name: "Vieux Moulin-Perrancey", km: 20.6 },
+    { id: 315, name: "Swiss III Tarmac", km: 8.2 },
+    { id: 316, name: "Swiss IV Gravel", km: 8.2 },
+    { id: 317, name: "Blanare", km: 7.6 },
+    { id: 318, name: "Lyon - Gerland", km: 0.8 },
+    { id: 319, name: "Blanare II", km: 6.6 },
+    { id: 320, name: "Slovakia Ring 2014", km: 11.2 },
+    { id: 321, name: "Slovakia Ring 2014 II", km: 11.1 },
+    { id: 322, name: "Tavia", km: 3.8 },
+    { id: 323, name: "SS Berica", km: 14.8 },
+    { id: 324, name: "Junior Wheels", km: 5.7 },
+    { id: 325, name: "SS Ai-Petri", km: 17.5 },
+    { id: 326, name: "SS Ai-Petri Winter", km: 17.5 },
+    { id: 327, name: "SS Uchan-Su", km: 10.9 },
+    { id: 328, name: "SS Uchan-Su Winter", km: 10.9 },
+    { id: 329, name: "FSO Zeran - Warsaw", km: 7.2 },
+    { id: 330, name: "Junior Wheels-II", km: 5.7 },
+    { id: 331, name: "Red Bull Hill Climb", km: 14.1 },
+    { id: 332, name: "Kuadonvaara", km: 5.9 },
+    { id: 333, name: "Maton I Snow", km: 3.6 },
+    { id: 334, name: "Maton II Snow", km: 3.6 },
+    { id: 335, name: "Foron Snow", km: 9.2 },
+    { id: 336, name: "Foron II Snow", km: 9.2 },
+    { id: 337, name: "Torre Vecchia", km: 9.8 },
+    { id: 338, name: "Undva I", km: 9.9 },
+    { id: 339, name: "Kolmenjarvet gravel I", km: 6.2 },
+    { id: 340, name: "Kolmenjarvet gravel II", km: 6.2 },
+    { id: 341, name: "Kolmenjarvet tarmac I", km: 6.2 },
+    { id: 342, name: "Kolmenjarvet tarmac II", km: 6.2 },
+    { id: 343, name: "Undva II", km: 9.9 },
+    { id: 344, name: "Azov I", km: 19.1 },
+    { id: 345, name: "Azov II", km: 19.2 },
+    { id: 346, name: "Fernet Branca 2015", km: 6 },
+    { id: 347, name: "Kormoran I", km: 10.3 },
+    { id: 348, name: "Kormoran II", km: 12 },
+    { id: 349, name: "Kormoran shakedown", km: 5.2 },
+    { id: 350, name: "Shakedown Rally del Salento 2014", km: 3.9 },
+    { id: 351, name: "Gestel I", km: 7.2 },
+    { id: 352, name: "Passo Valle", km: 5.8 },
+    { id: 353, name: "Passo Valle Reverse", km: 5.7 },
+    { id: 354, name: "SSS Mikolajki Rally I", km: 2.7 },
+    { id: 355, name: "SSS Mikolajki Rally II", km: 2.7 },
+    { id: 356, name: "Travanca do Monte", km: 2.2 },
+    { id: 357, name: "Zaraso Salos - 5 Laps", km: 5.2 },
+    { id: 358, name: "Zaraso Salos - 2 Laps", km: 2.1 },
+    { id: 359, name: "Joukkovaara gravel", km: 10.2 },
+    { id: 360, name: "Joukkovaara gravel II", km: 10.2 },
+    { id: 361, name: "Joukkovaara tarmac", km: 10.2 },
+    { id: 362, name: "Joukkovaara tarmac II", km: 10.2 },
+    { id: 363, name: "La Rocca", km: 7.4 },
+    { id: 364, name: "Rallysprint Hondarribia 2011", km: 7.6 },
+    { id: 365, name: "Sherwood Forest I Summer", km: 13.6 },
+    { id: 366, name: "Sherwood Forest II Summer", km: 13.6 },
+    { id: 367, name: "Sherwood Forest I", km: 13.6 },
+    { id: 368, name: "Sherwood Forest II", km: 13.6 },
+    { id: 369, name: "Capo Di Feno v2", km: 4.4 },
+    { id: 370, name: "Capo Di Feno v2 R", km: 4.4 },
+    { id: 371, name: "Carvalho de Rei 2008", km: 8.2 },
+    { id: 372, name: "Carvalho de Rei 2008 reverse", km: 8.2 },
+    { id: 373, name: "Halenkovice SD", km: 4.4 },
+    { id: 374, name: "Shurdin I", km: 21.9 },
+    { id: 375, name: "Shurdin II", km: 22 },
+    { id: 376, name: "Dolmen", km: 13.4 },
+    { id: 377, name: "SSS York I", km: 4.3 },
+    { id: 378, name: "SSS York II", km: 4.4 },
+    { id: 379, name: "Sturec", km: 8.1 },
+    { id: 380, name: "Sturec II", km: 8.1 },
+    { id: 381, name: "Lousada - WRC", km: 3.4 },
+    { id: 382, name: "Lousada - RX", km: 3.7 },
+    { id: 383, name: "Lousada - RG", km: 3.7 },
+    { id: 384, name: "Svince", km: 4.8 },
+    { id: 385, name: "Svince II", km: 4.8 },
+    { id: 386, name: "Sturec snow", km: 8.1 },
+    { id: 387, name: "Sturec snow II", km: 8.1 },
+    { id: 388, name: "Vicar", km: 4.8 },
+    { id: 389, name: "Mitterbach", km: 3 },
+    { id: 390, name: "Rally school mix", km: 5.2 },
+    { id: 391, name: "Rally school mix II", km: 5.2 },
+    { id: 392, name: "Rally school tarmac", km: 5.2 },
+    { id: 393, name: "Rally school tarmac II", km: 5.2 },
+    { id: 394, name: "Verkiai 2010", km: 5.6 },
+    { id: 395, name: "Verkiai 2010 reverse", km: 5.9 },
+    { id: 396, name: "Verkiai 2010 Super Special", km: 0.9 },
+    { id: 397, name: "Uhorna", km: 11.4 },
+    { id: 398, name: "Uhorna II", km: 11.3 },
+    { id: 399, name: "Torsby shakedown", km: 4.3 },
+    { id: 400, name: "Vinec-Skalsko", km: 17.8 },
+    { id: 401, name: "Vinec-Skalsko NIGHT", km: 17.8 },
+    { id: 402, name: "Zadverice", km: 14.8 },
+    { id: 403, name: "Zadverice II", km: 14.8 },
+    { id: 404, name: "Uhorna snow", km: 11.4 },
+    { id: 405, name: "Uhorna snow II", km: 11.3 },
+    { id: 410, name: "Vargassence", km: 14.9 },
+    { id: 411, name: "Komarov", km: 7.4 },
+    { id: 412, name: "Komarov II", km: 7.2 },
+    { id: 413, name: "Komarov Snow", km: 7.4 },
+    { id: 414, name: "Komarov Snow II", km: 7.2 },
+    { id: 415, name: "Vargassence Mirror-Reverse", km: 15 },
+    { id: 416, name: "Biskupice SSS", km: 2.3 },
+    { id: 417, name: "Luc\xE9ram - Col Saint-Roch", km: 5.7 },
+    { id: 418, name: "Pian del Colle", km: 8.3 },
+    { id: 419, name: "Pian del Colle Reversed", km: 8.4 },
+    { id: 420, name: "Pian del Colle Snow", km: 8.3 },
+    { id: 421, name: "Pian del Colle Snow Reversed", km: 8.4 },
+    { id: 422, name: "Torsby 2018", km: 9.7 },
+    { id: 423, name: "Torsby 2018 Sprint", km: 3.5 },
+    { id: 424, name: "Biskupice 2004", km: 7.5 },
+    { id: 425, name: "Biskupice 2004 II", km: 7.9 },
+    { id: 426, name: "Helfstyn", km: 13.9 },
+    { id: 427, name: "Zaton", km: 6.7 },
+    { id: 428, name: "Zaton II", km: 6.7 },
+    { id: 429, name: "Era del Cardon", km: 9.5 },
+    { id: 430, name: "Drazgose 2014", km: 9.5 },
+    { id: 431, name: "Inland Road 2022", km: 5.6 },
+    { id: 432, name: "Inland Road Reversed 2022", km: 5.7 },
+    { id: 433, name: "Harju 2019", km: 2.3 },
+    { id: 434, name: "Alpes Rally", km: 10.2 },
+    { id: 435, name: "Rally Diepflingen 2022", km: 5.3 },
+    { id: 436, name: "Barak", km: 5.4 },
+    { id: 437, name: "Barak snow", km: 3.8 },
+    { id: 438, name: "Mitterbach Tarmac", km: 3 },
+    { id: 439, name: "Olsava 2010", km: 1.7 },
+    { id: 440, name: "Olsava long", km: 3.1 },
+    { id: 441, name: "Banov", km: 3 },
+    { id: 442, name: "Banov II", km: 3 },
+    { id: 443, name: "Banov okruh", km: 12.7 },
+    { id: 444, name: "Koprivnice SS1", km: 2.2 },
+    { id: 445, name: "Koprivnice SS2", km: 4.2 },
+    { id: 447, name: "Koprivnice SS4", km: 5.5 },
+    { id: 448, name: "Horazdovice - Komusin", km: 5.1 },
+    { id: 449, name: "SSS Valasske Mezirici", km: 3.6 },
+    { id: 450, name: "Gabiria-Legazpi 2004", km: 6.5 },
+    { id: 451, name: "La Atalaya", km: 7.5 },
+    { id: 452, name: "La Atalaya II", km: 7.5 },
+    { id: 453, name: "Rally Diepflingen 2022 Reverse", km: 5.2 },
+    { id: 454, name: "Era del Cardon II", km: 9.6 },
+    { id: 455, name: "Murello", km: 7.2 },
+    { id: 456, name: "Legazpi-Gabiria 2004", km: 6.5 },
+    { id: 457, name: "El Fargue SS1", km: 6.7 },
+    { id: 458, name: "Rosciszow-Walim", km: 8.5 },
+    { id: 459, name: "Walim-Rosciszow", km: 8.5 },
+    { id: 460, name: "PS Valstagna", km: 12.8 },
+    { id: 461, name: "Sant Bartumeu - Valldoreix", km: 9.4 },
+    { id: 462, name: "Odry", km: 7.2 },
+    { id: 463, name: "Odry II", km: 7.2 },
+    { id: 464, name: "Odry snow", km: 6.3 },
+    { id: 465, name: "Odry snow II", km: 6.2 },
+    { id: 466, name: "Odry snow Night", km: 6.3 },
+    { id: 467, name: "Odry snow Night II", km: 6.2 },
+    { id: 468, name: "PS Valstagna Reverse", km: 12.8 },
+    { id: 469, name: "Estrada da Banana - Uphill", km: 4.4 },
+    { id: 470, name: "Narva Kreenholmi Rahvasprint 22", km: 3.3 },
+    { id: 473, name: "Estrada da Banana - Downhill", km: 4.4 },
+    { id: 474, name: "Valldoreix - Sant Bartumeu", km: 9.4 },
+    { id: 476, name: "La Mussara Shakedown I", km: 7.3 },
+    { id: 477, name: "La Mussara Shakedown II", km: 7.4 },
+    { id: 478, name: "Zlin SS1", km: 9.5 },
+    { id: 479, name: "Ul. Rajdowa", km: 1.6 },
+    { id: 480, name: "Ul. Rajdowa R", km: 1.6 },
+    { id: 481, name: "SSS Alpes School Rally", km: 1.8 },
+    { id: 482, name: "RabocsiRing 2021 Rally Hungary", km: 2.4 },
+    { id: 483, name: "RabocsiRing RX", km: 3.3 },
+    { id: 484, name: "Vacarisses SS2", km: 6 },
+    { id: 485, name: "Woliborz - Jodlownik", km: 8.2 },
+    { id: 486, name: "Neubuz - Slusovice", km: 1.8 },
+    { id: 487, name: "Vesikkola", km: 9.7 },
+    { id: 488, name: "Saalahti", km: 4.7 },
+    { id: 489, name: "Vacarisses SS1", km: 6.1 },
+    { id: 500, name: "Akagi", km: 3.5 },
+    { id: 501, name: "Myhinpaa 2023", km: 15.6 },
+    { id: 502, name: "Savopohja", km: 14.4 },
+    { id: 503, name: "Sunava Shakedown", km: 3.3 },
+    { id: 504, name: "Witoszow - Zloty Las", km: 5.4 },
+    { id: 505, name: "Zloty Las - Witoszow", km: 5.5 },
+    { id: 506, name: "Kaczyce", km: 3.3 },
+    { id: 507, name: "Jodlownik - Woliborz", km: 8.2 },
+    { id: 508, name: "Vilaplana 2007", km: 13 },
+    { id: 509, name: "Santa Lucia", km: 13 },
+    { id: 510, name: "PS Valstagna Historic Gravel", km: 6.5 },
+    { id: 511, name: "Kaczyce 2", km: 2.5 },
+    { id: 512, name: "The Legend", km: 4.3 },
+    { id: 513, name: "Bikernieki SSS", km: 11.1 },
+    { id: 514, name: "Santa Lucia II", km: 12.9 },
+    { id: 515, name: "Nujiang 72 Turns R", km: 15.3 },
+    { id: 516, name: "Halenkovice 2018", km: 13.7 },
+    { id: 517, name: "Bayanbulak-Pegasus 2", km: 18.1 },
+    { id: 518, name: "Ponteareas 2008", km: 6.2 },
+    { id: 519, name: "Bois de Bie", km: 5.2 },
+    { id: 520, name: "Vesala Shakedown", km: 4.4 },
+    { id: 521, name: "Ahvenus I", km: 5.2 },
+    { id: 522, name: "Ahvenus II", km: 5.4 },
+    { id: 523, name: "Fintele", km: 4.6 },
+    { id: 524, name: "Hassi", km: 7.8 },
+    { id: 525, name: "Piren Tarmac", km: 4.4 },
+    { id: 526, name: "Piren Gravel", km: 4.4 },
+    { id: 527, name: "Antaramanana", km: 14.4 },
+    { id: 528, name: "Antaramanana II", km: 14.5 },
+    { id: 529, name: "Blyfoten", km: 4.9 },
+    { id: 530, name: "TMF A 2021", km: 1.9 },
+    { id: 531, name: "Aittajarvi", km: 22.5 },
+    { id: 532, name: "Wythop", km: 5.3 },
+    { id: 533, name: "Wythop II", km: 5.3 },
+    { id: 534, name: "Ubunapa Kabula", km: 6.2 },
+    { id: 535, name: "Ubunapa Kabula II", km: 6.1 },
+    { id: 536, name: "Hacke Pokalen", km: 5.5 },
+    { id: 537, name: "Vennivaara", km: 5.7 },
+    { id: 538, name: "Koirakivi", km: 4.6 },
+    { id: 539, name: "Laitse Rallypark", km: 2.4 },
+    { id: 540, name: "Granbacken", km: 9.9 },
+    { id: 541, name: "Limnis Plastiras", km: 7.1 },
+    { id: 542, name: "El Cubilete", km: 13.7 },
+    { id: 543, name: "Valvestino II", km: 6 },
+    { id: 544, name: "Oskola 2023", km: 13.3 },
+    { id: 545, name: "Toikkala", km: 9.8 },
+    { id: 546, name: "Monti di Ala", km: 10.2 },
+    { id: 547, name: "Hokkara Gravel", km: 4 },
+    { id: 548, name: "Hokkara Gravel Rever", km: 4.2 },
+    { id: 549, name: "Makkola", km: 7.4 },
+    { id: 550, name: "Sirkkamaki", km: 6.4 },
+    { id: 551, name: "Sleeping Warrior 2019", km: 27 },
+    { id: 552, name: "Karkaus", km: 4.6 },
+    { id: 553, name: "Passauna", km: 5.5 },
+    { id: 554, name: "Passauna II", km: 5.6 },
+    { id: 555, name: "Course de Cote de Cauterets", km: 1.8 },
+    { id: 556, name: "Course de Cote de Cauterets Slal", km: 1.8 },
+    { id: 557, name: "Erken", km: 7.1 },
+    { id: 558, name: "Erken II", km: 7 },
+    { id: 559, name: "Karagita Ruma", km: 4.4 },
+    { id: 560, name: "Nechanice - Presin", km: 7.8 },
+    { id: 561, name: "Elmenteita", km: 3.6 },
+    { id: 562, name: "Aguimes-Santa Lucia 2025", km: 14.9 },
+    { id: 563, name: "Toivonvaara", km: 7.7 },
+    { id: 564, name: "El Condor", km: 9.7 },
+    { id: 565, name: "Legazpi-Gabiria Winter", km: 6.5 },
+    { id: 566, name: "Ulu Karagita", km: 8.6 },
+    { id: 567, name: "Kaczyce 3", km: 3 },
+    { id: 568, name: "Graciosa I", km: 13.9 },
+    { id: 569, name: "Graciosa II", km: 13.7 },
+    { id: 570, name: "Fosso delle Dogane", km: 3.2 },
+    { id: 571, name: "Cueva Santa", km: 9.2 },
+    { id: 572, name: "Kinamba Yala", km: 13.7 },
+    { id: 573, name: "Lebozan 2010", km: 13.9 },
+    { id: 574, name: "Longyou 2024 SSS - 1 Lap R", km: 1.8 },
+    { id: 575, name: "Longyou 2024 SSS - 1 Lap L", km: 1.8 },
+    { id: 576, name: "Longyou 2024 SSS - 2 Laps R", km: 3.5 },
+    { id: 577, name: "Longyou 2024 SSS - 2 Laps L", km: 3.5 },
+    { id: 578, name: "Mattila", km: 13 },
+    { id: 579, name: "Kuri Bush 1", km: 7.2 },
+    { id: 580, name: "Helette", km: 8.6 },
+    { id: 581, name: "Dylanda", km: 6 },
+    { id: 582, name: "Gastabudstrofen", km: 4.6 },
+    { id: 583, name: "Cercados de Espino", km: 7.7 },
+    { id: 584, name: "Cierru Los Pinos", km: 4.7 },
+    { id: 585, name: "Cierru Los Pinos 2", km: 4.8 },
+    { id: 586, name: "Pirttijarvi", km: 6.7 },
+    { id: 587, name: "Les Guilleries", km: 18.3 },
+    { id: 588, name: "Whaanga Coast 2025", km: 30 },
+    { id: 589, name: "Hakolahti sprint", km: 2.7 },
+    { id: 590, name: "Pirttikulma", km: 7 },
+    { id: 591, name: "Bois de Bie Reverse", km: 5.2 },
+    { id: 592, name: "Helette Reverse", km: 8.7 },
+    { id: 593, name: "Fintele Reverse", km: 4.5 },
+    { id: 594, name: "Colorado Springs West Circuit A", km: 13.2 },
+    { id: 595, name: "La Serra d'Almos", km: 4.1 },
+    { id: 597, name: "Sarvana", km: 6.5 },
+    { id: 598, name: "Colorado Springs West Hill Climb B", km: 12.6 },
+    { id: 599, name: "Hurricane Peak Hillclimb Snow", km: 6.3 },
+    { id: 600, name: "Arteara Artedara", km: 13.3 },
+    { id: 601, name: "Collsesplanes", km: 18.3 },
+    { id: 602, name: "Lescheraines-Arith", km: 5.2 },
+    { id: 603, name: "Arith-Lescheraines", km: 5.3 },
+    { id: 604, name: "Tahekeroa", km: 10.8 },
+    { id: 605, name: "Kuri Bush 2", km: 8.3 },
+    { id: 606, name: "Sarvana II", km: 7.2 },
+    { id: 607, name: "Pengonpohja", km: 7.9 },
+    { id: 608, name: "Olocau Gatova", km: 8.6 },
+    { id: 609, name: "Brantega 2010", km: 10.1 },
+    { id: 610, name: "Brantega 2010 R", km: 10.2 },
+    { id: 611, name: "Ouninpohja 1986", km: 7.4 },
+    { id: 612, name: "Ramirent Sprinten 2014", km: 3.5 },
+    { id: 614, name: "Gabiria-Legazpi Winter", km: 6.5 },
+    { id: 615, name: "Kaihuavaara 2021", km: 20 },
+    { id: 616, name: "Norrlands Sprinten", km: 4.3 },
+    { id: 617, name: "Komokoriki Hill Road 2021", km: 4.9 },
+    { id: 618, name: "Miadamanjaka", km: 11.2 },
+    { id: 619, name: "Miadamanjaka II", km: 11.2 },
+    { id: 620, name: "Stoccareddo", km: 5.7 },
+    { id: 621, name: "Comb I", km: 9.1 },
+    { id: 629, name: "Ruapuke", km: 14.2 },
+    { id: 630, name: "Whaanga Coast Sprint", km: 4.4 },
+    { id: 631, name: "Bignone Shakedown", km: 2.9 },
+    { id: 634, name: "Vyskovec", km: 5.9 },
+    { id: 635, name: "Vyskovec okruh", km: 9.1 },
+    { id: 636, name: "Te Parae Road", km: 7 },
+    { id: 640, name: "Dylanda II", km: 5.9 },
+    { id: 641, name: "Dobka-Partecznik Sprint", km: 5.8 },
+    { id: 1002, name: "Bikol Tardos", km: 7.3 },
+    { id: 1008, name: "Le barrage des gorges", km: 9.5 },
+    { id: 1014, name: "Crastazza", km: 20.7 },
+    { id: 1016, name: "Lantosque - Luceram", km: 7.2 },
+    { id: 1017, name: "Lantosque - Luceram II", km: 7.2 },
+    { id: 1021, name: "Serra d'Agua", km: 11 },
+    { id: 1027, name: "Sagen Sweden 2012", km: 14 },
+    { id: 1028, name: "Ouninpohja", km: 34.7 },
+    { id: 1029, name: "Ouninpohja II", km: 35 },
+    { id: 1032, name: "Bareyo", km: 7.7 },
+    { id: 1033, name: "Bareyo II", km: 7.7 },
+    { id: 1045, name: "Sainte - Agnes", km: 5.2 },
+    { id: 1046, name: "Skogby", km: 4.9 },
+    { id: 1048, name: "Stoccareddo II", km: 6.3 },
+    { id: 1049, name: "Tikkala", km: 7.1 },
+    { id: 1050, name: "UK 2", km: 7.9 },
+    { id: 1054, name: "Ypsonas Rallysprint", km: 2.8 },
+    { id: 1057, name: "Hokkara Snow", km: 4 },
+    { id: 1058, name: "Hokkara Snow Rever", km: 4.2 },
+    { id: 1059, name: "Mytt\xE4\xE4l\xE4", km: 5 },
+    { id: 1066, name: "Savo", km: 8 },
+    { id: 1067, name: "Korpiaho", km: 6.8 },
+    { id: 1073, name: "Komokoriki Hill Road 2021 R", km: 4.9 },
+    { id: 1075, name: "Kuohu", km: 8.3 },
+    { id: 1077, name: "Lebanon Rally SSS RPM", km: 2.3 },
+    { id: 1082, name: "Kutemaj\xE4rvi 1994", km: 13 },
+    { id: 1087, name: "Savulampi", km: 9.6 },
+    { id: 1091, name: "Cueva Santa II", km: 9.1 },
+    { id: 1096, name: "Laajavuori", km: 4.1 },
+    { id: 1097, name: "Ruuhim\xE4ki", km: 6.9 },
+    { id: 1098, name: "Kuomiokoski", km: 2.7 },
+    { id: 1099, name: "P\xF6ykky", km: 4.4 },
+    { id: 1100, name: "Myllyl\xE4hde", km: 5.9 },
+    { id: 1101, name: "Platres Hillclimb", km: 1.7 },
+    { id: 1105, name: "Karankam\xE4ki", km: 4.2 },
+    { id: 1107, name: "Te Parae Road II", km: 7 },
+    { id: 1109, name: "Pirttikulma Snow", km: 7.5 },
+    { id: 1110, name: "Kaihuavaara 2022", km: 28 },
+    { id: 1117, name: "Pengonpohja II", km: 8.6 },
+    { id: 1120, name: "Palvaanj\xE4rvi Sprint", km: 3.9 }
+  ];
+
+  // src/renderer/data/stageLengths.ts
+  function normalize(name) {
+    return name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+  var BY_NAME = new Map(
+    stages_default.map((s) => [normalize(s.name), s.km])
+  );
+  function stageLengthKm(name) {
+    return BY_NAME.get(normalize(name)) ?? null;
   }
 
   // src/renderer/results/index.ts
@@ -3807,12 +4399,21 @@ ${hit.ptIdx}` : null;
     if (!_data) return;
     _dirty = false;
     const stats = getFilteredStats();
-    const results = computeDriverResults(stats);
     const stages = _data.stages.filter((s) => _filterState.stageFilter.has(s.num)).sort((a, b) => a.num - b.num);
+    const lengths = stages.map((s) => stageLengthKm(s.name));
+    const stageKm = lengths.every((l) => l !== null) ? lengths : null;
+    const results = computeDriverResults(stats, stageKm);
     const thead = document.getElementById("results-thead");
-    buildResultsTableHeader(thead, stages, activateParticipantSearch);
+    buildResultsTableHeader(thead, stages, lengths, stageKm !== null, activateParticipantSearch);
     const tbody = document.getElementById("results-tbody");
-    renderResultsRows(tbody, results, computeStageRanks(results, stages.length), _selectedRows, toggleRowSelection);
+    renderResultsRows(
+      tbody,
+      results,
+      computeStageRanks(results, stages.length),
+      stageKm !== null,
+      _selectedRows,
+      toggleRowSelection
+    );
     if (_resetScroll) {
       _resetScroll = false;
       document.querySelector(".results-wrap")?.scrollTo(0, 0);

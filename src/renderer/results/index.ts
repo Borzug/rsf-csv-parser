@@ -15,6 +15,7 @@ import {
     buildResultsTableHeader,
     renderResultsRows
 } from "./tableRenderer";
+import { stageLengthKm } from "../data/stageLengths";
 
 export { computeAllDriverStats } from './compute';
 
@@ -80,16 +81,20 @@ export function renderResultsTable(): void {
     if (!_data) return;
     _dirty = false;
     const stats   = getFilteredStats();
-    const results = computeDriverResults(stats);
     const stages  = _data.stages
         .filter(s => _filterState.stageFilter.has(s.num))
         .sort((a, b) => a.num - b.num);
+    // Темп на км — только если известны длины всех выбранных СУ, иначе смесь бессмысленна
+    const lengths = stages.map(s => stageLengthKm(s.name));
+    const stageKm = lengths.every((l): l is number => l !== null) ? lengths : null;
+    const results = computeDriverResults(stats, stageKm);
 
     const thead = document.getElementById('results-thead')!;
-    buildResultsTableHeader(thead, stages, activateParticipantSearch);
+    buildResultsTableHeader(thead, stages, lengths, stageKm !== null, activateParticipantSearch);
 
     const tbody = document.getElementById('results-tbody')!;
-    renderResultsRows(tbody, results, computeStageRanks(results, stages.length), _selectedRows, toggleRowSelection);
+    renderResultsRows(tbody, results, computeStageRanks(results, stages.length), stageKm !== null,
+        _selectedRows, toggleRowSelection);
 
     if (_resetScroll) {
         _resetScroll = false;

@@ -1,5 +1,17 @@
 export type Language = 'ru' | 'en' | 'hu';
 
+/** Подписи и подсказки колонок темпа */
+export interface IPaceTexts {
+    colAvgGapLeader:        string;
+    colAvgGapPrev:          string;
+    colCleanGapLeader:      string;
+    colCleanGapPrev:        string;
+    colAvgGapLeaderTitle:   string;
+    colAvgGapPrevTitle:     string;
+    colCleanGapLeaderTitle: string;
+    colCleanGapPrevTitle:   string;
+}
+
 export interface ITranslations {
     // Welcome screen
     welcomeTitle:           string;
@@ -118,6 +130,9 @@ export interface ITranslations {
     colCleanGapLeaderTitle: string;
     colCleanGapPrevTitle:   string;
     cleanGapCellTooltip:    (used: number, total: number) => string;
+    /** Подписи колонок темпа, когда известны длины СУ и темп считается на км */
+    paceKm:                 IPaceTexts;
+    unitKm:                 string;
 
     // Кнопка применить фильтр
     applyFilterButton:      string;
