@@ -11,9 +11,14 @@ const HOVER_BORDER    = '#c0392b';
 export const ROTATE_45_AT = 9;
 export const ROTATE_90_AT = 20;
 
+/** Строка счётчиков 💬 сразу под осью, над подписями СУ. */
+export const COMMENT_ROW_H = 16;
+
 export function buildStageNamesPlugin(
-    getStages:      () => IStageInfo[],
-    getHoveredIdx:  () => number | null,
+    getStages:         () => IStageInfo[],
+    getHoveredIdx:     () => number | null,
+    getCommentCounts:  (ch: any) => number[],
+    getHoveredCounter: () => number | null,
 ): object {
     return {
         id: 'stageNames',
@@ -26,10 +31,13 @@ export function buildStageNamesPlugin(
             const xs         = scales.x;
             const bot        = chartArea.bottom;
             const hoveredIdx = getHoveredIdx();
+            const counts     = getCommentCounts(ch);
+            const hoveredCnt = getHoveredCounter();
             ctx.save();
 
             for (let i = 0; i < stages.length; i++) {
                 drawStageBand(ctx, stages[i], i, xs, bot, rot45, rot90, hoveredIdx === i);
+                drawCommentCounter(ctx, counts[i] ?? 0, i, xs, bot, hoveredCnt === i);
             }
             ctx.restore();
         },
@@ -50,7 +58,7 @@ function drawStageBand(
     const xR = xs.getPixelForTick(i * 3 + 3);
     if (xL >= xR) return;
 
-    const bandH = rot90 ? 108 : rot45 ? 88 : 40;
+    const bandH = (rot90 ? 108 : rot45 ? 88 : 40) + COMMENT_ROW_H;
 
     if (hovered) {
         ctx.fillStyle = i % 2 === 0 ? HOVER_BG_EVEN : HOVER_BG_ODD;
@@ -75,13 +83,46 @@ function drawStageBand(
     ctx.lineTo(xL, bot + 2 + bandH);
     ctx.stroke();
 
+    const labelTop = bot + COMMENT_ROW_H;
     if (!rot45 && !rot90) {
-        drawHorizontalLabel(ctx, stage, xL, xR, bot, hovered);
+        drawHorizontalLabel(ctx, stage, xL, xR, labelTop, hovered);
     } else if (rot45) {
-        drawRotatedLabel(ctx, stage, xL, xR, bot, Math.PI / 4, hovered);
+        drawRotatedLabel(ctx, stage, xL, xR, labelTop, Math.PI / 4, hovered);
     } else {
-        drawRotatedLabel(ctx, stage, xL, xR, bot, Math.PI / 2, hovered);
+        drawRotatedLabel(ctx, stage, xL, xR, labelTop, Math.PI / 2, hovered);
     }
+}
+
+/** Число комментариев на СУ; «💬 N», если полоса достаточно широкая, иначе только N. */
+function drawCommentCounter(
+    ctx:     CanvasRenderingContext2D,
+    count:   number,
+    i:       number,
+    xs:      any,
+    bot:     number,
+    hovered: boolean,
+): void {
+    if (!count) return;
+    const xL = xs.getPixelForTick(i * 3);
+    const xR = xs.getPixelForTick(i * 3 + 3);
+    if (xL >= xR) return;
+
+    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    const num   = String(count);
+    const full  = `💬 ${num}`;
+    const text  = ctx.measureText(full).width + 8 <= xR - xL ? full : num;
+    const w     = Math.min(ctx.measureText(text).width + 8, xR - xL - 2);
+    const xMid  = (xL + xR) / 2;
+    const yMid  = bot + 2 + COMMENT_ROW_H / 2;
+
+    ctx.fillStyle = hovered ? 'rgba(241,196,15,0.25)' : 'rgba(255,255,255,0.08)';
+    ctx.beginPath();
+    ctx.roundRect(xMid - w / 2, yMid - 6.5, w, 13, 6);
+    ctx.fill();
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = hovered ? '#fff' : '#c8c8c8';
+    ctx.fillText(text, xMid, yMid + 0.5);
 }
 
 function drawHorizontalLabel(

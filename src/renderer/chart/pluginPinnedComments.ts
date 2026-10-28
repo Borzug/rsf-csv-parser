@@ -1,239 +1,98 @@
-const FONT_FAMILY   = "'Fira Code', monospace";
-const PAD_X         = 10;
-const PAD_Y         = 7;
-const LINE_H        = 17;
-const FONT_SZ       = 12;
-const STAGE_FONT_SZ = 10;
-const MAX_BOX_W     = 280;
-const BOX_GAP       = 6;
+import type { IStageInfo } from '../../shared/types';
 
-interface ICommentBox {
-    x:        number;
-    y:        number;
-    w:        number;
-    h:        number;
-    cmtLines: string[];
-    stage:    string;
-}
+/**
+ * Комментарии закреплённых на графике: над каждым ◆ — плашка с номером СУ, сам текст —
+ * в ленте под графиком (commentStrip). Комментарий, на который навели в ленте, обводится.
+ * Наведение на ◆ закреплённого сообщается наружу, чтобы лента подсветила запись.
+ */
+const FONT       = "bold 9px 'Fira Code', monospace";
+const PILL_H     = 13;
+const PILL_PAD_X = 4;
+const PILL_GAP   = 9;
+const RING_R     = 10;
+const HOVER_PX   = 14;
 
-interface IBoxEntry {
-    bw:        number;
-    bh:        number;
-    cmtLines:  string[];
-    stageLabel: string;
-}
-
-interface IAnchorGroup {
-    pt:      any;
-    entries: IBoxEntry[];
-}
+export interface IActiveComment { key: string; ptIdx: number }
 
 export function buildPinnedCommentsPlugin(
-    getPinnedIdxs: () => number[],
+    getPinnedIdxs:    () => number[],
+    getStages:        () => IStageInfo[],
+    getActive:        () => IActiveComment | null,
+    onPointHover:     (c: IActiveComment | null) => void,
 ): object {
+    let lastHover: string | null = null;
+
     return {
         id: 'pinnedComments',
-        afterDraw(ch: any): void {
+        afterDatasetsDraw(ch: any): void {
             const pinnedIdxs = getPinnedIdxs();
             if (!pinnedIdxs.length) return;
-
-            const { ctx, chartArea } = ch;
+            const stages = getStages();
+            const active = getActive();
+            const { ctx, chartArea: area } = ch;
             ctx.save();
+            ctx.font         = FONT;
+            ctx.textAlign    = 'center';
+            ctx.textBaseline = 'middle';
 
-            const boxes: ICommentBox[] = [];
-            for (const pinnedIdx of pinnedIdxs) {
-                const ds = ch.data.datasets[pinnedIdx];
+            for (const di of pinnedIdxs) {
+                const ds = ch.data.datasets[di];
                 if (!ds || ds.hidden) continue;
-                const cmts  = ds._cmts        as string[];
-                const slbls = ds._stageLabels as string[];
-                const meta  = ch.getDatasetMeta(pinnedIdx);
-                boxes.push(...collectCommentBoxes(ctx, ds, meta, cmts, slbls, chartArea));
-            }
-            resolveCollisions(boxes, chartArea);
-            renderBoxes(ctx, boxes);
-            ctx.restore();
-        },
-    };
-}
+                const cmts = ds._cmts as string[];
+                const pts  = ch.getDatasetMeta(di).data as any[];
+                for (let i = 1; i < cmts.length; i++) {
+                    const pt = pts[i];
+                    if (!cmts[i] || !pt || pt.skip) continue;
+                    if (pt.y < area.top - 1 || pt.y > area.bottom + 1) continue;
 
-function wrapText(
-    ctx:      CanvasRenderingContext2D,
-    text:     string,
-    maxWidth: number,
-): string[] {
-    const words  = text.split(' ');
-    const lines: string[] = [];
-    let current  = '';
+                    const si    = i === ds._dnfCmtPtIdx && ds._dnfCmtStageIdx !== null
+                        ? ds._dnfCmtStageIdx : Math.floor((i - 1) / 3);
+                    const label = stages[si] ? String(stages[si].num) : '';
+                    const w     = ctx.measureText(label).width + PILL_PAD_X * 2;
+                    // Над точкой, а у верхнего края — под ней
+                    const above = pt.y - PILL_GAP - PILL_H >= area.top;
+                    const y     = above ? pt.y - PILL_GAP - PILL_H / 2 : pt.y + PILL_GAP + PILL_H / 2;
 
-    for (const word of words) {
-        const candidate = current ? `${current} ${word}` : word;
-        if (ctx.measureText(candidate).width <= maxWidth) {
-            current = candidate;
-        } else {
-            if (current) lines.push(current);
-            if (ctx.measureText(word).width > maxWidth) {
-                let chunk = '';
-                for (const ch of word) {
-                    if (ctx.measureText(chunk + ch).width > maxWidth) {
-                        lines.push(chunk);
-                        chunk = ch;
-                    } else {
-                        chunk += ch;
+                    ctx.fillStyle   = 'rgba(10,10,10,0.88)';
+                    ctx.strokeStyle = ds.borderColor;
+                    ctx.lineWidth   = 1;
+                    ctx.beginPath();
+                    ctx.roundRect(pt.x - w / 2, y - PILL_H / 2, w, PILL_H, 3);
+                    ctx.fill();
+                    ctx.stroke();
+                    ctx.fillStyle = '#eee';
+                    ctx.fillText(label, pt.x, y + 0.5);
+
+                    if (active && active.key === ds.driverKey && active.ptIdx === i) {
+                        ctx.strokeStyle = '#f1c40f';
+                        ctx.lineWidth   = 2;
+                        ctx.beginPath();
+                        ctx.arc(pt.x, pt.y, RING_R, 0, Math.PI * 2);
+                        ctx.stroke();
                     }
                 }
-                current = chunk;
-            } else {
-                current = word;
             }
-        }
-    }
-    if (current) lines.push(current);
-    return lines.length ? lines : [''];
-}
+            ctx.restore();
+        },
 
-function measureBoxWidth(
-    ctx:        CanvasRenderingContext2D,
-    cmtLines:   string[],
-    stageLabel: string,
-): number {
-    const innerW = MAX_BOX_W - PAD_X * 2;
-    ctx.font = `${STAGE_FONT_SZ}px ${FONT_FAMILY}`;
-    const stageW = stageLabel ? ctx.measureText(stageLabel).width : 0;
-    ctx.font = `${FONT_SZ}px ${FONT_FAMILY}`;
-    const maxLineW = Math.max(stageW, ...cmtLines.map(l => ctx.measureText(l).width));
-    return Math.min(maxLineW + PAD_X * 2, MAX_BOX_W + PAD_X * 2, innerW + PAD_X * 2);
-}
-
-function buildAnchorGroups(
-    ctx:       CanvasRenderingContext2D,
-    ds:        any,
-    meta:      any,
-    cmts:      string[],
-    slbls:     string[],
-): Map<number, IAnchorGroup> {
-    const innerW       = MAX_BOX_W - PAD_X * 2;
-    const dnfPtIdx     = ds._dnfCommentPtIdx as number | null;
-    const lastValidIdx = ds._lastValidPtIdx  as number;
-    const groups       = new Map<number, IAnchorGroup>();
-
-    meta.data.forEach((pt: any, i: number) => {
-        const cmt = cmts[i];
-        if (!cmt) return;
-
-        const isDnfCmt  = i === dnfPtIdx;
-        const anchorPt  = isDnfCmt ? meta.data[lastValidIdx] : pt;
-        const anchorKey = isDnfCmt ? lastValidIdx : i;
-
-        const stageLabel = (slbls[i] ?? '').split(' ').slice(0, 2).join(' ');
-
-        ctx.font = `${FONT_SZ}px ${FONT_FAMILY}`;
-        const cmtLines = wrapText(ctx, cmt, innerW);
-        const bw       = measureBoxWidth(ctx, cmtLines, stageLabel);
-        const stageLines = stageLabel ? 1 : 0;
-        const bh = LINE_H * (stageLines + cmtLines.length) + PAD_Y * 2;
-
-        if (!groups.has(anchorKey)) {
-            groups.set(anchorKey, { pt: anchorPt, entries: [] });
-        }
-        groups.get(anchorKey)!.entries.push({ bw, bh, cmtLines, stageLabel });
-    });
-
-    return groups;
-}
-
-function positionGroupBoxes(
-    group:     IAnchorGroup,
-    chartArea: any,
-): ICommentBox[] {
-    const { pt, entries } = group;
-    const boxes: ICommentBox[] = [];
-
-    // Первый комментарий — внизу стека, каждый следующий выше него
-    let bottomEdge = pt.y - 8;
-
-    for (const entry of entries) {
-        let bx = pt.x + 10;
-        let by = bottomEdge - entry.bh;
-
-        if (bx + entry.bw > chartArea.right) bx = pt.x - entry.bw - 10;
-        if (bx < chartArea.left)             bx = chartArea.left + 2;
-        if (by < chartArea.top)              by = chartArea.top + 2;
-        if (by + entry.bh > chartArea.bottom) by = chartArea.bottom - entry.bh - 2;
-
-        boxes.push({
-            x: bx,
-            y: by,
-            w: entry.bw,
-            h: entry.bh,
-            cmtLines: entry.cmtLines,
-            stage:    entry.stageLabel,
-        });
-
-        bottomEdge = by - BOX_GAP;
-    }
-
-    return boxes;
-}
-
-function collectCommentBoxes(
-    ctx:       CanvasRenderingContext2D,
-    ds:        any,
-    meta:      any,
-    cmts:      string[],
-    slbls:     string[],
-    chartArea: any,
-): ICommentBox[] {
-    const groups = buildAnchorGroups(ctx, ds, meta, cmts, slbls);
-    const boxes: ICommentBox[] = [];
-
-    groups.forEach(group => {
-        boxes.push(...positionGroupBoxes(group, chartArea));
-    });
-
-    return boxes;
-}
-
-function resolveCollisions(boxes: ICommentBox[], chartArea: any): void {
-    boxes.sort((a, b) => a.y - b.y);
-    for (let i = 0; i < boxes.length; i++) {
-        for (let j = i + 1; j < boxes.length; j++) {
-            const a = boxes[i], b = boxes[j];
-            const overlapsX = b.x < a.x + a.w && b.x + b.w > a.x;
-            const overlapsY = b.y < a.y + a.h + 2;
-            if (overlapsX && overlapsY) {
-                b.y = a.y + a.h + 4;
-                if (b.y + b.h > chartArea.bottom) b.y = a.y - b.h - 4;
+        afterEvent(ch: any, args: any): void {
+            const type = args.event.type;
+            if (type !== 'mousemove' && type !== 'mouseout') return;
+            let hit: IActiveComment | null = null;
+            if (type === 'mousemove') {
+                const pinned = getPinnedIdxs();
+                const el     = ch.getActiveElements()[0];
+                // Активной Chart.js считает ближайшую точку, даже далёкую — нужна реальная близость
+                const near = el && Math.hypot(el.element.x - args.event.x, el.element.y - args.event.y) <= HOVER_PX;
+                if (near && pinned.includes(el.datasetIndex)) {
+                    const ds = ch.data.datasets[el.datasetIndex];
+                    if ((ds._cmts as string[])[el.index]) hit = { key: ds.driverKey, ptIdx: el.index };
+                }
             }
-        }
-    }
-}
-
-function renderBoxes(ctx: CanvasRenderingContext2D, boxes: ICommentBox[]): void {
-    boxes.forEach(box => {
-        ctx.fillStyle   = 'rgba(8,8,8,0.95)';
-        ctx.strokeStyle = '#4a4a4a';
-        ctx.lineWidth   = 1;
-        ctx.beginPath();
-        ctx.roundRect(box.x, box.y, box.w, box.h, 4);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.textBaseline = 'top';
-        ctx.textAlign    = 'left';
-        let textY = box.y + PAD_Y;
-
-        if (box.stage) {
-            ctx.fillStyle = '#9a9a9a';
-            ctx.font      = `${STAGE_FONT_SZ}px ${FONT_FAMILY}`;
-            ctx.fillText(box.stage, box.x + PAD_X, textY);
-            textY += LINE_H;
-        }
-
-        ctx.fillStyle = '#ccc';
-        ctx.font      = `${FONT_SZ}px ${FONT_FAMILY}`;
-        for (const line of box.cmtLines) {
-            ctx.fillText(line, box.x + PAD_X, textY);
-            textY += LINE_H;
-        }
-    });
+            const sig = hit ? `${hit.key}\n${hit.ptIdx}` : null;
+            if (sig === lastHover) return;
+            lastHover = sig;
+            onPointHover(hit);
+        },
+    };
 }

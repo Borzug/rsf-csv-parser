@@ -61,6 +61,10 @@ export const ru: ITranslations = {
     presetFinishedTitle:    'Оставить только финишировавших',
 
     selectedCount:          (n) => `Выбрано участников: ${n}`,
+    cmtStripTitle:          (n) => `Комментарии выбранных: ${n}`,
+    cmtStripEntryTitle:     'Показать только этот СУ (повторный клик — вернуть)',
+    stageCmtScopePinned:    'выбранные',
+    stageCmtScopeAll:       'все показанные',
 
     pinnedCloseTitle:       'Снять выделение (Esc)',
     legendExpandTitle:      'Развернуть',
@@ -179,6 +183,10 @@ export const en: ITranslations = {
     presetFinishedTitle:    'Keep only drivers who finished',
 
     selectedCount:          (n) => `Selected: ${n}`,
+    cmtStripTitle:          (n) => `Comments of selected: ${n}`,
+    cmtStripEntryTitle:     'Show only this stage (click again to go back)',
+    stageCmtScopePinned:    'selected',
+    stageCmtScopeAll:       'all shown',
 
     pinnedCloseTitle:       'Unpin (Esc)',
     legendExpandTitle:      'Expand',
@@ -293,6 +301,10 @@ export const hu: ITranslations = {
     presetFinishedTitle:    'Csak a célba ért versenyzők',
 
     selectedCount:          (n) => `Kijelölve: ${n}`,
+    cmtStripTitle:          (n) => `Kijelöltek megjegyzései: ${n}`,
+    cmtStripEntryTitle:     'Csak ez a gyorsasági (újabb kattintás — vissza)',
+    stageCmtScopePinned:    'kijelöltek',
+    stageCmtScopeAll:       'minden megjelenített',
 
     pinnedCloseTitle:       'Rögzítés feloldása (Esc)',
     legendExpandTitle:      'Kibontás',

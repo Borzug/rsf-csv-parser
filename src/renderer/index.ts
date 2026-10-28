@@ -16,7 +16,18 @@ import {
     initLegendSearch,
     refreshLegendSearch
 } from "./chart/legendSearch";
+import {
+    highlightCommentEntry,
+    initCommentStrip,
+    renderCommentStrip
+} from "./chart/commentStrip";
 import { updatePinnedBar } from "./chart/pinnedBar";
+import {
+    closeStageComments,
+    hoverStageComments,
+    initStageCommentsPopover,
+    toggleStageComments
+} from "./chart/stageCommentsPopover";
 import {
     ensureCommentsRendered,
     invalidateComments
@@ -126,6 +137,17 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     chartCtrl.setOnPinChange(onPinsChanged);
+    initCommentStrip({
+        onEntryHover: c => chartCtrl.setActiveComment(c),
+        onEntryClick: stageNum => handleStageBandClick(stageNum),
+    });
+    initStageCommentsPopover(idx => chartCtrl.getStageComments(idx));
+    chartCtrl.setCommentCallbacks({
+        onPointHover:         c => highlightCommentEntry(c),
+        onStageCommentsHover: (idx, anchor) => hoverStageComments(idx, anchor),
+        onStageCommentsClick: (idx, anchor) => toggleStageComments(idx, anchor),
+        onOtherClick:         closeStageComments,
+    });
     initLegendSearch({
         onPreview: key => chartCtrl.setHoveredKey(key),
         onToggle:  key => chartCtrl.togglePin(key, true),
@@ -441,6 +463,7 @@ function setSidebarOpen(open: boolean): void {
 
 function switchTab(tab: TTab): void {
     currentTab = tab;
+    closeStageComments();
     for (const t of ['chart', 'results', 'comments'] as TTab[]) {
         const btn = qs<HTMLButtonElement>(`#tab-${t}`);
         btn.classList.toggle('active', tab === t);
@@ -511,6 +534,13 @@ function syncDatasetVisibility(): void {
         chartState.activeGroups,
         chartState.activeCars,
     );
+    refreshComments();
+}
+
+/** Лента комментариев закреплённых; открытый список на СУ мог устареть — закрываем. */
+function refreshComments(): void {
+    closeStageComments();
+    renderCommentStrip(chartCtrl.getPinnedComments(), chartCtrl.getPinnedKeys().length);
 }
 
 function afterFilterChange(): void {
@@ -551,6 +581,7 @@ function onPinsChanged(keys: string[]): void {
     syncYModeSwitch();
     updatePinnedBar(data, keys, key => chartCtrl.togglePin(key, true));
     refreshLegend();
+    refreshComments();
     scrollLegendTo(keys[keys.length - 1] ?? null);
     writeUrlState();
 }
@@ -592,6 +623,7 @@ function rebuildChart(): void {
 
     updatePinnedBar(data, chartCtrl.getPinnedKeys(), key => chartCtrl.togglePin(key, true));
     syncYModeSwitch();
+    refreshComments();
     afterFilterChange();
 }
 

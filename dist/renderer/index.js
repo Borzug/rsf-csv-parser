@@ -204,6 +204,10 @@
     presetFinished: "\u0424\u0438\u043D\u0438\u0448",
     presetFinishedTitle: "\u041E\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u0444\u0438\u043D\u0438\u0448\u0438\u0440\u043E\u0432\u0430\u0432\u0448\u0438\u0445",
     selectedCount: (n) => `\u0412\u044B\u0431\u0440\u0430\u043D\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432: ${n}`,
+    cmtStripTitle: (n) => `\u041A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0438 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0445: ${n}`,
+    cmtStripEntryTitle: "\u041F\u043E\u043A\u0430\u0437\u0430\u0442\u044C \u0442\u043E\u043B\u044C\u043A\u043E \u044D\u0442\u043E\u0442 \u0421\u0423 (\u043F\u043E\u0432\u0442\u043E\u0440\u043D\u044B\u0439 \u043A\u043B\u0438\u043A \u2014 \u0432\u0435\u0440\u043D\u0443\u0442\u044C)",
+    stageCmtScopePinned: "\u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435",
+    stageCmtScopeAll: "\u0432\u0441\u0435 \u043F\u043E\u043A\u0430\u0437\u0430\u043D\u043D\u044B\u0435",
     pinnedCloseTitle: "\u0421\u043D\u044F\u0442\u044C \u0432\u044B\u0434\u0435\u043B\u0435\u043D\u0438\u0435 (Esc)",
     legendExpandTitle: "\u0420\u0430\u0437\u0432\u0435\u0440\u043D\u0443\u0442\u044C",
     filterChartStages: "\u0421\u043F\u0435\u0446\u0443\u0447\u0430\u0441\u0442\u043A\u0438",
@@ -302,6 +306,10 @@
     presetFinished: "Finished",
     presetFinishedTitle: "Keep only drivers who finished",
     selectedCount: (n) => `Selected: ${n}`,
+    cmtStripTitle: (n) => `Comments of selected: ${n}`,
+    cmtStripEntryTitle: "Show only this stage (click again to go back)",
+    stageCmtScopePinned: "selected",
+    stageCmtScopeAll: "all shown",
     pinnedCloseTitle: "Unpin (Esc)",
     legendExpandTitle: "Expand",
     filterChartStages: "Stages",
@@ -396,6 +404,10 @@ Only stages without SR for both drivers`,
     presetFinished: "C\xE9lba \xE9rtek",
     presetFinishedTitle: "Csak a c\xE9lba \xE9rt versenyz\u0151k",
     selectedCount: (n) => `Kijel\xF6lve: ${n}`,
+    cmtStripTitle: (n) => `Kijel\xF6ltek megjegyz\xE9sei: ${n}`,
+    cmtStripEntryTitle: "Csak ez a gyorsas\xE1gi (\xFAjabb kattint\xE1s \u2014 vissza)",
+    stageCmtScopePinned: "kijel\xF6ltek",
+    stageCmtScopeAll: "minden megjelen\xEDtett",
     pinnedCloseTitle: "R\xF6gz\xEDt\xE9s felold\xE1sa (Esc)",
     legendExpandTitle: "Kibont\xE1s",
     filterChartStages: "Szakaszok",
@@ -626,7 +638,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         _cumSR: pts.cumSR,
         _hasSR: pts.hasSR,
         _cmts: pts.cmts,
-        _stageLabels: pts.stageLabels
+        _stageLabels: pts.stageLabels,
+        _dnfCmtPtIdx: pts.dnfCommentPtIdx,
+        _dnfCmtStageIdx: pts.dnfCmtStageIdx
       };
     });
   }
@@ -653,7 +667,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     let isDnf = false;
     let lastValidPtIdx = 0;
     let dnfCommentPtIdx = null;
-    for (const st of stages) {
+    let dnfCmtStageIdx = null;
+    for (let si = 0; si < stages.length; si++) {
+      const st = stages[si];
       const rec = recordMap.get(drv.username)?.get(st.num) ?? null;
       const pen = cumPenMap.get(drv.username)?.get(st.num) ?? 0;
       const sp = cumSPMap.get(drv.username)?.get(st.num) ?? 0;
@@ -688,6 +704,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           dnfCommentPtIdx,
           (idx) => {
             dnfCommentPtIdx = idx;
+            dnfCmtStageIdx = si;
           },
           pointStyles,
           pointRadii,
@@ -722,6 +739,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           dnfCommentPtIdx,
           (idx) => {
             dnfCommentPtIdx = idx;
+            dnfCmtStageIdx = si;
           },
           pointStyles,
           pointRadii,
@@ -749,6 +767,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           dnfCommentPtIdx,
           (idx) => {
             dnfCommentPtIdx = idx;
+            dnfCmtStageIdx = si;
           },
           pointStyles,
           pointRadii,
@@ -782,6 +801,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cmts,
       stageLabels,
       dnfCommentPtIdx,
+      dnfCmtStageIdx,
       lastValidPtIdx
     };
   }
@@ -854,169 +874,136 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     };
   }
 
+  // src/renderer/chart/chartComments.ts
+  function stageIdxOfPoint(ptIdx) {
+    return Math.floor((ptIdx - 1) / 3);
+  }
+  function commentStageIdx(ds, ptIdx) {
+    return ptIdx === ds._dnfCmtPtIdx && ds._dnfCmtStageIdx !== null ? ds._dnfCmtStageIdx : stageIdxOfPoint(ptIdx);
+  }
+  function commentSourceIdxs(chart, pinnedIdxs) {
+    if (pinnedIdxs.length) return pinnedIdxs;
+    const out = [];
+    chart.data.datasets.forEach((ds, i) => {
+      if (!ds.hidden) out.push(i);
+    });
+    return out;
+  }
+  function collectComments(chart, stages, dsIdxs, stageIdx = null) {
+    const out = [];
+    for (const di of dsIdxs) {
+      const ds = chart.data.datasets[di];
+      if (!ds || ds.hidden) continue;
+      const cmts = ds._cmts;
+      for (let i = 1; i < cmts.length; i++) {
+        if (!cmts[i]) continue;
+        const si = commentStageIdx(ds, i);
+        if (stageIdx !== null && si !== stageIdx) continue;
+        const st = stages[si];
+        if (!st) continue;
+        out.push({
+          key: ds.driverKey,
+          name: ds._displayName || ds.driverKey,
+          color: ds.borderColor,
+          stageIdx: si,
+          stageNum: st.num,
+          stageName: st.name,
+          ptIdx: i,
+          abs: ds._abs[i] ?? null,
+          text: cmts[i]
+        });
+      }
+    }
+    return out;
+  }
+  function countCommentsByStage(chart, nStages, dsIdxs) {
+    const counts = new Array(nStages).fill(0);
+    for (const di of dsIdxs) {
+      const ds = chart.data.datasets[di];
+      if (!ds || ds.hidden) continue;
+      const cmts = ds._cmts;
+      for (let i = 1; i < cmts.length; i++) {
+        if (cmts[i]) counts[commentStageIdx(ds, i)]++;
+      }
+    }
+    return counts;
+  }
+
   // src/renderer/chart/pluginPinnedComments.ts
-  var FONT_FAMILY = "'Fira Code', monospace";
-  var PAD_X = 10;
-  var PAD_Y = 7;
-  var LINE_H = 17;
-  var FONT_SZ = 12;
-  var STAGE_FONT_SZ = 10;
-  var MAX_BOX_W = 280;
-  var BOX_GAP = 6;
-  function buildPinnedCommentsPlugin(getPinnedIdxs) {
+  var FONT = "bold 9px 'Fira Code', monospace";
+  var PILL_H = 13;
+  var PILL_PAD_X = 4;
+  var PILL_GAP = 9;
+  var RING_R = 10;
+  var HOVER_PX = 14;
+  function buildPinnedCommentsPlugin(getPinnedIdxs, getStages, getActive, onPointHover) {
+    let lastHover = null;
     return {
       id: "pinnedComments",
-      afterDraw(ch) {
+      afterDatasetsDraw(ch) {
         const pinnedIdxs = getPinnedIdxs();
         if (!pinnedIdxs.length) return;
-        const { ctx, chartArea } = ch;
+        const stages = getStages();
+        const active = getActive();
+        const { ctx, chartArea: area } = ch;
         ctx.save();
-        const boxes = [];
-        for (const pinnedIdx of pinnedIdxs) {
-          const ds = ch.data.datasets[pinnedIdx];
+        ctx.font = FONT;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for (const di of pinnedIdxs) {
+          const ds = ch.data.datasets[di];
           if (!ds || ds.hidden) continue;
           const cmts = ds._cmts;
-          const slbls = ds._stageLabels;
-          const meta = ch.getDatasetMeta(pinnedIdx);
-          boxes.push(...collectCommentBoxes(ctx, ds, meta, cmts, slbls, chartArea));
-        }
-        resolveCollisions(boxes, chartArea);
-        renderBoxes(ctx, boxes);
-        ctx.restore();
-      }
-    };
-  }
-  function wrapText(ctx, text, maxWidth) {
-    const words = text.split(" ");
-    const lines = [];
-    let current2 = "";
-    for (const word of words) {
-      const candidate = current2 ? `${current2} ${word}` : word;
-      if (ctx.measureText(candidate).width <= maxWidth) {
-        current2 = candidate;
-      } else {
-        if (current2) lines.push(current2);
-        if (ctx.measureText(word).width > maxWidth) {
-          let chunk = "";
-          for (const ch of word) {
-            if (ctx.measureText(chunk + ch).width > maxWidth) {
-              lines.push(chunk);
-              chunk = ch;
-            } else {
-              chunk += ch;
+          const pts = ch.getDatasetMeta(di).data;
+          for (let i = 1; i < cmts.length; i++) {
+            const pt = pts[i];
+            if (!cmts[i] || !pt || pt.skip) continue;
+            if (pt.y < area.top - 1 || pt.y > area.bottom + 1) continue;
+            const si = i === ds._dnfCmtPtIdx && ds._dnfCmtStageIdx !== null ? ds._dnfCmtStageIdx : Math.floor((i - 1) / 3);
+            const label = stages[si] ? String(stages[si].num) : "";
+            const w = ctx.measureText(label).width + PILL_PAD_X * 2;
+            const above = pt.y - PILL_GAP - PILL_H >= area.top;
+            const y = above ? pt.y - PILL_GAP - PILL_H / 2 : pt.y + PILL_GAP + PILL_H / 2;
+            ctx.fillStyle = "rgba(10,10,10,0.88)";
+            ctx.strokeStyle = ds.borderColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.roundRect(pt.x - w / 2, y - PILL_H / 2, w, PILL_H, 3);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "#eee";
+            ctx.fillText(label, pt.x, y + 0.5);
+            if (active && active.key === ds.driverKey && active.ptIdx === i) {
+              ctx.strokeStyle = "#f1c40f";
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(pt.x, pt.y, RING_R, 0, Math.PI * 2);
+              ctx.stroke();
             }
           }
-          current2 = chunk;
-        } else {
-          current2 = word;
         }
-      }
-    }
-    if (current2) lines.push(current2);
-    return lines.length ? lines : [""];
-  }
-  function measureBoxWidth(ctx, cmtLines, stageLabel) {
-    const innerW = MAX_BOX_W - PAD_X * 2;
-    ctx.font = `${STAGE_FONT_SZ}px ${FONT_FAMILY}`;
-    const stageW = stageLabel ? ctx.measureText(stageLabel).width : 0;
-    ctx.font = `${FONT_SZ}px ${FONT_FAMILY}`;
-    const maxLineW = Math.max(stageW, ...cmtLines.map((l) => ctx.measureText(l).width));
-    return Math.min(maxLineW + PAD_X * 2, MAX_BOX_W + PAD_X * 2, innerW + PAD_X * 2);
-  }
-  function buildAnchorGroups(ctx, ds, meta, cmts, slbls) {
-    const innerW = MAX_BOX_W - PAD_X * 2;
-    const dnfPtIdx = ds._dnfCommentPtIdx;
-    const lastValidIdx = ds._lastValidPtIdx;
-    const groups = /* @__PURE__ */ new Map();
-    meta.data.forEach((pt, i) => {
-      const cmt = cmts[i];
-      if (!cmt) return;
-      const isDnfCmt = i === dnfPtIdx;
-      const anchorPt = isDnfCmt ? meta.data[lastValidIdx] : pt;
-      const anchorKey = isDnfCmt ? lastValidIdx : i;
-      const stageLabel = (slbls[i] ?? "").split(" ").slice(0, 2).join(" ");
-      ctx.font = `${FONT_SZ}px ${FONT_FAMILY}`;
-      const cmtLines = wrapText(ctx, cmt, innerW);
-      const bw = measureBoxWidth(ctx, cmtLines, stageLabel);
-      const stageLines = stageLabel ? 1 : 0;
-      const bh = LINE_H * (stageLines + cmtLines.length) + PAD_Y * 2;
-      if (!groups.has(anchorKey)) {
-        groups.set(anchorKey, { pt: anchorPt, entries: [] });
-      }
-      groups.get(anchorKey).entries.push({ bw, bh, cmtLines, stageLabel });
-    });
-    return groups;
-  }
-  function positionGroupBoxes(group, chartArea) {
-    const { pt, entries } = group;
-    const boxes = [];
-    let bottomEdge = pt.y - 8;
-    for (const entry of entries) {
-      let bx = pt.x + 10;
-      let by = bottomEdge - entry.bh;
-      if (bx + entry.bw > chartArea.right) bx = pt.x - entry.bw - 10;
-      if (bx < chartArea.left) bx = chartArea.left + 2;
-      if (by < chartArea.top) by = chartArea.top + 2;
-      if (by + entry.bh > chartArea.bottom) by = chartArea.bottom - entry.bh - 2;
-      boxes.push({
-        x: bx,
-        y: by,
-        w: entry.bw,
-        h: entry.bh,
-        cmtLines: entry.cmtLines,
-        stage: entry.stageLabel
-      });
-      bottomEdge = by - BOX_GAP;
-    }
-    return boxes;
-  }
-  function collectCommentBoxes(ctx, ds, meta, cmts, slbls, chartArea) {
-    const groups = buildAnchorGroups(ctx, ds, meta, cmts, slbls);
-    const boxes = [];
-    groups.forEach((group) => {
-      boxes.push(...positionGroupBoxes(group, chartArea));
-    });
-    return boxes;
-  }
-  function resolveCollisions(boxes, chartArea) {
-    boxes.sort((a, b) => a.y - b.y);
-    for (let i = 0; i < boxes.length; i++) {
-      for (let j = i + 1; j < boxes.length; j++) {
-        const a = boxes[i], b = boxes[j];
-        const overlapsX = b.x < a.x + a.w && b.x + b.w > a.x;
-        const overlapsY = b.y < a.y + a.h + 2;
-        if (overlapsX && overlapsY) {
-          b.y = a.y + a.h + 4;
-          if (b.y + b.h > chartArea.bottom) b.y = a.y - b.h - 4;
+        ctx.restore();
+      },
+      afterEvent(ch, args) {
+        const type = args.event.type;
+        if (type !== "mousemove" && type !== "mouseout") return;
+        let hit = null;
+        if (type === "mousemove") {
+          const pinned = getPinnedIdxs();
+          const el = ch.getActiveElements()[0];
+          const near = el && Math.hypot(el.element.x - args.event.x, el.element.y - args.event.y) <= HOVER_PX;
+          if (near && pinned.includes(el.datasetIndex)) {
+            const ds = ch.data.datasets[el.datasetIndex];
+            if (ds._cmts[el.index]) hit = { key: ds.driverKey, ptIdx: el.index };
+          }
         }
+        const sig = hit ? `${hit.key}
+${hit.ptIdx}` : null;
+        if (sig === lastHover) return;
+        lastHover = sig;
+        onPointHover(hit);
       }
-    }
-  }
-  function renderBoxes(ctx, boxes) {
-    boxes.forEach((box) => {
-      ctx.fillStyle = "rgba(8,8,8,0.95)";
-      ctx.strokeStyle = "#4a4a4a";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(box.x, box.y, box.w, box.h, 4);
-      ctx.fill();
-      ctx.stroke();
-      ctx.textBaseline = "top";
-      ctx.textAlign = "left";
-      let textY = box.y + PAD_Y;
-      if (box.stage) {
-        ctx.fillStyle = "#9a9a9a";
-        ctx.font = `${STAGE_FONT_SZ}px ${FONT_FAMILY}`;
-        ctx.fillText(box.stage, box.x + PAD_X, textY);
-        textY += LINE_H;
-      }
-      ctx.fillStyle = "#ccc";
-      ctx.font = `${FONT_SZ}px ${FONT_FAMILY}`;
-      for (const line of box.cmtLines) {
-        ctx.fillText(line, box.x + PAD_X, textY);
-        textY += LINE_H;
-      }
-    });
+    };
   }
 
   // src/renderer/chart/pluginPoints.ts
@@ -1061,7 +1048,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/chart/pluginStageNames.ts
-  var FONT_FAMILY2 = "'Fira Code', monospace";
+  var FONT_FAMILY = "'Fira Code', monospace";
   var FONT_SIZE_SS = 11;
   var FONT_SIZE_NM = 10;
   var HOVER_BG_EVEN = "#262626";
@@ -1069,7 +1056,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var HOVER_BORDER = "#c0392b";
   var ROTATE_45_AT = 9;
   var ROTATE_90_AT = 20;
-  function buildStageNamesPlugin(getStages, getHoveredIdx) {
+  var COMMENT_ROW_H = 16;
+  function buildStageNamesPlugin(getStages, getHoveredIdx, getCommentCounts, getHoveredCounter) {
     return {
       id: "stageNames",
       afterDraw(ch) {
@@ -1081,9 +1069,12 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         const xs = scales.x;
         const bot = chartArea.bottom;
         const hoveredIdx = getHoveredIdx();
+        const counts = getCommentCounts(ch);
+        const hoveredCnt = getHoveredCounter();
         ctx.save();
         for (let i = 0; i < stages.length; i++) {
           drawStageBand(ctx, stages[i], i, xs, bot, rot45, rot90, hoveredIdx === i);
+          drawCommentCounter(ctx, counts[i] ?? 0, i, xs, bot, hoveredCnt === i);
         }
         ctx.restore();
       }
@@ -1093,7 +1084,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const xL = xs.getPixelForTick(i * 3);
     const xR = xs.getPixelForTick(i * 3 + 3);
     if (xL >= xR) return;
-    const bandH = rot90 ? 108 : rot45 ? 88 : 40;
+    const bandH = (rot90 ? 108 : rot45 ? 88 : 40) + COMMENT_ROW_H;
     if (hovered) {
       ctx.fillStyle = i % 2 === 0 ? HOVER_BG_EVEN : HOVER_BG_ODD;
     } else {
@@ -1114,25 +1105,47 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     ctx.moveTo(xL, bot + 2);
     ctx.lineTo(xL, bot + 2 + bandH);
     ctx.stroke();
+    const labelTop = bot + COMMENT_ROW_H;
     if (!rot45 && !rot90) {
-      drawHorizontalLabel(ctx, stage, xL, xR, bot, hovered);
+      drawHorizontalLabel(ctx, stage, xL, xR, labelTop, hovered);
     } else if (rot45) {
-      drawRotatedLabel(ctx, stage, xL, xR, bot, Math.PI / 4, hovered);
+      drawRotatedLabel(ctx, stage, xL, xR, labelTop, Math.PI / 4, hovered);
     } else {
-      drawRotatedLabel(ctx, stage, xL, xR, bot, Math.PI / 2, hovered);
+      drawRotatedLabel(ctx, stage, xL, xR, labelTop, Math.PI / 2, hovered);
     }
+  }
+  function drawCommentCounter(ctx, count, i, xs, bot, hovered) {
+    if (!count) return;
+    const xL = xs.getPixelForTick(i * 3);
+    const xR = xs.getPixelForTick(i * 3 + 3);
+    if (xL >= xR) return;
+    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    const num = String(count);
+    const full = `\u{1F4AC} ${num}`;
+    const text = ctx.measureText(full).width + 8 <= xR - xL ? full : num;
+    const w = Math.min(ctx.measureText(text).width + 8, xR - xL - 2);
+    const xMid = (xL + xR) / 2;
+    const yMid = bot + 2 + COMMENT_ROW_H / 2;
+    ctx.fillStyle = hovered ? "rgba(241,196,15,0.25)" : "rgba(255,255,255,0.08)";
+    ctx.beginPath();
+    ctx.roundRect(xMid - w / 2, yMid - 6.5, w, 13, 6);
+    ctx.fill();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = hovered ? "#fff" : "#c8c8c8";
+    ctx.fillText(text, xMid, yMid + 0.5);
   }
   function drawHorizontalLabel(ctx, stage, xL, xR, bot, hovered) {
     const xMid = (xL + xR) / 2;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillStyle = hovered ? "#ff7a6b" : "#ef5b4c";
-    ctx.font = `bold ${FONT_SIZE_SS}px ${FONT_FAMILY2}`;
+    ctx.font = `bold ${FONT_SIZE_SS}px ${FONT_FAMILY}`;
     ctx.fillText(`SS${stage.num}`, xMid, bot + 6);
     const maxChars = Math.max(4, Math.floor((xR - xL - 4) / 7));
     const name = stage.name.length > maxChars ? stage.name.slice(0, maxChars - 1) + "\u2026" : stage.name;
     ctx.fillStyle = hovered ? "#c8c8c8" : "#8a8a8a";
-    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY2}`;
+    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
     ctx.fillText(name, xMid, bot + 21);
   }
   function drawRotatedLabel(ctx, stage, xL, xR, bot, angle, hovered) {
@@ -1145,13 +1158,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
     ctx.fillStyle = hovered ? "#ff7a6b" : "#ef5b4c";
-    ctx.font = `bold ${FONT_SIZE_NM}px ${FONT_FAMILY2}`;
+    ctx.font = `bold ${FONT_SIZE_NM}px ${FONT_FAMILY}`;
     const ssLabel = `SS${stage.num} `;
     ctx.fillText(ssLabel, 0, 0);
     const ssW = ctx.measureText(ssLabel).width;
     const name = stage.name.length > MAX_CHARS ? stage.name.slice(0, MAX_CHARS - 1) + "\u2026" : stage.name;
     ctx.fillStyle = hovered ? "#c8c8c8" : "#8a8a8a";
-    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY2}`;
+    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
     ctx.fillText(name, ssW, 0);
     ctx.restore();
   }
@@ -1291,9 +1304,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
 
   // src/renderer/chart/controller.ts
   var HOVER_DIST_PX = 40;
-  var BOT_PAD_NORMAL = 46;
-  var BOT_PAD_45 = 90;
-  var BOT_PAD_90 = 110;
+  var BOT_PAD_NORMAL = 46 + COMMENT_ROW_H;
+  var BOT_PAD_45 = 90 + COMMENT_ROW_H;
+  var BOT_PAD_90 = 110 + COMMENT_ROW_H;
   var NARROW_CHART_PX = 520;
   var DIM_ALPHA = 0.06;
   var DIM_ALPHA_SOFT = 0.35;
@@ -1311,6 +1324,9 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     let hoveredBandIdx = null;
     let activeStages = [];
     let currentBotPad = BOT_PAD_NORMAL;
+    let hoveredCounterIdx = null;
+    let activeComment = null;
+    let commentCb = null;
     let clickHandler = null;
     let mousemoveHandler = null;
     let mouseleaveHandler = null;
@@ -1436,6 +1452,25 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       getPinnedKeys: () => [...pinnedKeys],
       getYMode: () => yMode,
       getActiveStages: () => activeStages,
+      getPinnedComments() {
+        if (!chart || !pinnedIdxs.length) return [];
+        return collectComments(chart, activeStages, pinnedIdxs);
+      },
+      getStageComments(stageIdx) {
+        if (!chart) return { comments: [], pinnedOnly: false };
+        return {
+          comments: collectComments(chart, activeStages, commentSourceIdxs(chart, pinnedIdxs), stageIdx),
+          pinnedOnly: pinnedIdxs.length > 0
+        };
+      },
+      setActiveComment(c) {
+        if (c?.key === activeComment?.key && c?.ptIdx === activeComment?.ptIdx) return;
+        activeComment = c;
+        chart?.render();
+      },
+      setCommentCallbacks(cb) {
+        commentCb = cb;
+      },
       refreshLabels() {
         if (!chart) return;
         applyYMode();
@@ -1510,6 +1545,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           chart.setActiveElements([]);
           hoveredDsIdx = null;
           hoveredBandIdx = null;
+          hoveredCounterIdx = null;
+          activeComment = null;
           document.getElementById("chart-tooltip").style.display = "none";
           syncPinnedIdxs();
           applyYMode();
@@ -1573,16 +1610,46 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
               () => hoveredDsIdx,
               dimAlpha
             ),
-            buildStageNamesPlugin(() => activeStages, () => hoveredBandIdx),
+            buildStageNamesPlugin(
+              () => activeStages,
+              () => hoveredBandIdx,
+              // ch, а не chart: первая отрисовка идёт ещё внутри конструктора Chart
+              (ch) => countCommentsByStage(ch, activeStages.length, commentSourceIdxs(ch, pinnedIdxs)),
+              () => hoveredCounterIdx
+            ),
             buildDnfLinePlugin(() => hoveredDsKey, () => pinnedIdxs, () => hoveredDsIdx, dimAlpha),
-            buildPinnedCommentsPlugin(() => pinnedIdxs)
+            buildPinnedCommentsPlugin(
+              () => pinnedIdxs,
+              () => activeStages,
+              () => activeComment,
+              (c) => commentCb?.onPointHover(c)
+            )
           ]
         });
         syncPinnedIdxs();
         applyYMode();
         chart.options.scales.y2.display = chart.width >= NARROW_CHART_PX;
         chart.update("none");
+        const counterAt = (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const my = e.clientY - rect.top;
+          const bot = chart.chartArea.bottom;
+          if (my <= bot + 2 || my > bot + 2 + COMMENT_ROW_H) return null;
+          const idx = stageIdxAtX(chart, e.clientX - rect.left, activeStages.length);
+          if (idx === null) return null;
+          const counts = countCommentsByStage(chart, activeStages.length, commentSourceIdxs(chart, pinnedIdxs));
+          if (!counts[idx]) return null;
+          const xs = chart.scales.x;
+          const xMid = (xs.getPixelForTick(idx * 3) + xs.getPixelForTick(idx * 3 + 3)) / 2;
+          return { idx, anchor: { x: rect.left + xMid, y: rect.top + bot + 2 } };
+        };
         clickHandler = (e) => {
+          const counter = counterAt(e);
+          if (counter) {
+            commentCb?.onStageCommentsClick(counter.idx, counter.anchor);
+            return;
+          }
+          commentCb?.onOtherClick();
           const additive = e.ctrlKey || e.metaKey || e.shiftKey;
           const hit = handleCanvasClick(e, chart, canvas, activeStages, currentBotPad);
           if (hit === "ignore") return;
@@ -1597,8 +1664,15 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           if (key) togglePin(key, additive);
         };
         mousemoveHandler = (e) => {
-          const newBandIdx = resolveHoveredBandIdx(e, chart, canvas, activeStages, currentBotPad);
-          canvas.style.cursor = newBandIdx !== null ? "pointer" : "";
+          const counter = counterAt(e);
+          const newCounterIdx = counter?.idx ?? null;
+          if (newCounterIdx !== hoveredCounterIdx) {
+            hoveredCounterIdx = newCounterIdx;
+            commentCb?.onStageCommentsHover(newCounterIdx, counter?.anchor ?? null);
+            chart.render();
+          }
+          const newBandIdx = counter ? null : resolveHoveredBandIdx(e, chart, canvas, activeStages, currentBotPad);
+          canvas.style.cursor = counter || newBandIdx !== null ? "pointer" : "";
           if (newBandIdx !== hoveredBandIdx) {
             hoveredBandIdx = newBandIdx;
             chart.render();
@@ -1615,12 +1689,24 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             canvas.style.cursor = "";
             chart?.render();
           }
+          if (hoveredCounterIdx !== null) {
+            hoveredCounterIdx = null;
+            commentCb?.onStageCommentsHover(null, null);
+            chart?.render();
+          }
         };
         canvas.addEventListener("click", clickHandler);
         canvas.addEventListener("mousemove", mousemoveHandler);
         canvas.addEventListener("mouseleave", mouseleaveHandler);
       }
     };
+  }
+  function stageIdxAtX(chart, mx, nStages) {
+    const xs = chart.scales.x;
+    for (let i = 0; i < nStages; i++) {
+      if (mx >= xs.getPixelForTick(i * 3) && mx <= xs.getPixelForTick(i * 3 + 3)) return i;
+    }
+    return null;
   }
   function resolveHoveredBandIdx(e, chart, canvas, stages, botPad) {
     if (!chart) return null;
@@ -1747,13 +1833,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/chart/legendPanel.ts
-  function updateLegendPanel(data2, chart, activeStages, recordMap, isExpanded, pinnedKeys, leaderFirst, callbacks2) {
+  function updateLegendPanel(data2, chart, activeStages, recordMap, isExpanded, pinnedKeys, leaderFirst, callbacks3) {
     const panel = document.getElementById("legend-panel");
     const itemsEl = document.getElementById("legend-items");
     const expandBtn = document.getElementById("legend-expand-btn");
     const visibleWithTime = buildSortedVisibleDrivers(data2, chart, activeStages, recordMap);
     if (leaderFirst) visibleWithTime.reverse();
-    currentCallbacks = callbacks2;
+    currentCallbacks = callbacks3;
     bindLegendEvents(itemsEl);
     const order = visibleWithTime.map((v) => v.drv.username).join("\n");
     if (data2 === renderedData && order === renderedOrder && itemsEl.children.length === visibleWithTime.length) {
@@ -1987,6 +2073,101 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     });
   }
 
+  // src/renderer/chart/commentStrip.ts
+  var COLLAPSED_KEY = "rsf-comment-strip-collapsed";
+  var callbacks2 = null;
+  var collapsed = readCollapsed();
+  var stripEl = () => document.getElementById("comment-strip");
+  var listEl = () => document.getElementById("comment-strip-list");
+  function initCommentStrip(cb) {
+    callbacks2 = cb;
+    const toggle = document.getElementById("comment-strip-toggle");
+    toggle.addEventListener("click", () => {
+      collapsed = !collapsed;
+      try {
+        localStorage.setItem(COLLAPSED_KEY, collapsed ? "1" : "");
+      } catch {
+      }
+      applyCollapsed();
+    });
+    const list = listEl();
+    const entryOf = (e) => e.target?.closest(".cs-entry") ?? null;
+    const commentOf = (el) => ({ key: el.dataset["key"], ptIdx: Number(el.dataset["pt"]) });
+    list.addEventListener("mouseover", (e) => {
+      const el = entryOf(e);
+      if (el && !el.contains(e.relatedTarget)) callbacks2?.onEntryHover(commentOf(el));
+    });
+    list.addEventListener("mouseout", (e) => {
+      const el = entryOf(e);
+      if (el && !el.contains(e.relatedTarget)) callbacks2?.onEntryHover(null);
+    });
+    list.addEventListener("focusin", (e) => {
+      const el = entryOf(e);
+      if (el) callbacks2?.onEntryHover(commentOf(el));
+    });
+    list.addEventListener("focusout", () => callbacks2?.onEntryHover(null));
+    list.addEventListener("click", (e) => {
+      const el = entryOf(e);
+      if (el) callbacks2?.onEntryClick(Number(el.dataset["stage"]));
+    });
+  }
+  function renderCommentStrip(comments, pinnedCount) {
+    const strip = stripEl();
+    const list = listEl();
+    list.innerHTML = "";
+    strip.hidden = comments.length === 0;
+    if (!comments.length) return;
+    const t = i18n.t();
+    document.getElementById("comment-strip-title").textContent = t.cmtStripTitle(comments.length);
+    const sorted = [...comments].sort((a, b) => a.stageIdx - b.stageIdx || a.ptIdx - b.ptIdx);
+    for (const c of sorted) {
+      const li = createElement("li");
+      const btn = createElement("button", "cs-entry");
+      btn.type = "button";
+      btn.title = t.cmtStripEntryTitle;
+      btn.dataset["key"] = c.key;
+      btn.dataset["pt"] = String(c.ptIdx);
+      btn.dataset["stage"] = String(c.stageNum);
+      const dot = createElement("span", "cs-dot");
+      dot.style.background = c.color;
+      dot.setAttribute("aria-hidden", "true");
+      btn.appendChild(dot);
+      btn.appendChild(createElement("span", "cs-ss", `SS${c.stageNum}`));
+      btn.appendChild(createElement("span", "cs-stage", c.stageName));
+      if (pinnedCount > 1) btn.appendChild(createElement("span", "cs-driver", c.name));
+      btn.appendChild(createElement("span", "cs-text", c.text));
+      li.appendChild(btn);
+      list.appendChild(li);
+    }
+    applyCollapsed();
+  }
+  function highlightCommentEntry(c) {
+    const list = listEl();
+    list.querySelectorAll(".cs-entry.cs-active").forEach((el2) => el2.classList.remove("cs-active"));
+    if (!c) return;
+    const el = list.querySelector(
+      `.cs-entry[data-key="${CSS.escape(c.key)}"][data-pt="${c.ptIdx}"]`
+    );
+    if (!el) return;
+    el.classList.add("cs-active");
+    if (collapsed) return;
+    const lr = list.getBoundingClientRect();
+    const er = el.getBoundingClientRect();
+    if (er.top < lr.top || er.bottom > lr.bottom)
+      list.scrollBy({ top: er.top - lr.top - lr.height / 2 + er.height / 2, behavior: "smooth" });
+  }
+  function applyCollapsed() {
+    stripEl().classList.toggle("collapsed", collapsed);
+    document.getElementById("comment-strip-toggle").setAttribute("aria-expanded", String(!collapsed));
+  }
+  function readCollapsed() {
+    try {
+      return localStorage.getItem(COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }
+
   // src/renderer/chart/pinnedBar.ts
   function updatePinnedBar(data2, pinnedKeys, onUnpin) {
     const bar = document.getElementById("pinned-bar");
@@ -2017,6 +2198,119 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     document.getElementById("pinned-hint").textContent = isCoarsePointer() ? i18n.t().pinnedHintTouch : i18n.t().pinnedHint;
     bar.style.display = "flex";
+  }
+
+  // src/renderer/chart/stageCommentsPopover.ts
+  var CLOSE_DELAY_MS = 180;
+  var getComments = null;
+  var openIdx = null;
+  var sticky = false;
+  var closeTimer = null;
+  var popEl = () => document.getElementById("stage-comments");
+  function initStageCommentsPopover(get) {
+    getComments = get;
+    const pop = popEl();
+    pop.addEventListener("mouseenter", cancelClose);
+    pop.addEventListener("mouseleave", () => {
+      if (!sticky) scheduleClose();
+    });
+    document.addEventListener("mousedown", (e) => {
+      if (openIdx !== null && !pop.contains(e.target) && e.target.id !== "race-chart") closeStageComments();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && openIdx !== null) {
+        e.stopImmediatePropagation();
+        closeStageComments();
+      }
+    }, true);
+  }
+  function hoverStageComments(stageIdx, anchor) {
+    if (stageIdx === null || !anchor) {
+      if (!sticky) scheduleClose();
+      return;
+    }
+    if (sticky && openIdx !== stageIdx) return;
+    open(stageIdx, anchor);
+  }
+  function toggleStageComments(stageIdx, anchor) {
+    if (sticky && openIdx === stageIdx) {
+      closeStageComments();
+      return;
+    }
+    open(stageIdx, anchor);
+    sticky = true;
+  }
+  function closeStageComments() {
+    cancelClose();
+    openIdx = null;
+    sticky = false;
+    popEl().hidden = true;
+  }
+  function open(stageIdx, anchor) {
+    cancelClose();
+    if (openIdx === stageIdx && !popEl().hidden) return;
+    const data2 = getComments?.(stageIdx);
+    if (!data2 || !data2.comments.length) {
+      closeStageComments();
+      return;
+    }
+    openIdx = stageIdx;
+    sticky = false;
+    render(data2.comments, data2.pinnedOnly);
+    position(anchor);
+  }
+  function render(comments, pinnedOnly) {
+    const t = i18n.t();
+    const pop = popEl();
+    pop.innerHTML = "";
+    const first = comments[0];
+    const head = createElement("div", "scp-head");
+    head.appendChild(createElement("span", "scp-ss", `SS${first.stageNum}`));
+    head.appendChild(createElement("span", "scp-stage", first.stageName));
+    head.appendChild(createElement(
+      "span",
+      "scp-scope",
+      `${pinnedOnly ? t.stageCmtScopePinned : t.stageCmtScopeAll} \xB7 ${comments.length}`
+    ));
+    pop.appendChild(head);
+    const sorted = [...comments].sort((a, b) => (a.abs ?? Number.MAX_VALUE) - (b.abs ?? Number.MAX_VALUE));
+    const list = createElement("ul", "scp-list");
+    for (const c of sorted) {
+      const li = createElement("li", "scp-item");
+      const who = createElement("div", "scp-who");
+      const dot = createElement("span", "scp-dot");
+      dot.style.background = c.color;
+      dot.setAttribute("aria-hidden", "true");
+      who.appendChild(dot);
+      who.appendChild(createElement("span", "scp-name", c.name));
+      li.appendChild(who);
+      li.appendChild(createElement("div", "scp-text", c.text));
+      list.appendChild(li);
+    }
+    pop.appendChild(list);
+    pop.hidden = false;
+    list.scrollTop = 0;
+  }
+  function position(anchor) {
+    const pop = popEl();
+    const margin = 8;
+    pop.style.maxHeight = `${Math.max(160, Math.min(380, anchor.y - 70))}px`;
+    const w = pop.offsetWidth;
+    const h = pop.offsetHeight;
+    const left = Math.min(Math.max(anchor.x - w / 2, margin), window.innerWidth - w - margin);
+    const top = Math.max(anchor.y - h - 6, margin);
+    pop.style.left = `${left}px`;
+    pop.style.top = `${top}px`;
+  }
+  function scheduleClose() {
+    cancelClose();
+    closeTimer = setTimeout(closeStageComments, CLOSE_DELAY_MS);
+  }
+  function cancelClose() {
+    if (closeTimer !== null) {
+      clearTimeout(closeTimer);
+      closeTimer = null;
+    }
   }
 
   // src/renderer/comments/index.ts
@@ -2204,16 +2498,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     row.appendChild(buildCardsCol(driver.entries));
     return row;
   }
-  function buildPositionBlock(position) {
+  function buildPositionBlock(position2) {
     const el = document.createElement("div");
-    el.className = resolvePositionClass(position);
-    el.textContent = String(position);
+    el.className = resolvePositionClass(position2);
+    el.textContent = String(position2);
     return el;
   }
-  function resolvePositionClass(position) {
-    if (position === 1) return "cmt-pos cmt-pos--gold";
-    if (position === 2) return "cmt-pos cmt-pos--silver";
-    if (position === 3) return "cmt-pos cmt-pos--bronze";
+  function resolvePositionClass(position2) {
+    if (position2 === 1) return "cmt-pos cmt-pos--gold";
+    if (position2 === 2) return "cmt-pos cmt-pos--silver";
+    if (position2 === 3) return "cmt-pos cmt-pos--bronze";
     return "cmt-pos";
   }
   function buildDriverCol(driver) {
@@ -2688,8 +2982,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     hdr.appendChild(right);
     const body = createElement("div", "filter-body");
     left.addEventListener("click", () => {
-      const collapsed = group.classList.toggle("collapsed");
-      left.setAttribute("aria-expanded", String(!collapsed));
+      const collapsed2 = group.classList.toggle("collapsed");
+      left.setAttribute("aria-expanded", String(!collapsed2));
     });
     btnAll.addEventListener("click", (e) => e.stopPropagation());
     btnNone.addEventListener("click", (e) => e.stopPropagation());
@@ -2699,19 +2993,19 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/filters/filterBuilders.ts
-  function buildStageFilterUI(stages, state, callbacks2) {
+  function buildStageFilterUI(stages, state, callbacks3) {
     const cont = document.getElementById("filter-stages");
     cont.innerHTML = "";
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterChartStages, "counter-stages");
     btnAll.addEventListener("click", () => {
       stages.forEach((s) => state.activeStageNums.add(s.num));
       setAllCheckboxes(body, true);
-      callbacks2.onStagesChanged();
+      callbacks3.onStagesChanged();
     });
     btnNone.addEventListener("click", () => {
       state.activeStageNums.clear();
       setAllCheckboxes(body, false);
-      callbacks2.onStagesChanged();
+      callbacks3.onStagesChanged();
     });
     for (const s of stages) {
       const lbl = createElement("label", "filter-item");
@@ -2721,7 +3015,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.checked = state.activeStageNums.has(s.num);
       cb.addEventListener("change", () => {
         cb.checked ? state.activeStageNums.add(s.num) : state.activeStageNums.delete(s.num);
-        callbacks2.onStagesChanged();
+        callbacks3.onStagesChanged();
       });
       lbl.appendChild(cb);
       lbl.appendChild(createElement("span", "filter-ss", `SS${s.num}`));
@@ -2730,7 +3024,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     cont.appendChild(group);
   }
-  function buildDriverFilterUI(drivers, data2, state, callbacks2, rankMap2) {
+  function buildDriverFilterUI(drivers, data2, state, callbacks3, rankMap2) {
     const wrap = document.getElementById("filter-drivers-wrap");
     wrap.innerHTML = "";
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterParticipants, "counter-drivers");
@@ -2746,12 +3040,12 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     btnAll.addEventListener("click", () => {
       drivers.filter((d) => state.visibleDriverKeys.has(d.username)).forEach((d) => state.activeDriverKeys.add(d.username));
       syncVisibleCheckboxes(body, true);
-      callbacks2.onDriversChanged();
+      callbacks3.onDriversChanged();
     });
     btnNone.addEventListener("click", () => {
       drivers.filter((d) => state.visibleDriverKeys.has(d.username)).forEach((d) => state.activeDriverKeys.delete(d.username));
       syncVisibleCheckboxes(body, false);
-      callbacks2.onDriversChanged();
+      callbacks3.onDriversChanged();
     });
     buildSearchBox(body, (q) => applyDriverSearch(q, body));
     const applyPreset = (pick) => {
@@ -2765,7 +3059,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         const cb = item.querySelector('input[type="checkbox"]');
         if (cb) cb.checked = state.activeDriverKeys.has(item.dataset["driverKey"]);
       });
-      callbacks2.onDriversChanged();
+      callbacks3.onDriversChanged();
     };
     const presets = createElement("div", "filter-presets");
     const addPreset = (label, title, pick) => {
@@ -2788,7 +3082,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.checked = state.activeDriverKeys.has(drv.username);
       cb.addEventListener("change", () => {
         cb.checked ? state.activeDriverKeys.add(drv.username) : state.activeDriverKeys.delete(drv.username);
-        callbacks2.onDriversChanged();
+        callbacks3.onDriversChanged();
       });
       const rank = rankOf(drv);
       const place = createElement(
@@ -2806,11 +3100,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       if (drv.car) content.appendChild(createElement("span", "filter-driver-car", drv.car));
       lbl.addEventListener("mouseenter", () => {
         lbl.classList.add("hover-highlighted");
-        callbacks2.onDriverHover(drv.username);
+        callbacks3.onDriverHover(drv.username);
       });
       lbl.addEventListener("mouseleave", () => {
         lbl.classList.remove("hover-highlighted");
-        callbacks2.onDriverHover(null);
+        callbacks3.onDriverHover(null);
       });
       lbl.appendChild(cb);
       lbl.appendChild(place);
@@ -2819,7 +3113,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     wrap.appendChild(group);
   }
-  function buildGroupFilterUI(groups, data2, state, callbacks2, onRefilterDrivers) {
+  function buildGroupFilterUI(groups, data2, state, callbacks3, onRefilterDrivers) {
     const cont = document.getElementById("filter-groups");
     cont.innerHTML = "";
     if (!groups.length) {
@@ -2831,13 +3125,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       groups.forEach((g) => state.activeGroups.add(g));
       setAllCheckboxes(body, true);
       onRefilterDrivers();
-      callbacks2.onGroupsChanged();
+      callbacks3.onGroupsChanged();
     });
     btnNone.addEventListener("click", () => {
       state.activeGroups.clear();
       setAllCheckboxes(body, false);
       onRefilterDrivers();
-      callbacks2.onGroupsChanged();
+      callbacks3.onGroupsChanged();
     });
     for (const grp of groups) {
       const lbl = createElement("label", "filter-item");
@@ -2847,7 +3141,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.addEventListener("change", () => {
         cb.checked ? state.activeGroups.add(grp) : state.activeGroups.delete(grp);
         onRefilterDrivers();
-        callbacks2.onGroupsChanged();
+        callbacks3.onGroupsChanged();
       });
       lbl.appendChild(cb);
       lbl.appendChild(createElement("span", "filter-group-label", grp));
@@ -2855,7 +3149,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     }
     cont.appendChild(group);
   }
-  function buildCarFilterUI(drivers, state, callbacks2, onRefilterDrivers) {
+  function buildCarFilterUI(drivers, state, callbacks3, onRefilterDrivers) {
     const cont = document.getElementById("filter-cars");
     cont.innerHTML = "";
     const cars = [...new Set(drivers.map((d) => d.car).filter(Boolean))].sort();
@@ -2868,13 +3162,13 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cars.forEach((c) => state.activeCars.add(c));
       setAllCheckboxes(body, true);
       onRefilterDrivers();
-      callbacks2.onCarsChanged();
+      callbacks3.onCarsChanged();
     });
     btnNone.addEventListener("click", () => {
       state.activeCars.clear();
       setAllCheckboxes(body, false);
       onRefilterDrivers();
-      callbacks2.onCarsChanged();
+      callbacks3.onCarsChanged();
     });
     for (const car of cars) {
       const lbl = createElement("label", "filter-item");
@@ -2884,7 +3178,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cb.addEventListener("change", () => {
         cb.checked ? state.activeCars.add(car) : state.activeCars.delete(car);
         onRefilterDrivers();
-        callbacks2.onCarsChanged();
+        callbacks3.onCarsChanged();
       });
       lbl.appendChild(cb);
       lbl.appendChild(createElement("span", "filter-car-label", car));
@@ -2923,20 +3217,20 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
 
   // src/renderer/filters/chartFilters.ts
-  function buildChartFilterPanel(data2, state, callbacks2, rankMap2) {
-    buildStageFilterUI(data2.stages, state, callbacks2);
-    buildDriverFilterUI(data2.drivers, data2, state, callbacks2, rankMap2);
+  function buildChartFilterPanel(data2, state, callbacks3, rankMap2) {
+    buildStageFilterUI(data2.stages, state, callbacks3);
+    buildDriverFilterUI(data2.drivers, data2, state, callbacks3, rankMap2);
     buildGroupFilterUI(
       data2.groups,
       data2,
       state,
-      callbacks2,
+      callbacks3,
       () => applyGroupOrCarFilterToDriverList(data2, state)
     );
     buildCarFilterUI(
       data2.drivers,
       state,
-      callbacks2,
+      callbacks3,
       () => applyGroupOrCarFilterToDriverList(data2, state)
     );
   }
@@ -3679,6 +3973,17 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       btn.addEventListener("click", () => setYMode(btn.dataset["ymode"]));
     });
     chartCtrl.setOnPinChange(onPinsChanged);
+    initCommentStrip({
+      onEntryHover: (c) => chartCtrl.setActiveComment(c),
+      onEntryClick: (stageNum) => handleStageBandClick(stageNum)
+    });
+    initStageCommentsPopover((idx) => chartCtrl.getStageComments(idx));
+    chartCtrl.setCommentCallbacks({
+      onPointHover: (c) => highlightCommentEntry(c),
+      onStageCommentsHover: (idx, anchor) => hoverStageComments(idx, anchor),
+      onStageCommentsClick: (idx, anchor) => toggleStageComments(idx, anchor),
+      onOtherClick: closeStageComments
+    });
     initLegendSearch({
       onPreview: (key) => chartCtrl.setHoveredKey(key),
       onToggle: (key) => chartCtrl.togglePin(key, true)
@@ -3914,15 +4219,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   function isSidebarOpen() {
     return document.getElementById("app").classList.contains("sidebar-open");
   }
-  function setSidebarOpen(open) {
-    document.getElementById("app").classList.toggle("sidebar-open", open);
+  function setSidebarOpen(open2) {
+    document.getElementById("app").classList.toggle("sidebar-open", open2);
     const btn = qs("#btn-filters");
-    btn.setAttribute("aria-expanded", String(open));
-    if (open) qs("#btn-sidebar-close").focus();
+    btn.setAttribute("aria-expanded", String(open2));
+    if (open2) qs("#btn-sidebar-close").focus();
     else btn.focus({ preventScroll: true });
   }
   function switchTab(tab) {
     currentTab = tab;
+    closeStageComments();
     for (const t of ["chart", "results", "comments"]) {
       const btn = qs(`#tab-${t}`);
       btn.classList.toggle("active", tab === t);
@@ -3978,6 +4284,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       chartState.activeGroups,
       chartState.activeCars
     );
+    refreshComments();
+  }
+  function refreshComments() {
+    closeStageComments();
+    renderCommentStrip(chartCtrl.getPinnedComments(), chartCtrl.getPinnedKeys().length);
   }
   function afterFilterChange() {
     if (!data) return;
@@ -4011,6 +4322,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     syncYModeSwitch();
     updatePinnedBar(data, keys, (key) => chartCtrl.togglePin(key, true));
     refreshLegend();
+    refreshComments();
     scrollLegendTo(keys[keys.length - 1] ?? null);
     writeUrlState();
   }
@@ -4043,6 +4355,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     );
     updatePinnedBar(data, chartCtrl.getPinnedKeys(), (key) => chartCtrl.togglePin(key, true));
     syncYModeSwitch();
+    refreshComments();
     afterFilterChange();
   }
   function toggleLegendExpand() {
@@ -4051,7 +4364,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   }
   function refreshLegend() {
     if (!data || !chartCtrl.getChart()) return;
-    const callbacks2 = {
+    const callbacks3 = {
       onDriverHover: (key) => chartCtrl.setHoveredKey(key),
       onDriverClick: (key, additive) => chartCtrl.togglePin(key, additive)
     };
@@ -4063,7 +4376,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       legendExpanded,
       chartCtrl.getPinnedKeys(),
       chartCtrl.getYMode() !== "abs",
-      callbacks2
+      callbacks3
     );
     refreshLegendSearch();
   }

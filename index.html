@@ -113,6 +113,14 @@
                     <div id="chart-area" class="chart-area">
                         <canvas id="race-chart" role="img" aria-label="График хода гонки"></canvas>
                     </div>
+                    <!-- Комментарии закреплённых (см. commentStrip.ts) -->
+                    <div id="comment-strip" class="comment-strip" hidden>
+                        <button id="comment-strip-toggle" class="comment-strip-toggle" type="button" aria-expanded="true">
+                            <span class="cs-caret" aria-hidden="true">▾</span>
+                            <span id="comment-strip-title"></span>
+                        </button>
+                        <ul id="comment-strip-list" class="comment-strip-list"></ul>
+                    </div>
                 </div>
 
                 <!-- ── LEGEND PANEL ── -->
@@ -148,6 +156,7 @@
     </section>
 
     <div id="chart-tooltip"  class="chart-tooltip"></div>
+    <div id="stage-comments" class="stage-comments" role="dialog" hidden></div>
     <div id="cell-tooltip"   class="cell-tooltip"></div>
 
 </div>

@@ -74,6 +74,10 @@ export interface ITranslations {
 
     // Таблица результатов — выбор строк
     selectedCount:          (n: number) => string;
+    cmtStripTitle:          (n: number) => string;
+    cmtStripEntryTitle:     string;
+    stageCmtScopePinned:    string;
+    stageCmtScopeAll:       string;
 
     // Закреплённая строка
     pinnedCloseTitle:       string;

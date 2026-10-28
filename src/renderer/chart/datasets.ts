@@ -28,6 +28,9 @@ export interface IChartDataset {
     _hasSR:              boolean[];
     _cmts:               string[];
     _stageLabels:        string[];
+    /** Точка и СУ комментария к сходу (комментарий может висеть на точке предыдущего СУ). */
+    _dnfCmtPtIdx:        number | null;
+    _dnfCmtStageIdx:     number | null;
 }
 
 const POINT_RADIUS_NORMAL  = 2;
@@ -92,6 +95,8 @@ export function buildDatasets(
             _hasSR:       pts.hasSR,
             _cmts:        pts.cmts,
             _stageLabels: pts.stageLabels,
+            _dnfCmtPtIdx:    pts.dnfCommentPtIdx,
+            _dnfCmtStageIdx: pts.dnfCmtStageIdx,
         };
     });
 }
@@ -140,8 +145,12 @@ function buildDriverPoints(
     let isDnf                          = false;
     let lastValidPtIdx                 = 0;
     let dnfCommentPtIdx: number | null = null;
+    // СУ, где сошёл участник: комментарий висит на последней пройденной точке,
+    // а она может относиться к предыдущему СУ
+    let dnfCmtStageIdx:  number | null = null;
 
-    for (const st of stages) {
+    for (let si = 0; si < stages.length; si++) {
+        const st = stages[si];
         const rec    = recordMap.get(drv.username)?.get(st.num) ?? null;
         const pen    = cumPenMap.get(drv.username)?.get(st.num) ?? 0;
         const sp     = cumSPMap.get(drv.username)?.get(st.num)  ?? 0;
@@ -173,7 +182,7 @@ function buildDriverPoints(
         // Нет записи вообще или нет time1 — DNF без продвижения
         if (!rec || rec.time1 === null) {
             markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
-                (idx) => { dnfCommentPtIdx = idx; },
+                (idx) => { dnfCommentPtIdx = idx; dnfCmtStageIdx = si; },
                 pointStyles, pointRadii, pointColors, cmts, color,
             );
             y.push(null, null, null);
@@ -200,7 +209,7 @@ function buildDriverPoints(
             stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
             lastValidPtIdx = y.length - 3;
             markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
-                (idx) => { dnfCommentPtIdx = idx; },
+                (idx) => { dnfCommentPtIdx = idx; dnfCmtStageIdx = si; },
                 pointStyles, pointRadii, pointColors, cmts, color,
             );
             isDnf = true;
@@ -220,7 +229,7 @@ function buildDriverPoints(
             stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
             lastValidPtIdx = y.length - 2;
             markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
-                (idx) => { dnfCommentPtIdx = idx; },
+                (idx) => { dnfCommentPtIdx = idx; dnfCmtStageIdx = si; },
                 pointStyles, pointRadii, pointColors, cmts, color,
             );
             isDnf = true;
@@ -243,6 +252,6 @@ function buildDriverPoints(
     return {
         y, pointStyles, pointRadii, pointColors,
         cumPen, cumSP, cumSR, hasSR, cmts, stageLabels,
-        dnfCommentPtIdx, lastValidPtIdx,
+        dnfCommentPtIdx, dnfCmtStageIdx, lastValidPtIdx,
     };
 }

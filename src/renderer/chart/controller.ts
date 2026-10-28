@@ -7,19 +7,30 @@ import {
 import { buildDatasets } from "./datasets";
 import { buildDnfLinePlugin } from "./pluginDnfLine";
 import { buildHoverDimPlugin } from "./pluginHoverDim";
-import { buildPinnedCommentsPlugin } from "./pluginPinnedComments";
+import {
+    collectComments,
+    commentSourceIdxs,
+    countCommentsByStage,
+    IChartComment
+} from "./chartComments";
+import {
+    buildPinnedCommentsPlugin,
+    IActiveComment
+} from "./pluginPinnedComments";
 import { buildPointsPlugin } from "./pluginPoints";
 import {
     buildStageNamesPlugin,
+    COMMENT_ROW_H,
     ROTATE_45_AT,
     ROTATE_90_AT
 } from "./pluginStageNames";
 import { buildTooltipHandler } from "./tooltip";
 
 const HOVER_DIST_PX  = 40;
-const BOT_PAD_NORMAL = 46;
-const BOT_PAD_45     = 90;
-const BOT_PAD_90     = 110;
+// + строка счётчиков 💬 над подписями СУ
+const BOT_PAD_NORMAL = 46  + COMMENT_ROW_H;
+const BOT_PAD_45     = 90  + COMMENT_ROW_H;
+const BOT_PAD_90     = 110 + COMMENT_ROW_H;
 const NARROW_CHART_PX = 520;
 const DIM_ALPHA      = 0.06;
 const DIM_ALPHA_SOFT = 0.35;
@@ -64,6 +75,27 @@ export interface IChartController {
     getActiveStages(): IStageInfo[];
     getChart(): any;
     refreshLabels(): void;
+    /** Комментарии закреплённых по всем показанным СУ — для ленты под графиком. */
+    getPinnedComments(): IChartComment[];
+    /** Комментарии на СУ: закреплённых, а если их нет — всех показанных. */
+    getStageComments(stageIdx: number): { comments: IChartComment[]; pinnedOnly: boolean };
+    /** Комментарий, подсвеченный из ленты (кольцо вокруг точки). */
+    setActiveComment(c: IActiveComment | null): void;
+    setCommentCallbacks(cb: IChartCommentCallbacks): void;
+}
+
+/** Точка экрана, к которой привязывается всплывающий список комментариев СУ. */
+export interface IAnchor { x: number; y: number }
+
+export interface IChartCommentCallbacks {
+    /** Наведение на ◆ закреплённого (null — ушли). */
+    onPointHover:          (c: IActiveComment | null) => void;
+    /** Наведение на счётчик 💬 под осью (null — ушли). */
+    onStageCommentsHover:  (stageIdx: number | null, anchor: IAnchor | null) => void;
+    /** Клик/касание по счётчику 💬. */
+    onStageCommentsClick:  (stageIdx: number, anchor: IAnchor) => void;
+    /** Клик по графику мимо счётчиков — закрыть открытый список. */
+    onOtherClick:          () => void;
 }
 
 export function createChartController(): IChartController {
@@ -78,6 +110,9 @@ export function createChartController(): IChartController {
     let hoveredBandIdx:     number | null = null;
     let activeStages:       IStageInfo[]  = [];
     let currentBotPad       = BOT_PAD_NORMAL;
+    let hoveredCounterIdx:  number | null = null;
+    let activeComment:      IActiveComment | null = null;
+    let commentCb:          IChartCommentCallbacks | null = null;
 
     let clickHandler:       ((e: MouseEvent) => void) | null = null;
     let mousemoveHandler:   ((e: MouseEvent) => void) | null = null;
@@ -234,6 +269,29 @@ export function createChartController(): IChartController {
         getYMode:        () => yMode,
         getActiveStages: () => activeStages,
 
+        getPinnedComments(): IChartComment[] {
+            if (!chart || !pinnedIdxs.length) return [];
+            return collectComments(chart, activeStages, pinnedIdxs);
+        },
+
+        getStageComments(stageIdx: number) {
+            if (!chart) return { comments: [], pinnedOnly: false };
+            return {
+                comments:   collectComments(chart, activeStages, commentSourceIdxs(chart, pinnedIdxs), stageIdx),
+                pinnedOnly: pinnedIdxs.length > 0,
+            };
+        },
+
+        setActiveComment(c: IActiveComment | null): void {
+            if (c?.key === activeComment?.key && c?.ptIdx === activeComment?.ptIdx) return;
+            activeComment = c;
+            chart?.render();
+        },
+
+        setCommentCallbacks(cb: IChartCommentCallbacks): void {
+            commentCb = cb;
+        },
+
         refreshLabels(): void {
             if (!chart) return;
             applyYMode();   // заодно переводит заголовок оси
@@ -311,8 +369,10 @@ export function createChartController(): IChartController {
                 chart.data.datasets = datasets;
                 chart.options.layout.padding.bottom = currentBotPad;
                 chart.setActiveElements([]);
-                hoveredDsIdx   = null;
-                hoveredBandIdx = null;
+                hoveredDsIdx      = null;
+                hoveredBandIdx    = null;
+                hoveredCounterIdx = null;
+                activeComment     = null;
                 document.getElementById('chart-tooltip')!.style.display = 'none';
                 syncPinnedIdxs();
                 applyYMode();
@@ -372,9 +432,20 @@ export function createChartController(): IChartController {
                         () => hoveredDsIdx,
                         dimAlpha,
                     ),
-                    buildStageNamesPlugin(() => activeStages, () => hoveredBandIdx),
+                    buildStageNamesPlugin(
+                        () => activeStages,
+                        () => hoveredBandIdx,
+                        // ch, а не chart: первая отрисовка идёт ещё внутри конструктора Chart
+                        (ch: any) => countCommentsByStage(ch, activeStages.length, commentSourceIdxs(ch, pinnedIdxs)),
+                        () => hoveredCounterIdx,
+                    ),
                     buildDnfLinePlugin(() => hoveredDsKey, () => pinnedIdxs, () => hoveredDsIdx, dimAlpha),
-                    buildPinnedCommentsPlugin(() => pinnedIdxs),
+                    buildPinnedCommentsPlugin(
+                        () => pinnedIdxs,
+                        () => activeStages,
+                        () => activeComment,
+                        c => commentCb?.onPointHover(c),
+                    ),
                 ],
             });
 
@@ -384,7 +455,25 @@ export function createChartController(): IChartController {
             chart.options.scales.y2.display = chart.width >= NARROW_CHART_PX;
             chart.update('none');
 
+            /** Счётчик 💬 под курсором: индекс СУ и точка привязки списка. */
+            const counterAt = (e: MouseEvent): { idx: number; anchor: IAnchor } | null => {
+                const rect = canvas!.getBoundingClientRect();
+                const my   = e.clientY - rect.top;
+                const bot  = chart.chartArea.bottom;
+                if (my <= bot + 2 || my > bot + 2 + COMMENT_ROW_H) return null;
+                const idx = stageIdxAtX(chart, e.clientX - rect.left, activeStages.length);
+                if (idx === null) return null;
+                const counts = countCommentsByStage(chart, activeStages.length, commentSourceIdxs(chart, pinnedIdxs));
+                if (!counts[idx]) return null;
+                const xs = chart.scales.x;
+                const xMid = (xs.getPixelForTick(idx * 3) + xs.getPixelForTick(idx * 3 + 3)) / 2;
+                return { idx, anchor: { x: rect.left + xMid, y: rect.top + bot + 2 } };
+            };
+
             clickHandler = (e: MouseEvent) => {
+                const counter = counterAt(e);
+                if (counter) { commentCb?.onStageCommentsClick(counter.idx, counter.anchor); return; }
+                commentCb?.onOtherClick();
                 const additive = e.ctrlKey || e.metaKey || e.shiftKey;
                 const hit = handleCanvasClick(e, chart, canvas!, activeStages, currentBotPad);
                 if (hit === 'ignore') return;
@@ -397,8 +486,16 @@ export function createChartController(): IChartController {
             };
 
             mousemoveHandler = (e: MouseEvent) => {
-                const newBandIdx = resolveHoveredBandIdx(e, chart, canvas!, activeStages, currentBotPad);
-                canvas!.style.cursor = newBandIdx !== null ? 'pointer' : '';
+                const counter = counterAt(e);
+                const newCounterIdx = counter?.idx ?? null;
+                if (newCounterIdx !== hoveredCounterIdx) {
+                    hoveredCounterIdx = newCounterIdx;
+                    commentCb?.onStageCommentsHover(newCounterIdx, counter?.anchor ?? null);
+                    chart.render();
+                }
+                // Подписи СУ — ниже строки счётчиков
+                const newBandIdx = counter ? null : resolveHoveredBandIdx(e, chart, canvas!, activeStages, currentBotPad);
+                canvas!.style.cursor = counter || newBandIdx !== null ? 'pointer' : '';
                 if (newBandIdx !== hoveredBandIdx) {
                     hoveredBandIdx = newBandIdx;
                     chart.render();
@@ -413,6 +510,11 @@ export function createChartController(): IChartController {
                     canvas!.style.cursor = '';
                     chart?.render();
                 }
+                if (hoveredCounterIdx !== null) {
+                    hoveredCounterIdx = null;
+                    commentCb?.onStageCommentsHover(null, null);
+                    chart?.render();
+                }
             };
 
             canvas.addEventListener('click',      clickHandler);
@@ -423,6 +525,15 @@ export function createChartController(): IChartController {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Индекс СУ, в полосу которого попадает координата x на холсте. */
+function stageIdxAtX(chart: any, mx: number, nStages: number): number | null {
+    const xs = chart.scales.x;
+    for (let i = 0; i < nStages; i++) {
+        if (mx >= xs.getPixelForTick(i * 3) && mx <= xs.getPixelForTick(i * 3 + 3)) return i;
+    }
+    return null;
+}
 
 function resolveHoveredBandIdx(
     e:      MouseEvent,
