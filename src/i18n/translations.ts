@@ -73,6 +73,8 @@ export const ru: ITranslations = {
     filterParticipants:     'Участники',
     filterGroupClass:       'Группа / Класс',
     filterCar:              'Автомобиль',
+    filterCountry:          'Страна',
+    countryUnknown:         'Не указана',
 
     filterResultsStages:    'Этапы',
     filterResultsClass:     'Класс',
@@ -206,6 +208,8 @@ export const en: ITranslations = {
     filterParticipants:     'Participants',
     filterGroupClass:       'Group / Class',
     filterCar:              'Car',
+    filterCountry:          'Country',
+    countryUnknown:         'Not specified',
 
     filterResultsStages:    'Stages',
     filterResultsClass:     'Class',
@@ -335,6 +339,8 @@ export const hu: ITranslations = {
     filterParticipants:     'Résztvevők',
     filterGroupClass:       'Csoport / Osztály',
     filterCar:              'Autó',
+    filterCountry:          'Ország',
+    countryUnknown:         'Nincs megadva',
 
     filterResultsStages:    'Szakaszok',
     filterResultsClass:     'Osztály',

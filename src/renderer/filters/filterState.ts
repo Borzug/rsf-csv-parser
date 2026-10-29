@@ -5,6 +5,7 @@ export interface IChartFilterState {
     activeDriverKeys:  Set<string>;
     activeGroups:      Set<string>;
     activeCars:        Set<string>;
+    activeCountries:   Set<string>;
     visibleDriverKeys: Set<string>;
 }
 
@@ -13,6 +14,7 @@ export interface IChartFilterCallbacks {
     onDriversChanged: () => void;
     onGroupsChanged:  () => void;
     onCarsChanged:    () => void;
+    onCountriesChanged: () => void;
     onDriverHover:    (key: string | null) => void;
 }
 

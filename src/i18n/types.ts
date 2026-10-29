@@ -100,6 +100,8 @@ export interface ITranslations {
     filterParticipants:     string;
     filterGroupClass:       string;
     filterCar:              string;
+    filterCountry:          string;
+    countryUnknown:         string;
 
     // Фильтры — вкладка «Результаты»
     filterResultsStages:    string;

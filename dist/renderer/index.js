@@ -152,7 +152,9 @@
       (a, b) => a.label.localeCompare(b.label, void 0, { sensitivity: "base" })
     );
     const groups = [...new Set(records.map((r) => r.group).filter(Boolean))].sort();
-    return { records, stages, drivers, groups };
+    const countrySet = new Set(drivers.map((d) => d.country));
+    const countries = [...countrySet].some(Boolean) ? [...countrySet].sort() : [];
+    return { records, stages, drivers, groups, countries };
   }
 
   // src/i18n/translations.ts
@@ -217,6 +219,8 @@
     filterParticipants: "\u0423\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0438",
     filterGroupClass: "\u0413\u0440\u0443\u043F\u043F\u0430 / \u041A\u043B\u0430\u0441\u0441",
     filterCar: "\u0410\u0432\u0442\u043E\u043C\u043E\u0431\u0438\u043B\u044C",
+    filterCountry: "\u0421\u0442\u0440\u0430\u043D\u0430",
+    countryUnknown: "\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0430",
     filterResultsStages: "\u042D\u0442\u0430\u043F\u044B",
     filterResultsClass: "\u041A\u043B\u0430\u0441\u0441",
     filterAll: "\u0412\u0441\u0435",
@@ -330,6 +334,8 @@
     filterParticipants: "Participants",
     filterGroupClass: "Group / Class",
     filterCar: "Car",
+    filterCountry: "Country",
+    countryUnknown: "Not specified",
     filterResultsStages: "Stages",
     filterResultsClass: "Class",
     filterAll: "All",
@@ -439,6 +445,8 @@ Only stages without SR for both drivers`,
     filterParticipants: "R\xE9sztvev\u0151k",
     filterGroupClass: "Csoport / Oszt\xE1ly",
     filterCar: "Aut\xF3",
+    filterCountry: "Orsz\xE1g",
+    countryUnknown: "Nincs megadva",
     filterResultsStages: "Szakaszok",
     filterResultsClass: "Oszt\xE1ly",
     filterAll: "Mind",
@@ -637,13 +645,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var BORDER_WIDTH = 1.8;
   var DASH_ON = 6;
   var DASH_OFF = 4;
-  function buildDatasets(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, activeDriverKeys, activeGroups, activeCars) {
+  function buildDatasets(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, activeDriverKeys, activeGroups, activeCars, activeCountries) {
     return data2.drivers.map((drv, gi) => {
       const color = driverColor(gi);
       const pts = buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color);
       const dnfCommentPtIdx = pts.dnfCommentPtIdx;
       const grpOk = !data2.groups.length || activeGroups.has(drv.group);
       const carOk = !activeCars.size || activeCars.has(drv.car);
+      const ctyOk = !data2.countries.length || activeCountries.has(drv.country);
       const dn = drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username;
       return {
         label: drv.label,
@@ -663,7 +672,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         _ptColor: pts.pointColors,
         tension: 0,
         spanGaps: false,
-        hidden: !activeDriverKeys.has(drv.username) || !grpOk || !carOk,
+        hidden: !activeDriverKeys.has(drv.username) || !grpOk || !carOk || !ctyOk,
         // Функция стиля отрезков вызывается на каждый отрезок при каждом update(),
         // поэтому подключаем её только линиям, где пунктир действительно есть
         segment: pts.hasSR.some(Boolean) || dnfCommentPtIdx !== null ? {
@@ -1542,18 +1551,19 @@ ${hit.ptIdx}` : null;
         applyYMode();
         chart?.update("none");
       },
-      updateDatasetVisibility(data2, activeDriverKeys, activeGroups, activeCars) {
+      updateDatasetVisibility(data2, activeDriverKeys, activeGroups, activeCars, activeCountries) {
         if (!chart || !data2) return;
         chart.data.datasets.forEach((ds) => {
           const drv = data2.drivers.find((d) => d.username === ds.driverKey);
           const grpOk = !data2.groups.length || !drv || activeGroups.has(drv.group);
           const carOk = !activeCars.size || !drv || activeCars.has(drv.car);
-          ds.hidden = !activeDriverKeys.has(ds.driverKey) || !grpOk || !carOk;
+          const ctyOk = !data2.countries.length || !drv || activeCountries.has(drv.country);
+          ds.hidden = !activeDriverKeys.has(ds.driverKey) || !grpOk || !carOk || !ctyOk;
         });
         applyYMode();
         chart.update("none");
       },
-      build(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, activeDriverKeys, activeGroups, activeCars) {
+      build(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, activeDriverKeys, activeGroups, activeCars, activeCountries) {
         activeStages = stages;
         const useRot45 = stages.length > ROTATE_45_AT && stages.length <= ROTATE_90_AT;
         const useRot90 = stages.length > ROTATE_90_AT;
@@ -1569,7 +1579,8 @@ ${hit.ptIdx}` : null;
           cumSRMap,
           activeDriverKeys,
           activeGroups,
-          activeCars
+          activeCars,
+          activeCountries
         );
         datasets.forEach((ds) => {
           ds._abs = ds.data.slice();
@@ -1884,6 +1895,15 @@ ${hit.ptIdx}` : null;
     img.loading = "lazy";
     img.decoding = "async";
     return img;
+  }
+  function countryName(country) {
+    if (!country) return i18n.t().countryUnknown;
+    try {
+      const name = new Intl.DisplayNames([i18n.getLanguage()], { type: "region" }).of(country);
+      if (name && name !== country) return name;
+    } catch {
+    }
+    return country;
   }
   function prependFlag(el, country) {
     const flag = createFlag(country);
@@ -2955,6 +2975,8 @@ ${hit.ptIdx}` : null;
     const allCars = [...new Set(data2.drivers.map((d) => d.car).filter(Boolean))];
     if (allCars.length)
       setCounterText("counter-cars", activeCars.size, allCars.length);
+    if (data2.countries.length)
+      setCounterText("counter-countries", state.activeCountries.size, data2.countries.length);
   }
   function updateToggleButtonStates(data2, state) {
     const { activeStageNums, activeDriverKeys, activeGroups, activeCars, visibleDriverKeys } = state;
@@ -2971,6 +2993,9 @@ ${hit.ptIdx}` : null;
     const allCars = [...new Set(data2.drivers.map((d) => d.car).filter(Boolean))];
     setToggleActive("#filter-cars .btn-fa:nth-child(1)", activeCars.size === allCars.length && allCars.length > 0);
     setToggleActive("#filter-cars .btn-fa:nth-child(2)", activeCars.size === 0);
+    const nCty = data2.countries.length;
+    setToggleActive("#filter-countries .btn-fa:nth-child(1)", state.activeCountries.size === nCty && nCty > 0);
+    setToggleActive("#filter-countries .btn-fa:nth-child(2)", state.activeCountries.size === 0);
   }
   function syncStageCheckboxes(activeStageNums) {
     const body = document.querySelector("#filter-stages .filter-body");
@@ -3052,6 +3077,26 @@ ${hit.ptIdx}` : null;
     group.appendChild(hdr);
     group.appendChild(body);
     return { group, body, btnAll, btnNone };
+  }
+
+  // src/renderer/filters/countryFilter.ts
+  function buildCountryItems(data2, body, isChecked, onToggle) {
+    const counts = /* @__PURE__ */ new Map();
+    for (const d of data2.drivers) counts.set(d.country, (counts.get(d.country) ?? 0) + 1);
+    const items2 = data2.countries.map((code) => ({ code, name: countryName(code) })).sort((a, b) => (a.code ? 0 : 1) - (b.code ? 0 : 1) || a.name.localeCompare(b.name));
+    for (const { code, name } of items2) {
+      const lbl = createElement("label", "filter-item");
+      const cb = createElement("input");
+      cb.type = "checkbox";
+      cb.checked = isChecked(code);
+      cb.addEventListener("change", () => onToggle(code, cb.checked));
+      const label = createElement("span", "filter-country-label", name);
+      prependFlag(label, code);
+      lbl.appendChild(cb);
+      lbl.appendChild(label);
+      lbl.appendChild(createElement("span", "filter-country-count", String(counts.get(code) ?? 0)));
+      body.appendChild(lbl);
+    }
   }
 
   // src/renderer/filters/filterBuilders.ts
@@ -3139,6 +3184,7 @@ ${hit.ptIdx}` : null;
       lbl.dataset["driverKey"] = drv.username;
       lbl.dataset["group"] = drv.group;
       lbl.dataset["car"] = drv.car;
+      lbl.dataset["country"] = drv.country;
       const cb = createElement("input");
       cb.type = "checkbox";
       cb.checked = state.activeDriverKeys.has(drv.username);
@@ -3253,11 +3299,7 @@ ${hit.ptIdx}` : null;
     const body = document.querySelector("#filter-drivers-wrap .filter-body");
     if (!body) return;
     qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      const grp = item.dataset["group"] ?? "";
-      const car = item.dataset["car"] ?? "";
-      const grpOk = !data2.groups.length || state.activeGroups.has(grp);
-      const carOk = !state.activeCars.size || state.activeCars.has(car);
-      item.style.display = grpOk && carOk ? "" : "none";
+      item.style.display = passesAttrFilters(item, data2, state) ? "" : "none";
     });
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
@@ -3268,15 +3310,45 @@ ${hit.ptIdx}` : null;
     const allSelected = state.activeStageNums.size === data2.stages.length;
     qsa(".filter-item[data-driver-key]", body).forEach((item) => {
       const key = item.dataset["driverKey"];
-      const grp = item.dataset["group"] ?? "";
-      const car = item.dataset["car"] ?? "";
-      const grpOk = !data2.groups.length || state.activeGroups.has(grp);
-      const carOk = !state.activeCars.size || state.activeCars.has(car);
       const stageOk = allSelected || [...state.activeStageNums].some((sn) => recordMap.get(key)?.has(sn));
-      item.style.display = grpOk && carOk && stageOk ? "" : "none";
+      item.style.display = passesAttrFilters(item, data2, state) && stageOk ? "" : "none";
     });
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
+  }
+  function passesAttrFilters(item, data2, state) {
+    const grpOk = !data2.groups.length || state.activeGroups.has(item.dataset["group"] ?? "");
+    const carOk = !state.activeCars.size || state.activeCars.has(item.dataset["car"] ?? "");
+    const ctyOk = !data2.countries.length || state.activeCountries.has(item.dataset["country"] ?? "");
+    return grpOk && carOk && ctyOk;
+  }
+  function buildCountryFilterUI(data2, state, callbacks3, onRefilterDrivers) {
+    const cont = document.getElementById("filter-countries");
+    cont.innerHTML = "";
+    if (!data2.countries.length) {
+      cont.style.display = "none";
+      return;
+    }
+    cont.style.display = "";
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterCountry, "counter-countries");
+    btnAll.addEventListener("click", () => {
+      data2.countries.forEach((c) => state.activeCountries.add(c));
+      setAllCheckboxes(body, true);
+      onRefilterDrivers();
+      callbacks3.onCountriesChanged();
+    });
+    btnNone.addEventListener("click", () => {
+      state.activeCountries.clear();
+      setAllCheckboxes(body, false);
+      onRefilterDrivers();
+      callbacks3.onCountriesChanged();
+    });
+    buildCountryItems(data2, body, (c) => state.activeCountries.has(c), (c, checked) => {
+      checked ? state.activeCountries.add(c) : state.activeCountries.delete(c);
+      onRefilterDrivers();
+      callbacks3.onCountriesChanged();
+    });
+    cont.appendChild(group);
   }
 
   // src/renderer/filters/chartFilters.ts
@@ -3292,6 +3364,12 @@ ${hit.ptIdx}` : null;
     );
     buildCarFilterUI(
       data2.drivers,
+      state,
+      callbacks3,
+      () => applyGroupOrCarFilterToDriverList(data2, state)
+    );
+    buildCountryFilterUI(
+      data2,
       state,
       callbacks3,
       () => applyGroupOrCarFilterToDriverList(data2, state)
@@ -3473,12 +3551,15 @@ ${hit.ptIdx}` : null;
     buildResultsStageFilter(data2, state, onChange, cont);
     buildResultsDriverFilter(data2, state, onChange, cont);
     if (data2.groups.length) buildResultsGroupFilter(data2, state, onChange, cont);
+    if (data2.countries.length) buildResultsCountryFilter(data2, state, onChange, cont);
     updateResultsFilterCounters(data2, state);
     wireApplyButton(onApply);
   }
   function updateResultsFilterCounters(data2, state) {
     setCounter("counter-res-stages", state.stageFilter.size, data2.stages.length);
     if (data2.groups.length) setCounter("counter-res-groups", state.groupFilter.size, data2.groups.length);
+    if (data2.countries.length)
+      setCounter("counter-res-countries", state.countryFilter.size, data2.countries.length);
     const active = state.driverFilter.size > 0 ? state.driverFilter.size : data2.drivers.length;
     setCounter("counter-res-drivers", active, data2.drivers.length);
   }
@@ -3621,6 +3702,30 @@ ${hit.ptIdx}` : null;
       lbl.appendChild(createElement("span", "filter-group-label", grp));
       body.appendChild(lbl);
     }
+    cont.appendChild(group);
+  }
+  function buildResultsCountryFilter(data2, state, onChange, cont) {
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
+      i18n.t().filterCountry,
+      "counter-res-countries"
+    );
+    btnAll.addEventListener("click", () => {
+      data2.countries.forEach((c) => state.countryFilter.add(c));
+      setAllCb(body, true);
+      updateResultsFilterCounters(data2, state);
+      onChange();
+    });
+    btnNone.addEventListener("click", () => {
+      state.countryFilter.clear();
+      setAllCb(body, false);
+      updateResultsFilterCounters(data2, state);
+      onChange();
+    });
+    buildCountryItems(data2, body, (c) => state.countryFilter.has(c), (c, checked) => {
+      checked ? state.countryFilter.add(c) : state.countryFilter.delete(c);
+      updateResultsFilterCounters(data2, state);
+      onChange();
+    });
     cont.appendChild(group);
   }
   function wireApplyButton(onApply) {
@@ -4392,6 +4497,7 @@ ${hit.ptIdx}` : null;
   var _filterState = {
     stageFilter: /* @__PURE__ */ new Set(),
     groupFilter: /* @__PURE__ */ new Set(),
+    countryFilter: /* @__PURE__ */ new Set(),
     driverFilter: /* @__PURE__ */ new Set(),
     activeDriverKeys: /* @__PURE__ */ new Set()
   };
@@ -4405,6 +4511,7 @@ ${hit.ptIdx}` : null;
     _filterState = {
       stageFilter: new Set(data2.stages.map((s) => s.num)),
       groupFilter: new Set(data2.groups),
+      countryFilter: new Set(data2.countries),
       driverFilter: /* @__PURE__ */ new Set(),
       activeDriverKeys: new Set(data2.drivers.map((d) => d.username))
     };
@@ -4468,6 +4575,8 @@ ${hit.ptIdx}` : null;
     let stats = _allStats;
     if (_data.groups.length && _filterState.groupFilter.size > 0)
       stats = stats.filter((s) => _filterState.groupFilter.has(s.group));
+    if (_data.countries.length)
+      stats = stats.filter((s) => _filterState.countryFilter.has(s.country));
     if (_filterState.driverFilter.size > 0)
       stats = stats.filter((s) => _filterState.driverFilter.has(s.username));
     return stats.map(
@@ -4559,12 +4668,13 @@ ${hit.ptIdx}` : null;
   var prevStageFilter = null;
   var rallyName = null;
   var rankMap = /* @__PURE__ */ new Map();
-  var lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [] });
+  var lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [], countries: [] });
   var chartState = {
     activeStageNums: /* @__PURE__ */ new Set(),
     activeDriverKeys: /* @__PURE__ */ new Set(),
     activeGroups: /* @__PURE__ */ new Set(),
     activeCars: /* @__PURE__ */ new Set(),
+    activeCountries: /* @__PURE__ */ new Set(),
     visibleDriverKeys: /* @__PURE__ */ new Set()
   };
   var chartCtrl = createChartController();
@@ -4751,6 +4861,7 @@ ${hit.ptIdx}` : null;
     chartState.activeDriverKeys = new Set(data.drivers.map((d) => d.username));
     chartState.activeGroups = new Set(data.groups);
     chartState.activeCars = new Set(data.drivers.map((d) => d.car).filter(Boolean));
+    chartState.activeCountries = new Set(data.countries);
     chartState.visibleDriverKeys = new Set(data.drivers.map((d) => d.username));
     prevStageFilter = null;
     legendExpanded = false;
@@ -4792,6 +4903,8 @@ ${hit.ptIdx}` : null;
       yMode: y === "abs" || y === "leader" || y === "position" || y === "pinned" ? y : null,
       stages: list("ss")?.map(Number).filter((n) => !isNaN(n)) ?? null,
       groups: list("cls"),
+      // «-» — страна не указана (пустой код в список не уложить)
+      countries: list("cty")?.map((c) => c === "-" ? "" : c) ?? null,
       pins: list("pin") ?? []
     };
   }
@@ -4801,6 +4914,8 @@ ${hit.ptIdx}` : null;
     if (stages?.length) chartState.activeStageNums = new Set(stages);
     const groups = s.groups?.filter((g) => data.groups.includes(g));
     if (groups?.length) chartState.activeGroups = new Set(groups);
+    const countries = s.countries?.filter((c) => data.countries.includes(c));
+    if (countries?.length) chartState.activeCountries = new Set(countries);
   }
   function applyUrlView(s) {
     if (!data) return;
@@ -4826,6 +4941,8 @@ ${hit.ptIdx}` : null;
       p.set("ss", [...chartState.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
     if (data.groups.length && chartState.activeGroups.size !== data.groups.length)
       p.set("cls", [...chartState.activeGroups].join(LIST_SEP));
+    if (data.countries.length && chartState.activeCountries.size !== data.countries.length)
+      p.set("cty", [...chartState.activeCountries].map((c) => c || "-").sort().join(LIST_SEP));
     const pins = chartCtrl.getPinnedKeys();
     if (pins.length) p.set("pin", pins.join(LIST_SEP));
     const hash = p.toString();
@@ -4908,6 +5025,10 @@ ${hit.ptIdx}` : null;
         syncDatasetVisibility();
         afterFilterChange();
       },
+      onCountriesChanged: () => {
+        syncDatasetVisibility();
+        afterFilterChange();
+      },
       onDriverHover: (key) => {
         chartCtrl.setHoveredKey(key);
       }
@@ -4918,7 +5039,8 @@ ${hit.ptIdx}` : null;
       data,
       chartState.activeDriverKeys,
       chartState.activeGroups,
-      chartState.activeCars
+      chartState.activeCars,
+      chartState.activeCountries
     );
     refreshComments();
   }
@@ -4987,7 +5109,8 @@ ${hit.ptIdx}` : null;
       lookups.cumSRMap,
       chartState.activeDriverKeys,
       chartState.activeGroups,
-      chartState.activeCars
+      chartState.activeCars,
+      chartState.activeCountries
     );
     updatePinnedBar(data, chartCtrl.getPinnedKeys(), (key) => chartCtrl.togglePin(key, true));
     syncYModeSwitch();

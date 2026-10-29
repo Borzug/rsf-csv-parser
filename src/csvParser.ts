@@ -162,5 +162,8 @@ function buildRallyData(records: ILapRecord[]): IParsedRallyData {
     );
 
     const groups = [...new Set(records.map(r => r.group).filter(Boolean))].sort();
-    return { records, stages, drivers, groups };
+    const countrySet = new Set(drivers.map(d => d.country));
+    // Без колонки Nationality у всех '' — фильтр по стране не нужен
+    const countries = [...countrySet].some(Boolean) ? [...countrySet].sort() : [];
+    return { records, stages, drivers, groups, countries };
 }

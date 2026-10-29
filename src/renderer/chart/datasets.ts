@@ -51,6 +51,7 @@ export function buildDatasets(
     activeDriverKeys: Set<string>,
     activeGroups:     Set<string>,
     activeCars:       Set<string>,
+    activeCountries:  Set<string>,
 ): IChartDataset[] {
     return data.drivers.map((drv, gi) => {
         const color = driverColor(gi);
@@ -58,7 +59,8 @@ export function buildDatasets(
         const dnfCommentPtIdx = pts.dnfCommentPtIdx;
         const grpOk = !data.groups.length || activeGroups.has(drv.group);
         const carOk = !activeCars.size || activeCars.has(drv.car);
-        const dn    = drv.realName && drv.realName !== drv.username
+        const ctyOk = !data.countries.length || activeCountries.has(drv.country);
+        const dn   = drv.realName && drv.realName !== drv.username
             ? `${drv.username} (${drv.realName})`
             : drv.username;
 
@@ -80,7 +82,7 @@ export function buildDatasets(
             _ptColor:            pts.pointColors,
             tension:             0,
             spanGaps:            false,
-            hidden:              !activeDriverKeys.has(drv.username) || !grpOk || !carOk,
+            hidden:              !activeDriverKeys.has(drv.username) || !grpOk || !carOk || !ctyOk,
             // Функция стиля отрезков вызывается на каждый отрезок при каждом update(),
             // поэтому подключаем её только линиям, где пунктир действительно есть
             segment: pts.hasSR.some(Boolean) || dnfCommentPtIdx !== null

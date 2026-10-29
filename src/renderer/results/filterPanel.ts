@@ -6,10 +6,12 @@ import {
 } from "../dom.js";
 import { buildCollapsibleFilterGroup } from "../filters/filterGroup.js";
 import { prependFlag } from "../flags";
+import { buildCountryItems } from "../filters/countryFilter";
 
 export interface IResultsFilterState {
     stageFilter:      Set<number>;
     groupFilter:      Set<string>;
+    countryFilter:    Set<string>;
     driverFilter:     Set<string>;
     activeDriverKeys: Set<string>;
 }
@@ -26,6 +28,7 @@ export function buildResultsFilterPanel(
     buildResultsStageFilter(data, state, onChange, cont);
     buildResultsDriverFilter(data, state, onChange, cont);
     if (data.groups.length) buildResultsGroupFilter(data, state, onChange, cont);
+    if (data.countries.length) buildResultsCountryFilter(data, state, onChange, cont);
 
     updateResultsFilterCounters(data, state);
     wireApplyButton(onApply);
@@ -37,6 +40,8 @@ export function updateResultsFilterCounters(
 ): void {
     setCounter('counter-res-stages',  state.stageFilter.size, data.stages.length);
     if (data.groups.length) setCounter('counter-res-groups', state.groupFilter.size, data.groups.length);
+    if (data.countries.length)
+        setCounter('counter-res-countries', state.countryFilter.size, data.countries.length);
 
     const active = state.driverFilter.size > 0 ? state.driverFilter.size : data.drivers.length;
     setCounter('counter-res-drivers', active, data.drivers.length);
@@ -211,6 +216,37 @@ function buildResultsGroupFilter(
         lbl.appendChild(createElement('span', 'filter-group-label', grp));
         body.appendChild(lbl);
     }
+    cont.appendChild(group);
+}
+
+function buildResultsCountryFilter(
+    data:    IParsedRallyData,
+    state:   IResultsFilterState,
+    onChange: () => void,
+    cont:    HTMLElement,
+): void {
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
+        i18n.t().filterCountry, 'counter-res-countries',
+    );
+
+    btnAll.addEventListener('click', () => {
+        data.countries.forEach(c => state.countryFilter.add(c));
+        setAllCb(body, true);
+        updateResultsFilterCounters(data, state);
+        onChange();
+    });
+    btnNone.addEventListener('click', () => {
+        state.countryFilter.clear();
+        setAllCb(body, false);
+        updateResultsFilterCounters(data, state);
+        onChange();
+    });
+
+    buildCountryItems(data, body, c => state.countryFilter.has(c), (c, checked) => {
+        checked ? state.countryFilter.add(c) : state.countryFilter.delete(c);
+        updateResultsFilterCounters(data, state);
+        onChange();
+    });
     cont.appendChild(group);
 }
 

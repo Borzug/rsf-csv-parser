@@ -56,6 +56,7 @@ export interface IChartController {
         activeDriverKeys: Set<string>,
         activeGroups:     Set<string>,
         activeCars:       Set<string>,
+        activeCountries:  Set<string>,
     ): void;
     destroy(): void;
     updateDatasetVisibility(
@@ -63,6 +64,7 @@ export interface IChartController {
         activeDriverKeys: Set<string>,
         activeGroups:     Set<string>,
         activeCars:       Set<string>,
+        activeCountries:  Set<string>,
     ): void;
     /** additive = true — добавить/убрать из сравнения, иначе выделить только этого участника. */
     togglePin(key: string, additive: boolean): void;
@@ -333,20 +335,21 @@ export function createChartController(): IChartController {
             chart?.update('none');
         },
 
-        updateDatasetVisibility(data, activeDriverKeys, activeGroups, activeCars): void {
+        updateDatasetVisibility(data, activeDriverKeys, activeGroups, activeCars, activeCountries): void {
             if (!chart || !data) return;
             chart.data.datasets.forEach((ds: any) => {
                 const drv   = data.drivers.find(d => d.username === ds.driverKey);
                 const grpOk = !data.groups.length || !drv || activeGroups.has(drv.group);
                 const carOk = !activeCars.size || !drv || activeCars.has(drv.car);
-                ds.hidden   = !activeDriverKeys.has(ds.driverKey) || !grpOk || !carOk;
+                const ctyOk = !data.countries.length || !drv || activeCountries.has(drv.country);
+                ds.hidden   = !activeDriverKeys.has(ds.driverKey) || !grpOk || !carOk || !ctyOk;
             });
             applyYMode();
             chart.update('none');
         },
 
         build(data, stages, recordMap, cumPenMap, cumSPMap, cumSRMap,
-              activeDriverKeys, activeGroups, activeCars): void {
+              activeDriverKeys, activeGroups, activeCars, activeCountries): void {
             activeStages = stages;
             const useRot45 = stages.length > ROTATE_45_AT && stages.length <= ROTATE_90_AT;
             const useRot90 = stages.length > ROTATE_90_AT;
@@ -357,7 +360,7 @@ export function createChartController(): IChartController {
 
             const datasets = buildDatasets(
                 data, stages, recordMap, cumPenMap, cumSPMap, cumSRMap,
-                activeDriverKeys, activeGroups, activeCars,
+                activeDriverKeys, activeGroups, activeCars, activeCountries,
             );
             datasets.forEach((ds: any) => { ds._abs = ds.data.slice(); });
 

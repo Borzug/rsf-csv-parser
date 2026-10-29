@@ -2,6 +2,7 @@
  * Флаги стран по коду ISO alpha-2 из CSV (колонка Nationality).
  * SVG из flag-icons (MIT, flags/LICENSE) лежат в папке flags/ рядом со страницей.
  */
+import { i18n } from '../i18n/index';
 import { createElement } from './dom';
 
 /** Коды, для которых есть файл, — чтобы не запрашивать несуществующие. */
@@ -22,6 +23,16 @@ export function createFlag(country: string): HTMLImageElement | null {
     img.loading  = 'lazy';
     img.decoding = 'async';
     return img;
+}
+
+/** Название страны на языке интерфейса («FI» → «Финляндия»); без кода — «не указана». */
+export function countryName(country: string): string {
+    if (!country) return i18n.t().countryUnknown;
+    try {
+        const name = new Intl.DisplayNames([i18n.getLanguage()], { type: 'region' }).of(country);
+        if (name && name !== country) return name;
+    } catch { /* нестандартный код — покажем как есть */ }
+    return country;
 }
 
 /** Ставит флаг первым в элементе с именем участника. */

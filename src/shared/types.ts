@@ -40,4 +40,6 @@ export interface IParsedRallyData {
     stages:  IStageInfo[];
     drivers: IDriverInfo[];
     groups:  string[];
+    /** Коды стран участников; '' — страна не указана. Пусто, если колонки нет. */
+    countries: string[];
 }

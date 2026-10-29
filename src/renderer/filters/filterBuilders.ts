@@ -18,6 +18,7 @@ import {
     syncVisibleCheckboxes
 } from "./filterState.js";
 import { prependFlag } from "../flags";
+import { buildCountryItems } from "./countryFilter";
 
 export function buildStageFilterUI(
     stages:    IStageInfo[],
@@ -127,6 +128,7 @@ export function buildDriverFilterUI(
         lbl.dataset['driverKey'] = drv.username;
         lbl.dataset['group']     = drv.group;
         lbl.dataset['car']       = drv.car;
+        lbl.dataset['country']   = drv.country;
 
         const cb = createElement('input') as HTMLInputElement;
         cb.type = 'checkbox'; cb.checked = state.activeDriverKeys.has(drv.username);
@@ -260,11 +262,7 @@ export function applyGroupOrCarFilterToDriverList(
     const body = document.querySelector<HTMLElement>('#filter-drivers-wrap .filter-body');
     if (!body) return;
     qsa<HTMLElement>('.filter-item[data-driver-key]', body).forEach(item => {
-        const grp   = item.dataset['group'] ?? '';
-        const car   = item.dataset['car']   ?? '';
-        const grpOk = !data.groups.length || state.activeGroups.has(grp);
-        const carOk = !state.activeCars.size || state.activeCars.has(car);
-        item.style.display = (grpOk && carOk) ? '' : 'none';
+        item.style.display = passesAttrFilters(item, data, state) ? '' : 'none';
     });
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
@@ -281,15 +279,54 @@ export function updateDriverItemsByStageAndFilter(
 
     qsa<HTMLElement>('.filter-item[data-driver-key]', body).forEach(item => {
         const key   = item.dataset['driverKey']!;
-        const grp   = item.dataset['group'] ?? '';
-        const car   = item.dataset['car']   ?? '';
-        const grpOk = !data.groups.length || state.activeGroups.has(grp);
-        const carOk = !state.activeCars.size || state.activeCars.has(car);
         const stageOk = allSelected
             || [...state.activeStageNums].some(sn => recordMap.get(key)?.has(sn));
-        item.style.display = (grpOk && carOk && stageOk) ? '' : 'none';
+        item.style.display = (passesAttrFilters(item, data, state) && stageOk) ? '' : 'none';
     });
 
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
+}
+
+/** Класс, автомобиль и страна участника из data-атрибутов пункта списка. */
+function passesAttrFilters(item: HTMLElement, data: IParsedRallyData, state: IChartFilterState): boolean {
+    const grpOk = !data.groups.length || state.activeGroups.has(item.dataset['group'] ?? '');
+    const carOk = !state.activeCars.size || state.activeCars.has(item.dataset['car'] ?? '');
+    const ctyOk = !data.countries.length || state.activeCountries.has(item.dataset['country'] ?? '');
+    return grpOk && carOk && ctyOk;
+}
+
+export function buildCountryFilterUI(
+    data:      IParsedRallyData,
+    state:     IChartFilterState,
+    callbacks: IChartFilterCallbacks,
+    onRefilterDrivers: () => void,
+): void {
+    const cont = document.getElementById('filter-countries')!;
+    cont.innerHTML = '';
+    if (!data.countries.length) { cont.style.display = 'none'; return; }
+    cont.style.display = '';
+
+    const { group, body, btnAll, btnNone } =
+        buildCollapsibleFilterGroup(i18n.t().filterCountry, 'counter-countries');
+
+    btnAll.addEventListener('click', () => {
+        data.countries.forEach(c => state.activeCountries.add(c));
+        setAllCheckboxes(body, true);
+        onRefilterDrivers();
+        callbacks.onCountriesChanged();
+    });
+    btnNone.addEventListener('click', () => {
+        state.activeCountries.clear();
+        setAllCheckboxes(body, false);
+        onRefilterDrivers();
+        callbacks.onCountriesChanged();
+    });
+
+    buildCountryItems(data, body, c => state.activeCountries.has(c), (c, checked) => {
+        checked ? state.activeCountries.add(c) : state.activeCountries.delete(c);
+        onRefilterDrivers();
+        callbacks.onCountriesChanged();
+    });
+    cont.appendChild(group);
 }

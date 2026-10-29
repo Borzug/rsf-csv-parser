@@ -77,13 +77,14 @@ let rallyName:     string | null = null;
 /** Итоговое место участника по всем СУ; null — сошёл. */
 let rankMap        = new Map<string, number | null>();
 
-let lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [] });
+let lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [], countries: [] });
 
 const chartState: IChartFilterState = {
     activeStageNums:   new Set(),
     activeDriverKeys:  new Set(),
     activeGroups:      new Set(),
     activeCars:        new Set(),
+    activeCountries:   new Set(),
     visibleDriverKeys: new Set(),
 };
 
@@ -306,6 +307,7 @@ function showChart(): void {
     chartState.activeDriverKeys  = new Set(data.drivers.map(d => d.username));
     chartState.activeGroups      = new Set(data.groups);
     chartState.activeCars        = new Set(data.drivers.map(d => d.car).filter(Boolean));
+    chartState.activeCountries   = new Set(data.countries);
     chartState.visibleDriverKeys = new Set(data.drivers.map(d => d.username));
     prevStageFilter  = null;
     legendExpanded   = false;
@@ -343,6 +345,7 @@ interface IUrlState {
     yMode:  TYMode | null;
     stages: number[] | null;
     groups: string[] | null;
+    countries: string[] | null;
     pins:   string[];
 }
 
@@ -367,6 +370,8 @@ function readUrlState(): IUrlState | null {
         yMode:  y === 'abs' || y === 'leader' || y === 'position' || y === 'pinned' ? y : null,
         stages: list('ss')?.map(Number).filter(n => !isNaN(n)) ?? null,
         groups: list('cls'),
+        // «-» — страна не указана (пустой код в список не уложить)
+        countries: list('cty')?.map(c => c === '-' ? '' : c) ?? null,
         pins:   list('pin') ?? [],
     };
 }
@@ -378,6 +383,8 @@ function applyUrlFilters(s: IUrlState): void {
     if (stages?.length) chartState.activeStageNums = new Set(stages);
     const groups = s.groups?.filter(g => data!.groups.includes(g));
     if (groups?.length) chartState.activeGroups = new Set(groups);
+    const countries = s.countries?.filter(c => data!.countries.includes(c));
+    if (countries?.length) chartState.activeCountries = new Set(countries);
 }
 
 /** Режим, закреплённые и вкладка — когда график уже построен. */
@@ -407,6 +414,8 @@ function writeUrlState(): void {
         p.set('ss', [...chartState.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
     if (data.groups.length && chartState.activeGroups.size !== data.groups.length)
         p.set('cls', [...chartState.activeGroups].join(LIST_SEP));
+    if (data.countries.length && chartState.activeCountries.size !== data.countries.length)
+        p.set('cty', [...chartState.activeCountries].map(c => c || '-').sort().join(LIST_SEP));
     const pins = chartCtrl.getPinnedKeys();
     if (pins.length) p.set('pin', pins.join(LIST_SEP));
 
@@ -521,6 +530,10 @@ function makeFilterCallbacks(): IChartFilterCallbacks {
             syncDatasetVisibility();
             afterFilterChange();
         },
+        onCountriesChanged: () => {
+            syncDatasetVisibility();
+            afterFilterChange();
+        },
         onDriverHover: (key: string | null) => {
             chartCtrl.setHoveredKey(key);
         },
@@ -533,6 +546,7 @@ function syncDatasetVisibility(): void {
         chartState.activeDriverKeys,
         chartState.activeGroups,
         chartState.activeCars,
+        chartState.activeCountries,
     );
     refreshComments();
 }
@@ -619,6 +633,7 @@ function rebuildChart(): void {
         data, stages,
         lookups.recordMap, lookups.cumPenMap, lookups.cumSPMap, lookups.cumSRMap,
         chartState.activeDriverKeys, chartState.activeGroups, chartState.activeCars,
+        chartState.activeCountries,
     );
 
     updatePinnedBar(data, chartCtrl.getPinnedKeys(), key => chartCtrl.togglePin(key, true));

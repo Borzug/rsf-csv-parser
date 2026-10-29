@@ -32,6 +32,7 @@ let _resetScroll = true;
 let _filterState: IResultsFilterState = {
     stageFilter:      new Set(),
     groupFilter:      new Set(),
+    countryFilter:    new Set(),
     driverFilter:     new Set(),
     activeDriverKeys: new Set(),
 };
@@ -52,6 +53,7 @@ export function initResultsModule(
     _filterState = {
         stageFilter:      new Set(data.stages.map(s => s.num)),
         groupFilter:      new Set(data.groups),
+        countryFilter:    new Set(data.countries),
         driverFilter:     new Set(),
         activeDriverKeys: new Set(data.drivers.map(d => d.username)),
     };
@@ -132,6 +134,10 @@ function getFilteredStats(): IDriverStats[] {
 
     if (_data.groups.length && _filterState.groupFilter.size > 0)
         stats = stats.filter(s => _filterState.groupFilter.has(s.group));
+
+    // В отличие от класса, «Ничего» по стране действительно никого не оставляет
+    if (_data.countries.length)
+        stats = stats.filter(s => _filterState.countryFilter.has(s.country));
 
     if (_filterState.driverFilter.size > 0)
         stats = stats.filter(s => _filterState.driverFilter.has(s.username));

@@ -10,6 +10,7 @@ import {
     buildDriverFilterUI,
     buildGroupFilterUI,
     buildCarFilterUI,
+    buildCountryFilterUI,
 } from './filterBuilders';
 
 export function buildChartFilterPanel(
@@ -26,6 +27,10 @@ export function buildChartFilterPanel(
     );
     buildCarFilterUI(
         data.drivers, state, callbacks,
+        () => applyGroupOrCarFilterToDriverList(data, state),
+    );
+    buildCountryFilterUI(
+        data, state, callbacks,
         () => applyGroupOrCarFilterToDriverList(data, state),
     );
 }

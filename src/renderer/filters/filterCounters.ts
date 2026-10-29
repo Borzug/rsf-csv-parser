@@ -24,6 +24,9 @@ export function updateFilterCounters(
     const allCars = [...new Set(data.drivers.map(d => d.car).filter(Boolean))];
     if (allCars.length)
         setCounterText('counter-cars', activeCars.size, allCars.length);
+
+    if (data.countries.length)
+        setCounterText('counter-countries', state.activeCountries.size, data.countries.length);
 }
 
 export function updateToggleButtonStates(
@@ -48,6 +51,10 @@ export function updateToggleButtonStates(
     const allCars = [...new Set(data.drivers.map(d => d.car).filter(Boolean))];
     setToggleActive('#filter-cars .btn-fa:nth-child(1)', activeCars.size === allCars.length && allCars.length > 0);
     setToggleActive('#filter-cars .btn-fa:nth-child(2)', activeCars.size === 0);
+
+    const nCty = data.countries.length;
+    setToggleActive('#filter-countries .btn-fa:nth-child(1)', state.activeCountries.size === nCty && nCty > 0);
+    setToggleActive('#filter-countries .btn-fa:nth-child(2)', state.activeCountries.size === 0);
 }
 
 export function syncStageCheckboxes(activeStageNums: Set<number>): void {
