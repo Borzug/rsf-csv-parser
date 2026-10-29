@@ -226,24 +226,30 @@ body {
 .filter-item.hover-highlighted { background: rgba(192,57,43,0.08); }
 /* Скрыта поиском (не фильтром) — см. applyDriverSearch */
 .filter-item.search-hidden { display: none; }
-.filter-item input[type="checkbox"] { margin-top: 3px; flex-shrink: 0; accent-color: var(--red); cursor: pointer; }
+/* Первая строка любой подписи — 16px, чекбокс 13px: отступ 1.5px ставит его центр на середину строки */
+.filter-item input[type="checkbox"] {
+    width: 13px; height: 13px; margin-top: 1.5px; margin-bottom: 0;
+    flex-shrink: 0; accent-color: var(--red); cursor: pointer;
+}
+.filter-ss, .filter-name, .filter-driver-name, .filter-driver-rank,
+.filter-group-label, .filter-car-label, .filter-country-label, .filter-country-count { line-height: 16px; }
 
 .filter-ss           { font-size: 11px; font-weight: 600; color: var(--red-text); font-family: var(--ff); white-space: nowrap; flex-shrink: 0; }
-.filter-name         { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
+.filter-name         { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; }
 
 /* 2-line driver item */
 .filter-driver-content { display: flex; flex-direction: column; min-width: 0; }
 .filter-driver-rank    {
     font-size: 10px; color: var(--muted); font-family: var(--ff);
-    min-width: 22px; text-align: right; margin-top: 2px; flex-shrink: 0;
+    min-width: 22px; text-align: right; flex-shrink: 0;
 }
 .filter-driver-rank.dnf { color: var(--dim); font-size: 9px; }
 .filter-presets { display: flex; gap: 4px; padding: 0 10px 6px; }
-.filter-driver-name    { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
+.filter-driver-name    { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; }
 .filter-driver-car     { font-size: 10px; color: var(--dim); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
 
 .filter-group-label  { font-size: 11px; color: var(--text); font-family: var(--ff); }
-.filter-car-label    { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
+.filter-car-label    { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; }
 .filter-country-label { flex: 1; min-width: 0; font-size: 11px; color: var(--text); font-family: var(--ff); }
 .filter-country-count { margin-left: auto; font-size: 10px; color: var(--dim); font-family: var(--ff); }
 
