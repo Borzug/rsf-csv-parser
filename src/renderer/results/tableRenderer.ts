@@ -9,6 +9,7 @@ import {
     formatTime,
     formatTimeSigned
 } from "../utils.js";
+import { prependFlag } from "../flags";
 
 /** km — темп считается на километр (известны длины всех выбранных СУ). */
 interface IColumnDef {
@@ -180,6 +181,7 @@ function buildPositionCell(pos: number | null): HTMLTableCellElement {
 function buildNameCell(stats: any): HTMLTableCellElement {
     const td   = createTd('td-name sticky-col sticky-col-2');
     const user = createElement('span', 'td-name-user', stats.username);
+    prependFlag(user, stats.country);
     td.appendChild(user);
     if (stats.realName && stats.realName !== stats.username) {
         const real = createElement('span', 'td-name-real', ` | ${stats.realName}`);

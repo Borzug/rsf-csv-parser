@@ -6,6 +6,7 @@
     stageName: ["stage name", "stage_name", "stagename"],
     username: ["user name", "username", "user_name", "login", "nick"],
     realName: ["real name", "real_name", "realname", "full name", "driver name"],
+    country: ["nationality", "country", "nation"],
     car: ["car name", "car", "vehicle", "car_name"],
     group: ["group", "class", "category"],
     time1: ["time1"],
@@ -111,6 +112,7 @@
         stageName: decodeHtmlEntities(get(row, "stageName") ?? `SS${stageNum}`),
         username: decodeHtmlEntities(get(row, "username") ?? `driver_${i}`),
         realName: decodeHtmlEntities(get(row, "realName") ?? ""),
+        country: (get(row, "country") ?? "").toUpperCase(),
         car: decodeHtmlEntities(get(row, "car") ?? ""),
         comment: decodeHtmlEntities(get(row, "comment") ?? ""),
         group: get(row, "group") ?? "",
@@ -139,6 +141,7 @@
         driverMap.set(r.username, {
           username: r.username,
           realName: r.realName,
+          country: r.country,
           car: r.car,
           group: r.group,
           label: `${r.username}${realPart}${carPart}`
@@ -1865,6 +1868,28 @@ ${hit.ptIdx}` : null;
     return createElement("td", className, text);
   }
 
+  // src/renderer/flags.ts
+  var AVAILABLE = new Set(
+    "ad ae af ag ai al am ao aq ar arab as asean at au aw ax az ba bb bd be bf bg bh bi bj bl bm bn bo bq br bs bt bv bw by bz ca cc cd cefta cf cg ch ci ck cl cm cn co cp cr cu cv cw cx cy cz de dg dj dk dm do dz eac ec ee eg eh er es-ct es-ga es-pv es et eu fi fj fk fm fo fr ga gb-eng gb-nir gb-sct gb-wls gb gd ge gf gg gh gi gl gm gn gp gq gr gs gt gu gw gy hk hm hn hr ht hu ic id ie il im in io iq ir is it je jm jo jp ke kg kh ki km kn kp kr kw ky kz la lb lc li lk lr ls lt lu lv ly ma mc md me mf mg mh mk ml mm mn mo mp mq mr ms mt mu mv mw mx my mz na nc ne nf ng ni nl no np nr nu nz om pa pc pe pf pg ph pk pl pm pn pr ps pt pw py qa re ro rs ru rw sa sb sc sd se sg sh-ac sh-hl sh-ta sh si sj sk sl sm sn so sr ss st sv sx sy sz tc td tf tg th tj tk tl tm tn to tr tt tv tw tz ua ug um un us uy uz va vc ve vg vi vn vu wf ws xk xx ye yt za zm zw".split(" ")
+  );
+  function createFlag(country) {
+    const code = country.trim().toLowerCase();
+    if (!AVAILABLE.has(code)) return null;
+    const img = createElement("img", "flag");
+    img.src = `flags/${code}.svg`;
+    img.alt = country.toUpperCase();
+    img.title = country.toUpperCase();
+    img.width = 16;
+    img.height = 12;
+    img.loading = "lazy";
+    img.decoding = "async";
+    return img;
+  }
+  function prependFlag(el, country) {
+    const flag = createFlag(country);
+    if (flag) el.prepend(flag);
+  }
+
   // src/renderer/chart/legendPanel.ts
   function updateLegendPanel(data2, chart, activeStages, recordMap, isExpanded, pinnedKeys, leaderFirst, callbacks3) {
     const panel = document.getElementById("legend-panel");
@@ -1981,6 +2006,7 @@ ${hit.ptIdx}` : null;
         "legend-name",
         drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
       );
+      prependFlag(name, drv.country);
       item.appendChild(dot);
       item.appendChild(name);
       frag.appendChild(item);
@@ -2220,6 +2246,7 @@ ${hit.ptIdx}` : null;
         "pinned-name",
         drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
       );
+      prependFlag(name, drv.country);
       const x = createElement("button", "pinned-chip-x", "\xD7");
       x.title = i18n.t().pinnedChipRemove;
       x.setAttribute("aria-label", `${i18n.t().pinnedChipRemove}: ${drv.username}`);
@@ -2459,6 +2486,7 @@ ${hit.ptIdx}` : null;
         result.push({
           username: driver.username,
           realName: driver.realName,
+          country: driver.country,
           car: driver.car,
           group: driver.group,
           position: positions.get(driver.username) ?? 0,
@@ -2549,6 +2577,7 @@ ${hit.ptIdx}` : null;
     const username = document.createElement("div");
     username.className = "cmt-drv-username";
     username.textContent = driver.username;
+    prependFlag(username, driver.country);
     col.appendChild(username);
     if (driver.realName && driver.realName !== driver.username) {
       const realName = document.createElement("div");
@@ -3129,6 +3158,7 @@ ${hit.ptIdx}` : null;
         "filter-driver-name",
         drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
       );
+      prependFlag(nameSpan, drv.country);
       content.appendChild(nameSpan);
       if (drv.car) content.appendChild(createElement("span", "filter-driver-car", drv.car));
       lbl.addEventListener("mouseenter", () => {
@@ -3347,6 +3377,7 @@ ${hit.ptIdx}` : null;
       return {
         username: drv.username,
         realName: drv.realName,
+        country: drv.country,
         car: drv.car,
         group: drv.group,
         displayName: dn,
@@ -3550,6 +3581,7 @@ ${hit.ptIdx}` : null;
         "filter-driver-name",
         drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
       );
+      prependFlag(nm, drv.country);
       content.appendChild(nm);
       if (drv.car) content.appendChild(createElement("span", "filter-driver-car", drv.car));
       lbl.appendChild(cb);
@@ -3747,6 +3779,7 @@ ${hit.ptIdx}` : null;
   function buildNameCell(stats) {
     const td = createTd("td-name sticky-col sticky-col-2");
     const user = createElement("span", "td-name-user", stats.username);
+    prependFlag(user, stats.country);
     td.appendChild(user);
     if (stats.realName && stats.realName !== stats.username) {
       const real = createElement("span", "td-name-real", ` | ${stats.realName}`);

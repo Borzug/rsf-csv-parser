@@ -5,6 +5,7 @@ const COLUMN_ALIASES: Record<string, string[]> = {
     stageName:      ['stage name', 'stage_name', 'stagename'],
     username:       ['user name', 'username', 'user_name', 'login', 'nick'],
     realName:       ['real name', 'real_name', 'realname', 'full name', 'driver name'],
+    country:        ['nationality', 'country', 'nation'],
     car:            ['car name', 'car', 'vehicle', 'car_name'],
     group:          ['group', 'class', 'category'],
     time1:          ['time1'],
@@ -114,6 +115,7 @@ export function parseCsvText(raw: string): IParsedRallyData {
             stageName:      decodeHtmlEntities(get(row, 'stageName') ?? `SS${stageNum}`),
             username:       decodeHtmlEntities(get(row, 'username')  ?? `driver_${i}`),
             realName:       decodeHtmlEntities(get(row, 'realName')  ?? ''),
+            country:        (get(row, 'country') ?? '').toUpperCase(),
             car:            decodeHtmlEntities(get(row, 'car')       ?? ''),
             comment:        decodeHtmlEntities(get(row, 'comment')   ?? ''),
             group:          get(row, 'group')          ?? '',
@@ -148,6 +150,7 @@ function buildRallyData(records: ILapRecord[]): IParsedRallyData {
             driverMap.set(r.username, {
                 username: r.username,
                 realName: r.realName,
+                country:  r.country,
                 car:      r.car,
                 group:    r.group,
                 label:    `${r.username}${realPart}${carPart}`,

@@ -3,6 +3,7 @@ import { i18n } from "../../i18n/index";
 import { driverColor } from '../colors';
 import { createElement } from "../dom";
 import { isCoarsePointer } from "../utils";
+import { prependFlag } from "../flags";
 
 export function updatePinnedBar(
     data:       IParsedRallyData | null,
@@ -30,7 +31,8 @@ export function updatePinnedBar(
                 ? `${drv!.username} (${drv!.realName})`
                 : drv!.username,
         );
-        const x = createElement('button', 'pinned-chip-x', '×');
+        prependFlag(name, drv!.country);
+        const x =createElement('button', 'pinned-chip-x', '×');
         x.title = i18n.t().pinnedChipRemove;
         x.setAttribute('aria-label', `${i18n.t().pinnedChipRemove}: ${drv!.username}`);
         x.addEventListener('click', () => onUnpin(drv!.username));

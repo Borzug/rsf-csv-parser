@@ -5,6 +5,7 @@ import {
     formatTime,
     nullableCompare
 } from "../utils";
+import { prependFlag } from "../flags";
 
 const STYLES_ID    = 'comments-module-styles';
 const CARD_WIDTH   = 220;
@@ -155,6 +156,7 @@ function buildCommentsData(data: IParsedRallyData): IDriverComments[] {
             result.push({
                 username:  driver.username,
                 realName:  driver.realName,
+                country:   driver.country,
                 car:       driver.car,
                 group:     driver.group,
                 position:  positions.get(driver.username) ?? 0,
@@ -261,6 +263,7 @@ function buildDriverCol(driver: IDriverComments): HTMLElement {
     const username = document.createElement('div');
     username.className   = 'cmt-drv-username';
     username.textContent = driver.username;
+    prependFlag(username, driver.country);
     col.appendChild(username);
 
     if (driver.realName && driver.realName !== driver.username) {

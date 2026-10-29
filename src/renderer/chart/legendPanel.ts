@@ -2,6 +2,7 @@ import type { IParsedRallyData, IStageInfo } from '../../shared/types';
 import { driverColor } from "../colors";
 import { createElement } from "../dom";
 import { isCoarsePointer } from "../utils";
+import { prependFlag } from "../flags";
 
 export interface ILegendPanelCallbacks {
     onDriverHover: (key: string | null) => void;
@@ -169,6 +170,7 @@ function renderLegendItems(
                 ? `${drv.username} (${drv.realName})`
                 : drv.username,
         );
+        prependFlag(name, drv.country);
         item.appendChild(dot);
         item.appendChild(name);
         frag.appendChild(item);

@@ -5,6 +5,7 @@ import {
     qsa
 } from "../dom.js";
 import { buildCollapsibleFilterGroup } from "../filters/filterGroup.js";
+import { prependFlag } from "../flags";
 
 export interface IResultsFilterState {
     stageFilter:      Set<number>;
@@ -165,6 +166,7 @@ function buildResultsDriverFilter(
             drv.realName && drv.realName !== drv.username
                 ? `${drv.username} (${drv.realName})` : drv.username,
         );
+        prependFlag(nm, drv.country);
         content.appendChild(nm);
         if (drv.car) content.appendChild(createElement('span', 'filter-driver-car', drv.car));
         lbl.appendChild(cb); lbl.appendChild(content);

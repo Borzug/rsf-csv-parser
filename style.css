@@ -389,6 +389,12 @@ body {
 .legend-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .legend-name { font-family: var(--ff); font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; }
 
+/* Флаг страны перед именем участника (flags.ts); тонкая обводка — чтобы тёмные флаги не терялись на фоне */
+.flag {
+    display: inline-block; width: 16px; height: 12px; margin-right: 5px; vertical-align: -1px;
+    border-radius: 2px; object-fit: cover; box-shadow: 0 0 0 1px rgba(255,255,255,0.14);
+}
+
 /* ── Results view ────────────────────────────────────────────── */
 /* Левый отступ перенесён в первую (закреплённую) колонку, иначе под ним видно прокручиваемые ячейки */
 .results-wrap { flex: 1; overflow: auto; padding: 12px 16px 12px 0; }

@@ -8,6 +8,7 @@ export interface IDriverStageSnap {
 export interface IDriverStats {
     username:     string;
     realName:     string;
+    country:      string;
     car:          string;
     group:        string;
     displayName:  string;

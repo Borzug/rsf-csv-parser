@@ -32,6 +32,7 @@ export function computeAllDriverStats(
         return {
             username:     drv.username,
             realName:     drv.realName,
+            country:      drv.country,
             car:          drv.car,
             group:        drv.group,
             displayName:  dn,

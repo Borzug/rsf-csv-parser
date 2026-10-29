@@ -4,6 +4,8 @@ export interface ILapRecord {
     stageName:      string;
     username:       string;
     realName:       string;
+    /** Код страны ISO alpha-2 («FI»), может быть пустым */
+    country:        string;
     car:            string;
     group:          string;
     time1:          number | null;
@@ -25,6 +27,7 @@ export interface IStageInfo {
 export interface IDriverInfo {
     username: string;
     realName: string;
+    country:  string;
     car:      string;
     group:    string;
     /** Метка фильтра: "username (Real Name) | Car" */

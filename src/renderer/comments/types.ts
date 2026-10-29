@@ -12,6 +12,7 @@ export interface ICommentEntry {
 export interface IDriverComments {
     username:  string;
     realName:  string;
+    country:   string;
     car:       string;
     group:     string;
     position:  number;

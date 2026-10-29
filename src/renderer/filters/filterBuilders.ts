@@ -17,6 +17,7 @@ import {
     setAllCheckboxes,
     syncVisibleCheckboxes
 } from "./filterState.js";
+import { prependFlag } from "../flags";
 
 export function buildStageFilterUI(
     stages:    IStageInfo[],
@@ -145,6 +146,7 @@ export function buildDriverFilterUI(
                 ? `${drv.username} (${drv.realName})`
                 : drv.username,
         );
+        prependFlag(nameSpan, drv.country);
         content.appendChild(nameSpan);
         if (drv.car) content.appendChild(createElement('span', 'filter-driver-car', drv.car));
 
