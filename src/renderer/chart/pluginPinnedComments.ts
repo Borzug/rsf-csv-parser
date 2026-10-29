@@ -1,11 +1,13 @@
 import type { IStageInfo } from '../../shared/types';
+import { commentStageIdx } from "./chartComments";
+import { chartTheme } from "./theme";
 
 /**
  * Комментарии закреплённых на графике: над каждым ◆ — плашка с номером СУ, сам текст —
  * в ленте под графиком (commentStrip). Комментарий, на который навели в ленте, обводится.
  * Наведение на ◆ закреплённого сообщается наружу, чтобы лента подсветила запись.
  */
-const FONT       = "bold 9px 'Fira Code', monospace";
+const FONT_SIZE  = 9;
 const PILL_H     = 13;
 const PILL_PAD_X = 4;
 const PILL_GAP   = 9;
@@ -31,7 +33,7 @@ export function buildPinnedCommentsPlugin(
             const active = getActive();
             const { ctx, chartArea: area } = ch;
             ctx.save();
-            ctx.font         = FONT;
+            ctx.font         = `bold ${FONT_SIZE}px ${chartTheme().font}`;
             ctx.textAlign    = 'center';
             ctx.textBaseline = 'middle';
 
@@ -45,26 +47,25 @@ export function buildPinnedCommentsPlugin(
                     if (!cmts[i] || !pt || pt.skip) continue;
                     if (pt.y < area.top - 1 || pt.y > area.bottom + 1) continue;
 
-                    const si    = i === ds._dnfCmtPtIdx && ds._dnfCmtStageIdx !== null
-                        ? ds._dnfCmtStageIdx : Math.floor((i - 1) / 3);
+                    const si    = commentStageIdx(ds, i);
                     const label = stages[si] ? String(stages[si].num) : '';
                     const w     = ctx.measureText(label).width + PILL_PAD_X * 2;
                     // Над точкой, а у верхнего края — под ней
                     const above = pt.y - PILL_GAP - PILL_H >= area.top;
                     const y     = above ? pt.y - PILL_GAP - PILL_H / 2 : pt.y + PILL_GAP + PILL_H / 2;
 
-                    ctx.fillStyle   = 'rgba(10,10,10,0.88)';
+                    ctx.fillStyle   = chartTheme().pillBg;
                     ctx.strokeStyle = ds.borderColor;
                     ctx.lineWidth   = 1;
                     ctx.beginPath();
                     ctx.roundRect(pt.x - w / 2, y - PILL_H / 2, w, PILL_H, 3);
                     ctx.fill();
                     ctx.stroke();
-                    ctx.fillStyle = '#eee';
+                    ctx.fillStyle = chartTheme().pillText;
                     ctx.fillText(label, pt.x, y + 0.5);
 
                     if (active && active.key === ds.driverKey && active.ptIdx === i) {
-                        ctx.strokeStyle = '#f1c40f';
+                        ctx.strokeStyle = chartTheme().highlight;
                         ctx.lineWidth   = 2;
                         ctx.beginPath();
                         ctx.arc(pt.x, pt.y, RING_R, 0, Math.PI * 2);

@@ -1,4 +1,14 @@
 import type { ILapRecord, IStageInfo, IDriverInfo, IParsedRallyData } from './shared/types';
+import { driverDisplayName } from './shared/driverName';
+
+/** Почему файл не разобран; текст сообщения выбирает интерфейс по коду (i18n). */
+export type TCsvErrorCode = 'tooFewLines' | 'noData';
+
+export class CsvParseError extends Error {
+    constructor(readonly code: TCsvErrorCode) {
+        super(code);
+    }
+}
 
 const COLUMN_ALIASES: Record<string, string[]> = {
     stageNum:       ['ss'],
@@ -93,7 +103,7 @@ export function parseCsvText(raw: string): IParsedRallyData {
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
 
     const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
-    if (lines.length < 2) throw new Error('Файл содержит слишком мало строк');
+    if (lines.length < 2) throw new CsvParseError('tooFewLines');
 
     const delim  = detectDelimiter(lines[0]);
     const colMap = buildColumnMap(splitRow(lines[0], delim));
@@ -128,7 +138,7 @@ export function parseCsvText(raw: string): IParsedRallyData {
         });
     }
 
-    if (records.length === 0) throw new Error('Не удалось распознать данные в файле');
+    if (records.length === 0) throw new CsvParseError('noData');
 
     return buildRallyData(records);
 }
@@ -145,7 +155,6 @@ function buildRallyData(records: ILapRecord[]): IParsedRallyData {
     const driverMap = new Map<string, IDriverInfo>();
     for (const r of records) {
         if (!driverMap.has(r.username)) {
-            const realPart = r.realName && r.realName !== r.username ? ` (${r.realName})` : '';
             const carPart  = r.car ? ` | ${r.car}` : '';
             driverMap.set(r.username, {
                 username: r.username,
@@ -153,7 +162,7 @@ function buildRallyData(records: ILapRecord[]): IParsedRallyData {
                 country:  r.country,
                 car:      r.car,
                 group:    r.group,
-                label:    `${r.username}${realPart}${carPart}`,
+                label:    `${driverDisplayName(r)}${carPart}`,
             });
         }
     }

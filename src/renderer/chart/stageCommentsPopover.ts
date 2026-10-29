@@ -10,13 +10,20 @@ import type { IAnchor } from "./controller";
  * закрепляет его открытым до клика мимо или Escape.
  */
 const CLOSE_DELAY_MS = 180;
+/** Отступ от краёв окна и зазор до строки счётчиков */
+const VIEW_MARGIN    = 8;
+const ANCHOR_GAP     = 6;
+/** Высота списка: не меньше и не больше этих значений, но не выше места над счётчиком */
+const MIN_HEIGHT     = 160;
+const MAX_HEIGHT     = 380;
+const TOP_RESERVE    = 70;
 
 type TGetComments = (stageIdx: number) => { comments: IChartComment[]; pinnedOnly: boolean };
 
 let getComments: TGetComments | null = null;
 let openIdx:     number | null = null;
 let sticky       = false;
-let closeTimer:  number | null = null;
+let closeTimer:  number | undefined;
 
 const popEl = (): HTMLElement => document.getElementById('stage-comments')!;
 
@@ -109,21 +116,21 @@ function render(comments: IChartComment[], pinnedOnly: boolean): void {
 /** Над строкой счётчиков, по центру СУ, в пределах окна. */
 function position(anchor: IAnchor): void {
     const pop = popEl();
-    const margin = 8;
-    pop.style.maxHeight = `${Math.max(160, Math.min(380, anchor.y - 70))}px`;
+    pop.style.maxHeight = `${Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, anchor.y - TOP_RESERVE))}px`;
     const w = pop.offsetWidth;
     const h = pop.offsetHeight;
-    const left = Math.min(Math.max(anchor.x - w / 2, margin), window.innerWidth - w - margin);
-    const top  = Math.max(anchor.y - h - 6, margin);
+    const left = Math.min(Math.max(anchor.x - w / 2, VIEW_MARGIN), window.innerWidth - w - VIEW_MARGIN);
+    const top  = Math.max(anchor.y - h - ANCHOR_GAP, VIEW_MARGIN);
     pop.style.left = `${left}px`;
     pop.style.top  = `${top}px`;
 }
 
 function scheduleClose(): void {
     cancelClose();
-    closeTimer = setTimeout(closeStageComments, CLOSE_DELAY_MS) as unknown as number;
+    closeTimer = window.setTimeout(closeStageComments, CLOSE_DELAY_MS);
 }
 
 function cancelClose(): void {
-    if (closeTimer !== null) { clearTimeout(closeTimer); closeTimer = null; }
+    window.clearTimeout(closeTimer);
+    closeTimer = undefined;
 }

@@ -2,7 +2,7 @@
  * Набор «активных» датасетов, которые рисуются ярко (остальные приглушены).
  * null — ничего не выделено, все линии рисуются как обычно.
  */
-export function resolveActiveIdxs(
+function resolveActiveIdxs(
     ch:             any,
     getHoveredKey:  () => string | null,
     getPinnedIdxs:  () => number[],

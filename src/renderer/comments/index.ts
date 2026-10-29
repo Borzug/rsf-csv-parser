@@ -1,4 +1,5 @@
 import type { IParsedRallyData, ILapRecord } from '../../shared/types';
+import type { IDriverStats } from '../results/types';
 import type { ICommentEntry, IDriverComments } from './types';
 import { i18n } from "../../i18n/index";
 import {
@@ -6,14 +7,21 @@ import {
     nullableCompare
 } from "../utils";
 import { prependFlag } from "../flags";
+import { hasRealName } from "../../shared/driverName";
 
-const STYLES_ID    = 'comments-module-styles';
-const CARD_WIDTH   = 220;
-const DRIVER_COL_W = 190;
+/** Итоговые места и время — считаются один раз при загрузке файла (см. initCommentsModule). */
+let rankMap    = new Map<string, number | null>();
+let totalTimes = new Map<string, number | null>();
 
 /** Данные, для которых построен текущий вид; null — вид устарел (смена языка). */
 let renderedFor: IParsedRallyData | null = null;
 let lastData:    IParsedRallyData | null = null;
+
+/** Места и итоговое время берём из общих расчётов, а не считаем заново. */
+export function initCommentsModule(ranks: Map<string, number | null>, allStats: IDriverStats[]): void {
+    rankMap    = ranks;
+    totalTimes = new Map(allStats.map(s => [s.username, s.totalTime]));
+}
 
 /** Перестраивает вид, только если он устарел (другой файл или смена языка). */
 export function ensureCommentsRendered(data: IParsedRallyData): void {
@@ -28,7 +36,6 @@ export function renderCommentsView(data: IParsedRallyData): void {
     // Вкладка сохраняет прокрутку между переходами; для другого файла начинаем сверху
     const isNewData = data !== lastData;
     renderedFor = lastData = data;
-    injectStyles();
     renderSidebarSearch();
 
     const container = document.getElementById('view-comments')!;
@@ -122,10 +129,7 @@ function scrollToDriverMatch(query: string): void {
 // ── Data building ─────────────────────────────────────────────────────────────
 
 function buildCommentsData(data: IParsedRallyData): IDriverComments[] {
-    const recordMap   = buildRecordMap(data.records);
     const leaderTimes = buildLeaderTimes(data.records);
-    const totalTimes  = buildTotalTimes(data, recordMap);
-    const positions   = buildPositions(data, recordMap);
     const result: IDriverComments[] = [];
 
     // Записи с комментарием по участникам — один проход вместо фильтра всех записей на каждого
@@ -159,7 +163,7 @@ function buildCommentsData(data: IParsedRallyData): IDriverComments[] {
                 country:   driver.country,
                 car:       driver.car,
                 group:     driver.group,
-                position:  positions.get(driver.username) ?? 0,
+                position:  rankMap.get(driver.username) ?? null,
                 totalTime: totalTimes.get(driver.username) ?? null,
                 entries,
             });
@@ -168,53 +172,6 @@ function buildCommentsData(data: IParsedRallyData): IDriverComments[] {
 
     result.sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
     return result;
-}
-
-function buildRecordMap(records: ILapRecord[]): Map<string, Map<number, ILapRecord>> {
-    const map = new Map<string, Map<number, ILapRecord>>();
-    for (const r of records) {
-        if (!map.has(r.username)) map.set(r.username, new Map());
-        map.get(r.username)!.set(r.stageNum, r);
-    }
-    return map;
-}
-
-function buildPositions(
-    data:      IParsedRallyData,
-    recordMap: Map<string, Map<number, ILapRecord>>,
-): Map<string, number> {
-    const stageNums = [...data.stages].sort((a, b) => a.num - b.num).map(s => s.num);
-    const totals = data.drivers.map(drv => {
-        let total: number | null = 0;
-        for (const sn of stageNums) {
-            const t3 = recordMap.get(drv.username)?.get(sn)?.time3 ?? null;
-            if (t3 === null) { total = null; break; }
-            else total += t3;
-        }
-        return { username: drv.username, total };
-    });
-    totals.sort((a, b) => nullableCompare(a.total, b.total));
-    const map = new Map<string, number>();
-    totals.forEach((d, i) => map.set(d.username, i + 1));
-    return map;
-}
-
-function buildTotalTimes(
-    data:      IParsedRallyData,
-    recordMap: Map<string, Map<number, ILapRecord>>,
-): Map<string, number | null> {
-    const stageNums = [...data.stages].sort((a, b) => a.num - b.num).map(s => s.num);
-    const map = new Map<string, number | null>();
-    for (const drv of data.drivers) {
-        let total: number | null = 0;
-        for (const sn of stageNums) {
-            const t3 = recordMap.get(drv.username)?.get(sn)?.time3 ?? null;
-            if (t3 === null) { total = null; break; }
-            else total += t3;
-        }
-        map.set(drv.username, total);
-    }
-    return map;
 }
 
 function buildLeaderTimes(records: ILapRecord[]): Map<number, number> {
@@ -242,10 +199,11 @@ function buildDriverRow(driver: IDriverComments): HTMLElement {
     return row;
 }
 
-function buildPositionBlock(position: number): HTMLElement {
+/** Место, как в таблице результатов: у сошедших — DNF. */
+function buildPositionBlock(position: number | null): HTMLElement {
     const el = document.createElement('div');
-    el.className  = resolvePositionClass(position);
-    el.textContent = String(position);
+    el.className   = position === null ? 'cmt-pos pos-dnf' : resolvePositionClass(position);
+    el.textContent = position === null ? 'DNF' : String(position);
     return el;
 }
 
@@ -266,7 +224,7 @@ function buildDriverCol(driver: IDriverComments): HTMLElement {
     prependFlag(username, driver.country);
     col.appendChild(username);
 
-    if (driver.realName && driver.realName !== driver.username) {
+    if (hasRealName(driver)) {
         const realName = document.createElement('div');
         realName.className   = 'cmt-drv-realname';
         realName.textContent = driver.realName;
@@ -391,206 +349,3 @@ function buildCardBadges(entry: ICommentEntry): HTMLElement {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-// ── Styles ────────────────────────────────────────────────────────────────────
-
-function injectStyles(): void {
-    if (document.getElementById(STYLES_ID)) return;
-    const style = document.createElement('style');
-    style.id = STYLES_ID;
-    style.textContent = `
-        /* Имена переменных ниже нигде больше не объявлялись — карточки оставались
-           без фона и рамки и с системным шрифтом. Сводим их к токенам приложения. */
-        :root {
-            --font-mono:                var(--ff);
-            --color-text-primary:       var(--text);
-            --color-text-secondary:     var(--text-2);
-            --color-text-tertiary:      var(--muted);
-            --color-background-secondary: var(--surface);
-            --color-border-tertiary:    var(--border);
-            --color-border-secondary:   #444;
-        }
-        #view-comments, .cmt-search-wrap { font-family: var(--ff); }
-        #view-comments {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 20px 24px;
-        }
-        .cmt-empty {
-            color: var(--color-text-tertiary);
-            text-align: center;
-            margin-top: 80px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-        }
-        .cmt-list { display: flex; flex-direction: column; }
-        .cmt-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 18px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.12);
-            transition: background 0.15s;
-            /* Строки за пределами экрана не раскладываются — на больших ралли их сотни.
-               auto запоминает настоящую высоту, когда строка хоть раз показана */
-            content-visibility: auto;
-            contain-intrinsic-size: auto 400px;
-        }
-        .cmt-row:last-child { border-bottom: none; }
-        .cmt-row--highlighted {
-            background: rgba(46,204,113,0.12);
-            outline: 1px solid rgba(46,204,113,0.4);
-            border-radius: 6px;
-        }
-        .cmt-pos {
-            font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--color-text-tertiary);
-            width: 28px;
-            min-width: 28px;
-            text-align: right;
-            padding-top: 2px;
-            flex-shrink: 0;
-        }
-        .cmt-pos--gold   { color: #f1c40f; }
-        .cmt-pos--silver { color: #bdc3c7; }
-        .cmt-pos--bronze { color: #e67e22; }
-        .cmt-driver {
-            width: ${DRIVER_COL_W}px;
-            min-width: ${DRIVER_COL_W}px;
-            padding-top: 2px;
-        }
-        .cmt-drv-username {
-            font-family: var(--font-mono);
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .cmt-drv-realname {
-            font-size: 11px;
-            color: var(--color-text-tertiary);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .cmt-drv-car {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            margin-top: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .cmt-drv-count {
-            display: inline-block;
-            margin-top: 8px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--muted);
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--color-border-tertiary);
-            border-radius: 4px;
-            padding: 1px 6px;
-        }
-        .cmt-cards { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
-        .cmt-card {
-            width: ${CARD_WIDTH}px;
-            min-width: ${CARD_WIDTH}px;
-            background: var(--color-background-secondary);
-            border: 1px solid var(--color-border-tertiary);
-            border-radius: 8px;
-            padding: 10px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            transition: border-color 0.15s;
-        }
-        .cmt-card:hover { border-color: var(--color-border-secondary); }
-        .cmt-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
-        .cmt-badge {
-            background: #cc2222;
-            color: #fff;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-        .cmt-stage-name {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .cmt-card-meta { display: flex; flex-direction: column; gap: 3px; }
-        .cmt-time {
-            font-family: var(--font-mono);
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text-primary);
-        }
-        .cmt-gap {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--color-text-tertiary);
-        }
-        .cmt-gap--leader { color: #44aa66; font-size: 10px; font-weight: 500; }
-        .cmt-card-badges { display: flex; flex-wrap: wrap; gap: 4px; }
-        .cmt-badge-sr {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--red-text);
-            background: rgba(204,34,34,0.12);
-            border: 1px solid rgba(204,34,34,0.25);
-            padding: 1px 6px;
-            border-radius: 3px;
-        }
-        .cmt-badge-penalty {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--red-text);
-            background: rgba(204,34,34,0.07);
-            border: 1px solid rgba(204,34,34,0.18);
-            padding: 1px 6px;
-            border-radius: 3px;
-        }
-        .cmt-card-text {
-            font-size: 13px;
-            line-height: 1.55;
-            color: var(--color-text-primary);
-            word-break: break-word;
-            border-top: 1px solid var(--color-border-tertiary);
-            padding-top: 6px;
-            margin-top: 2px;
-        }
-        .cmt-search-wrap {
-            padding: 8px 12px 12px;
-            border-bottom: 1px solid var(--color-border-tertiary);
-            margin-bottom: 4px;
-        }
-        .cmt-search-input {
-            width: 100%;
-            margin-top: 6px;
-            padding: 5px 8px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            background: var(--color-background-secondary);
-            border: 1px solid var(--color-border-secondary);
-            border-radius: 4px;
-            color: var(--color-text-primary);
-            box-sizing: border-box;
-            outline: none;
-        }
-        .cmt-search-input:focus { border-color: #cc2222; }
-    `;
-    document.head.appendChild(style);
-}

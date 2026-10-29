@@ -6,6 +6,7 @@ import {
     formatTimeSigned
 } from "../utils.js";
 import type { TYMode } from "./controller.js";
+import { splitOfPoint, stageIdxOfPoint } from "./points";
 
 const TOOLTIP_MARGIN_PX = 16;
 const TOOLTIP_OFFSET_Y  = 12;
@@ -72,7 +73,8 @@ function collectMatchingDatasets(
         if (ds.hidden) return;
         if (pinnedIdxs.length && !pinnedIdxs.includes(di)) return;
         const yv    = ds.data[xIdx] as number | null;
-        const isDnf = xIdx === (ds._dnfCommentPtIdx as number | null);
+        // Последняя пройденная точка участника, сошедшего с комментарием
+        const isDnf = xIdx === (ds._dnfCmtPtIdx as number | null);
         if (yv !== null && Math.abs(yv - y0) < 1.0) matches.push({ ds, y: yv, isDnf });
     });
 
@@ -149,14 +151,16 @@ function buildTooltipHtml(
         if (car) html += `<span class="tt-car">🚗 ${car}</span>`;
         html += `<span class="tt-sep"></span>`;
         const abs = (ds._abs as (number | null)[])[xIdx] ?? null;
-        html += isDnf || abs === null
+        // Время точки схода настоящее (последний сплит) — показываем его и помечаем сход
+        html += abs === null
             ? `<span class="tt-red">DNF</span>`
             : `<span class="tt-row">⏱ ${formatTime(abs)}</span>`;
-        if (!isDnf && y !== null && yMode === 'position') {
+        if (isDnf && abs !== null) html += `<span class="tt-red">DNF</span>`;
+        if (y !== null && yMode === 'position') {
             html += `<span class="tt-row">${t.tooltipPosition}: ${y}</span>`;
             if (abs !== null && leaderAbs !== null && abs > leaderAbs)
                 html += `<span class="tt-row">${t.tooltipGapLeader}: ${formatTimeSigned(abs - leaderAbs)}</span>`;
-        } else if (!isDnf && y !== null && yMode !== 'abs')
+        } else if (y !== null && yMode !== 'abs')
             html += `<span class="tt-row">${yMode === 'leader' ? t.tooltipGapLeader : t.tooltipGapPinned}: ${formatTimeSigned(y)}</span>`;
         if (pen > 0) html += `<span class="tt-red">${t.tooltipPenalty}: +${formatTime(pen)}</span>`;
         if (sp  > 0) html += `<span class="tt-red">${t.tooltipServicePenalty}: +${formatTime(sp)}</span>`;
@@ -172,13 +176,16 @@ function resolveStageFromIndex(
     stages: IStageInfo[],
 ): { label: string } | null {
     if (idx === 0) return null;
-    const si    = Math.floor((idx - 1) / 3);
-    const split = (idx - 1) % 3 + 1;
+    const si    = stageIdxOfPoint(idx);
+    const split = splitOfPoint(idx);
     const stage = stages[si];
     if (!stage) return null;
     const suffix = split === 1 ? ' · SP1' : split === 2 ? ' · SP2' : '';
     return { label: `SS${stage.num} ${stage.name}${suffix}` };
 }
+
+/** Подсказка не подходит к краю окна ближе этого */
+const VIEW_EDGE = 10;
 
 function positionTooltip(
     el:       HTMLElement,
@@ -194,8 +201,8 @@ function positionTooltip(
 
     requestAnimationFrame(() => {
         const tr = el.getBoundingClientRect();
-        if (tr.right  > window.innerWidth  - 10) tx = rect.left + context.tooltip.caretX - tr.width  - marginPx;
-        if (tr.bottom > window.innerHeight - 10) ty = rect.top  + context.tooltip.caretY - tr.height;
+        if (tr.right  > window.innerWidth  - VIEW_EDGE) tx = rect.left + context.tooltip.caretX - tr.width  - marginPx;
+        if (tr.bottom > window.innerHeight - VIEW_EDGE) ty = rect.top  + context.tooltip.caretY - tr.height;
         el.style.left = `${tx}px`;
         el.style.top  = `${ty}px`;
     });

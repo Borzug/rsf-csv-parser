@@ -1,5 +1,5 @@
 import type { IParsedRallyData } from '../shared/types';
-import { parseCsvText } from "../csvParser";
+import { CsvParseError, parseCsvText } from "../csvParser";
 import { i18n } from "../i18n/index";
 import { initLangSwitcher } from "../lang-switcher";
 import {
@@ -30,6 +30,7 @@ import {
 } from "./chart/stageCommentsPopover";
 import {
     ensureCommentsRendered,
+    initCommentsModule,
     invalidateComments
 } from "./comments/index";
 import { qs } from "./dom";
@@ -233,6 +234,7 @@ async function loadFile(file: File): Promise<void> {
         [...allStats]
             .sort((a, b) => nullableCompare(a.totalTime, b.totalTime))
             .forEach((s, i) => rankMap.set(s.username, s.totalTime !== null ? i + 1 : null));
+        initCommentsModule(rankMap, allStats);
         // Цвет линии берётся по индексу участника. Упорядочив участников по итоговому месту,
         // получаем у соседей по таблице (а значит, и по графику) заведомо разные цвета палитры
         const order = (k: string) => rankMap.get(k) ?? Number.MAX_SAFE_INTEGER;
@@ -246,7 +248,8 @@ async function loadFile(file: File): Promise<void> {
         showChart();
         if (rallyId) void refreshRallyName(rallyId);
     } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
+        const msg = err instanceof CsvParseError ? i18n.t().csvErrors[err.code]
+            : err instanceof Error ? err.message : String(err);
         info.textContent = `${i18n.t().fileError}: ${msg}`;
         info.className   = 'file-info error';
         // Ошибку видно только на стартовом экране — переходим туда, если файл бросили на график
@@ -693,6 +696,12 @@ function isTextInput(target: EventTarget | null): boolean {
 
 // ── Cell tooltip ──────────────────────────────────────────────────────────────
 
+/** Подсказка ячейки — правее и выше курсора; у края окна переносится на другую сторону. */
+const CELL_TIP_DX     = 12;
+const CELL_TIP_DY     = 30;
+const CELL_TIP_DY_FLIP = 16;
+const CELL_TIP_MARGIN = 8;
+
 function onCellTooltipMove(e: MouseEvent): void {
     const tipEl = document.getElementById('cell-tooltip')!;
     const tip   = (e.target as HTMLElement).dataset['tooltip'];
@@ -700,11 +709,11 @@ function onCellTooltipMove(e: MouseEvent): void {
 
     tipEl.textContent = tip;
     tipEl.style.display = 'block';
-    let tx = e.clientX + 12;
-    let ty = e.clientY - 30;
+    let tx = e.clientX + CELL_TIP_DX;
+    let ty = e.clientY - CELL_TIP_DY;
     const tr = tipEl.getBoundingClientRect();
-    if (tx + tr.width  > window.innerWidth  - 8) tx = e.clientX - tr.width - 12;
-    if (ty < 8)                                   ty = e.clientY + 16;
+    if (tx + tr.width > window.innerWidth - CELL_TIP_MARGIN) tx = e.clientX - tr.width - CELL_TIP_DX;
+    if (ty < CELL_TIP_MARGIN)                                ty = e.clientY + CELL_TIP_DY_FLIP;
     tipEl.style.left = `${tx}px`;
     tipEl.style.top  = `${ty}px`;
 }

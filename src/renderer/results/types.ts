@@ -11,7 +11,6 @@ export interface IDriverStats {
     country:      string;
     car:          string;
     group:        string;
-    displayName:  string;
     totalTime:    number | null;
     totalPenalty: number;
     srCount:      number;

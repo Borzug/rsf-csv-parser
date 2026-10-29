@@ -1,12 +1,11 @@
 import { i18n } from "../../i18n/index";
-import type { IParsedRallyData, IStageInfo } from '../../shared/types';
+import type { IParsedRallyData, IStageInfo, TRecordMap } from '../../shared/types';
 import {
     computeYAxisStep,
     formatYAxisTick
 } from "../utils";
 import { buildDatasets } from "./datasets";
 import { passesAttrFilters } from "../filters/filterState";
-import { buildDnfLinePlugin } from "./pluginDnfLine";
 import { buildHoverDimPlugin } from "./pluginHoverDim";
 import {
     collectComments,
@@ -26,6 +25,8 @@ import {
     ROTATE_90_AT
 } from "./pluginStageNames";
 import { buildTooltipHandler } from "./tooltip";
+import { isStageFinish, pointCount, stageEndTick, stageStartTick } from "./points";
+import { AXIS_FONT_SIZE, chartTheme } from "./theme";
 
 const HOVER_DIST_PX  = 40;
 // + строка счётчиков 💬 над подписями СУ
@@ -50,7 +51,7 @@ export interface IChartController {
     build(
         data:             IParsedRallyData,
         stages:           IStageInfo[],
-        recordMap:        Map<string, Map<number, any>>,
+        recordMap:        TRecordMap,
         cumPenMap:        Map<string, Map<number, number>>,
         cumSPMap:         Map<string, Map<number, number>>,
         cumSRMap:         Map<string, Map<number, number>>,
@@ -355,7 +356,7 @@ export function createChartController(): IChartController {
             const useRot90 = stages.length > ROTATE_90_AT;
             currentBotPad  = useRot90 ? BOT_PAD_90 : useRot45 ? BOT_PAD_45 : BOT_PAD_NORMAL;
 
-            const nPts   = 1 + stages.length * 3;
+            const nPts   = pointCount(stages.length);
             const labels = new Array<string>(nPts).fill('');
 
             const datasets = buildDatasets(
@@ -442,7 +443,6 @@ export function createChartController(): IChartController {
                         (ch: any) => countCommentsByStage(ch, activeStages.length, commentSourceIdxs(ch, pinnedIdxs)),
                         () => hoveredCounterIdx,
                     ),
-                    buildDnfLinePlugin(() => hoveredDsKey, () => pinnedIdxs, () => hoveredDsIdx, dimAlpha),
                     buildPinnedCommentsPlugin(
                         () => pinnedIdxs,
                         () => activeStages,
@@ -469,7 +469,7 @@ export function createChartController(): IChartController {
                 const counts = countCommentsByStage(chart, activeStages.length, commentSourceIdxs(chart, pinnedIdxs));
                 if (!counts[idx]) return null;
                 const xs = chart.scales.x;
-                const xMid = (xs.getPixelForTick(idx * 3) + xs.getPixelForTick(idx * 3 + 3)) / 2;
+                const xMid = (xs.getPixelForTick(stageStartTick(idx)) + xs.getPixelForTick(stageEndTick(idx))) / 2;
                 return { idx, anchor: { x: rect.left + xMid, y: rect.top + bot + 2 } };
             };
 
@@ -533,7 +533,7 @@ export function createChartController(): IChartController {
 function stageIdxAtX(chart: any, mx: number, nStages: number): number | null {
     const xs = chart.scales.x;
     for (let i = 0; i < nStages; i++) {
-        if (mx >= xs.getPixelForTick(i * 3) && mx <= xs.getPixelForTick(i * 3 + 3)) return i;
+        if (mx >= xs.getPixelForTick(stageStartTick(i)) && mx <= xs.getPixelForTick(stageEndTick(i))) return i;
     }
     return null;
 }
@@ -555,8 +555,8 @@ function resolveHoveredBandIdx(
 
     const xs = chart.scales.x;
     for (let i = 0; i < stages.length; i++) {
-        const xL = xs.getPixelForTick(i * 3);
-        const xR = xs.getPixelForTick(i * 3 + 3);
+        const xL = xs.getPixelForTick(stageStartTick(i));
+        const xR = xs.getPixelForTick(stageEndTick(i));
         if (mx >= xL && mx <= xR) return i;
     }
     return null;
@@ -564,9 +564,11 @@ function resolveHoveredBandIdx(
 
 function buildScales(getMode: () => TYMode): object {
     const isGapMode = () => getMode() === 'leader' || getMode() === 'pinned';
+    const theme     = chartTheme();
+    const axisFont  = { size: AXIS_FONT_SIZE, family: theme.font };
     const yTickConfig = {
-        color:    '#8a8a8a',
-        font:     { size: 11, family: "'Fira Code', monospace" },
+        color:    theme.axisText,
+        font:     axisFont,
         callback: (v: any) => {
             const n = v as number;
             // Деления считаются в дробных числах (100.00000001) — округляем, дробные места не подписываем
@@ -593,10 +595,10 @@ function buildScales(getMode: () => TYMode): object {
             ticks: { display: false },
             grid: {
                 drawTicks: false,
-                color:     (ctx: any) => (ctx.index > 0 && ctx.index % 3 === 0) ? '#2a2a2a' : '#1a1a1a',
-                lineWidth: (ctx: any) => (ctx.index > 0 && ctx.index % 3 === 0) ? 1.5 : 0.5,
+                color:     (ctx: any) => isStageFinish(ctx.index) ? theme.gridStage : theme.gridSplit,
+                lineWidth: (ctx: any) => isStageFinish(ctx.index) ? 1.5 : 0.5,
             },
-            border: { color: '#3a3a3a' },
+            border: { color: theme.axisBorder },
         },
         y: {
             type:     'linear',
@@ -604,15 +606,15 @@ function buildScales(getMode: () => TYMode): object {
             ticks:    { ...yTickConfig },
             afterBuildTicks: positionTicks,
             grid:     {
-                color:     (ctx: any) => isGapMode() && ctx.tick?.value === 0 ? '#3a3a3a' : '#1c1c1c',
+                color:     (ctx: any) => isGapMode() && ctx.tick?.value === 0 ? theme.axisBorder : theme.gridY,
                 lineWidth: 1,
             },
-            border:   { color: '#3a3a3a' },
+            border:   { color: theme.axisBorder },
             title: {
                 display: true,
                 text:    i18n.t().axisTimeTitle,
-                color:   '#8a8a8a',
-                font:    { size: 11, family: "'Fira Code', monospace" },
+                color:   theme.axisText,
+                font:    axisFont,
             },
         },
         y2: {
@@ -621,12 +623,12 @@ function buildScales(getMode: () => TYMode): object {
             ticks:     { ...yTickConfig },
             afterBuildTicks: positionTicks,
             grid:      { drawOnChartArea: false },
-            border:    { color: '#3a3a3a' },
+            border:    { color: theme.axisBorder },
             title: {
                 display: true,
                 text:    i18n.t().axisTimeTitle,
-                color:   '#8a8a8a',
-                font:    { size: 11, family: "'Fira Code', monospace" },
+                color:   theme.axisText,
+                font:    axisFont,
             },
         },
     };
@@ -649,8 +651,8 @@ function handleCanvasClick(
     if (my > ca.bottom + 1 && my < ca.bottom + 1 + botPad) {
         const xs = chart.scales.x;
         for (let i = 0; i < stages.length; i++) {
-            const xL = xs.getPixelForTick(i * 3);
-            const xR = xs.getPixelForTick(i * 3 + 3);
+            const xL = xs.getPixelForTick(stageStartTick(i));
+            const xR = xs.getPixelForTick(stageEndTick(i));
             if (mx >= xL && mx <= xR) {
                 (window as any).__onStageBandClick?.(stages[i].num);
                 return 'ignore';

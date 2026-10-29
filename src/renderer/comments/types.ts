@@ -15,7 +15,7 @@ export interface IDriverComments {
     country:   string;
     car:       string;
     group:     string;
-    position:  number;
+    position:  number | null;
     totalTime: number | null;
     entries:   ICommentEntry[];
 }

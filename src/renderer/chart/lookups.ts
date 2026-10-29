@@ -1,14 +1,14 @@
-import type { IParsedRallyData, ILapRecord } from '../../shared/types';
+import type { IParsedRallyData, TRecordMap } from '../../shared/types';
 
 export interface IRallyLookups {
-    recordMap: Map<string, Map<number, ILapRecord>>;
+    recordMap: TRecordMap;
     cumPenMap: Map<string, Map<number, number>>;
     cumSPMap:  Map<string, Map<number, number>>;
     cumSRMap:  Map<string, Map<number, number>>;
 }
 
 export function buildRallyLookups(data: IParsedRallyData): IRallyLookups {
-    const recordMap: Map<string, Map<number, ILapRecord>> = new Map();
+    const recordMap: TRecordMap = new Map();
     const cumPenMap: Map<string, Map<number, number>>     = new Map();
     const cumSPMap:  Map<string, Map<number, number>>     = new Map();
     const cumSRMap:  Map<string, Map<number, number>>     = new Map();

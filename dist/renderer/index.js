@@ -1,6 +1,20 @@
 "use strict";
 (() => {
+  // src/shared/driverName.ts
+  function hasRealName(d) {
+    return !!d.realName && d.realName !== d.username;
+  }
+  function driverDisplayName(d) {
+    return hasRealName(d) ? `${d.username} (${d.realName})` : d.username;
+  }
+
   // src/csvParser.ts
+  var CsvParseError = class extends Error {
+    constructor(code) {
+      super(code);
+      this.code = code;
+    }
+  };
   var COLUMN_ALIASES = {
     stageNum: ["ss"],
     stageName: ["stage name", "stage_name", "stagename"],
@@ -94,7 +108,7 @@
     let text = raw;
     if (text.charCodeAt(0) === 65279) text = text.slice(1);
     const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
-    if (lines.length < 2) throw new Error("\u0424\u0430\u0439\u043B \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u043E \u0441\u0442\u0440\u043E\u043A");
+    if (lines.length < 2) throw new CsvParseError("tooFewLines");
     const delim = detectDelimiter(lines[0]);
     const colMap = buildColumnMap(splitRow(lines[0], delim));
     const get = (row, field) => {
@@ -124,7 +138,7 @@
         superRally: parseBoolFlag(get(row, "superRally"))
       });
     }
-    if (records.length === 0) throw new Error("\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0442\u044C \u0434\u0430\u043D\u043D\u044B\u0435 \u0432 \u0444\u0430\u0439\u043B\u0435");
+    if (records.length === 0) throw new CsvParseError("noData");
     return buildRallyData(records);
   }
   function buildRallyData(records) {
@@ -136,7 +150,6 @@
     const driverMap = /* @__PURE__ */ new Map();
     for (const r of records) {
       if (!driverMap.has(r.username)) {
-        const realPart = r.realName && r.realName !== r.username ? ` (${r.realName})` : "";
         const carPart = r.car ? ` | ${r.car}` : "";
         driverMap.set(r.username, {
           username: r.username,
@@ -144,7 +157,7 @@
           country: r.country,
           car: r.car,
           group: r.group,
-          label: `${r.username}${realPart}${carPart}`
+          label: `${driverDisplayName(r)}${carPart}`
         });
       }
     }
@@ -167,6 +180,10 @@
     fileReading: "\u0427\u0442\u0435\u043D\u0438\u0435 \u0444\u0430\u0439\u043B\u0430\u2026",
     fileLoaded: (stages, drivers) => `\u2713 \u0417\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u043E: ${stages} \u0443\u0447\u0430\u0441\u0442\u043A\u043E\u0432, ${drivers} \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`,
     fileError: "\u2717 \u041E\u0448\u0438\u0431\u043A\u0430",
+    csvErrors: {
+      tooFewLines: "\u0424\u0430\u0439\u043B \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u043E \u0441\u0442\u0440\u043E\u043A",
+      noData: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0442\u044C \u0434\u0430\u043D\u043D\u044B\u0435 \u0432 \u0444\u0430\u0439\u043B\u0435"
+    },
     fileReadError: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0444\u0430\u0439\u043B",
     defaultTitle: "Rally Race Chart",
     filtersLabel: "\u0424\u0438\u043B\u044C\u0442\u0440\u044B",
@@ -280,6 +297,10 @@
     fileReading: "Reading file\u2026",
     fileLoaded: (stages, drivers) => `\u2713 Loaded: ${stages} stages, ${drivers} participants`,
     fileError: "\u2717 Error",
+    csvErrors: {
+      tooFewLines: "The file has too few lines",
+      noData: "Could not recognise any data in the file"
+    },
     fileReadError: "Failed to read file",
     defaultTitle: "Rally Race Chart",
     filtersLabel: "Filters",
@@ -389,6 +410,10 @@ Only stages without SR for both drivers`,
     fileReading: "F\xE1jl olvas\xE1sa\u2026",
     fileLoaded: (stages, drivers) => `\u2713 Bet\xF6ltve: ${stages} szakasz, ${drivers} r\xE9sztvev\u0151`,
     fileError: "\u2717 Hiba",
+    csvErrors: {
+      tooFewLines: "A f\xE1jl t\xFAl kev\xE9s sort tartalmaz",
+      noData: "Nem siker\xFClt adatot felismerni a f\xE1jlban"
+    },
     fileReadError: "A f\xE1jl olvas\xE1sa sikertelen",
     defaultTitle: "Rally Race Chart",
     filtersLabel: "Sz\u0171r\u0151k",
@@ -584,11 +609,40 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   function escapeHtml(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
+  var SEARCH_DEBOUNCE_MS = 200;
+  function debounce(fn, ms) {
+    let timer;
+    return (...args) => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => fn(...args), ms);
+    };
+  }
   function nullableCompare(a, b) {
     if (a === null && b === null) return 0;
     if (a === null) return 1;
     if (b === null) return -1;
     return a - b;
+  }
+
+  // src/renderer/chart/points.ts
+  var POINTS_PER_STAGE = 3;
+  function pointCount(nStages) {
+    return 1 + nStages * POINTS_PER_STAGE;
+  }
+  function stageStartTick(stageIdx) {
+    return stageIdx * POINTS_PER_STAGE;
+  }
+  function stageEndTick(stageIdx) {
+    return (stageIdx + 1) * POINTS_PER_STAGE;
+  }
+  function stageIdxOfPoint(ptIdx) {
+    return Math.floor((ptIdx - 1) / POINTS_PER_STAGE);
+  }
+  function splitOfPoint(ptIdx) {
+    return (ptIdx - 1) % POINTS_PER_STAGE + 1;
+  }
+  function isStageFinish(ptIdx) {
+    return ptIdx > 0 && ptIdx % POINTS_PER_STAGE === 0;
   }
 
   // src/renderer/colors.ts
@@ -694,13 +748,14 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var BORDER_WIDTH = 1.8;
   var DASH_ON = 6;
   var DASH_OFF = 4;
+  var COMMENT_POINT_FILL = "#fff";
   function buildDatasets(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, activeDriverKeys, activeGroups, activeCars, activeCountries) {
     return data2.drivers.map((drv, gi) => {
       const color = driverColor(gi);
       const pts = buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color);
       const dnfCommentPtIdx = pts.dnfCommentPtIdx;
       const attrOk = passesAttrFilters(data2, { activeGroups, activeCars, activeCountries }, drv);
-      const dn = drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username;
+      const dn = driverDisplayName(drv);
       return {
         label: drv.label,
         driverKey: drv.username,
@@ -730,19 +785,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         _cumSR: pts.cumSR,
         _hasSR: pts.hasSR,
         _cmts: pts.cmts,
-        _stageLabels: pts.stageLabels,
         _dnfCmtPtIdx: pts.dnfCommentPtIdx,
         _dnfCmtStageIdx: pts.dnfCmtStageIdx
       };
     });
-  }
-  function markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx, setDnfIdx, pointStyles, pointRadii, pointColors, cmts, color) {
-    if (!hasCmt || dnfCommentPtIdx !== null || lastValidPtIdx === 0) return;
-    pointStyles[lastValidPtIdx] = "rectRot";
-    pointRadii[lastValidPtIdx] = POINT_RADIUS_COMMENT;
-    pointColors[lastValidPtIdx] = "#fff";
-    cmts[lastValidPtIdx] = rec.comment;
-    setDnfIdx(lastValidPtIdx);
   }
   function buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color) {
     const y = [0];
@@ -754,7 +800,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     const cumSR = [0];
     const hasSR = [false];
     const cmts = [""];
-    const stageLabels = ["\u0421\u0442\u0430\u0440\u0442"];
     let cum = 0;
     let isDnf = false;
     let lastValidPtIdx = 0;
@@ -765,121 +810,42 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const rec = recordMap.get(drv.username)?.get(st.num) ?? null;
       const pen = cumPenMap.get(drv.username)?.get(st.num) ?? 0;
       const sp = cumSPMap.get(drv.username)?.get(st.num) ?? 0;
-      const srBase = cumSRMap.get(drv.username)?.get(st.num) ?? 0;
-      const srThis = rec?.superRally ? 1 : 0;
-      const thisSR = srThis > 0;
-      const hasCmt = !!rec?.comment?.trim();
-      const slFull = `SS${st.num} ${st.name}`;
-      const pushMeta = (count) => {
-        for (let k = 0; k < count; k++) {
-          cumPen.push(pen);
-          cumSP.push(sp);
-          cumSR.push(srBase + srThis);
-          hasSR.push(thisSR);
+      const sr = (cumSRMap.get(drv.username)?.get(st.num) ?? 0) + (rec?.superRally ? 1 : 0);
+      const thisSR = !!rec?.superRally;
+      const comment = rec?.comment?.trim() ? rec.comment : "";
+      const splits = [rec?.time1 ?? null, rec?.time2 ?? null, rec?.time3 ?? null];
+      let reached = 0;
+      if (!isDnf) while (reached < POINTS_PER_STAGE && splits[reached] !== null) reached++;
+      const finished = reached === POINTS_PER_STAGE;
+      for (let k = 0; k < POINTS_PER_STAGE; k++) {
+        const passed = k < reached;
+        const isFinish = k === POINTS_PER_STAGE - 1;
+        const cmtHere = finished && isFinish && !!comment;
+        y.push(passed ? cum + splits[k] : null);
+        pointStyles.push(cmtHere ? "rectRot" : "circle");
+        pointRadii.push(!passed ? 0 : cmtHere ? POINT_RADIUS_COMMENT : isFinish ? POINT_RADIUS_FINAL : POINT_RADIUS_NORMAL);
+        pointColors.push(cmtHere ? COMMENT_POINT_FILL : color);
+        cmts.push(cmtHere ? comment : "");
+        cumPen.push(pen);
+        cumSP.push(sp);
+        cumSR.push(sr);
+        hasSR.push(thisSR);
+      }
+      if (finished) {
+        cum += splits[POINTS_PER_STAGE - 1];
+        lastValidPtIdx = y.length - 1;
+      } else if (!isDnf) {
+        if (reached > 0) lastValidPtIdx = y.length - POINTS_PER_STAGE + reached - 1;
+        if (comment && lastValidPtIdx > 0) {
+          pointStyles[lastValidPtIdx] = "rectRot";
+          pointRadii[lastValidPtIdx] = POINT_RADIUS_COMMENT;
+          pointColors[lastValidPtIdx] = COMMENT_POINT_FILL;
+          cmts[lastValidPtIdx] = comment;
+          dnfCommentPtIdx = lastValidPtIdx;
+          dnfCmtStageIdx = si;
         }
-      };
-      if (isDnf) {
-        y.push(null, null, null);
-        pointStyles.push("circle", "circle", "circle");
-        pointRadii.push(0, 0, 0);
-        pointColors.push(color, color, color);
-        pushMeta(3);
-        cmts.push("", "", "");
-        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-        continue;
-      }
-      if (!rec || rec.time1 === null) {
-        markDnf(
-          hasCmt,
-          rec,
-          lastValidPtIdx,
-          dnfCommentPtIdx,
-          (idx) => {
-            dnfCommentPtIdx = idx;
-            dnfCmtStageIdx = si;
-          },
-          pointStyles,
-          pointRadii,
-          pointColors,
-          cmts,
-          color
-        );
-        y.push(null, null, null);
-        pointStyles.push("circle", "circle", "circle");
-        pointRadii.push(0, 0, 0);
-        pointColors.push(color, color, color);
-        pushMeta(3);
-        cmts.push("", "", "");
-        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
         isDnf = true;
-        continue;
       }
-      const t1 = rec.time1;
-      if (rec.time2 === null) {
-        y.push(cum + t1, null, null);
-        pointStyles.push("circle", "circle", "circle");
-        pointRadii.push(POINT_RADIUS_NORMAL, 0, 0);
-        pointColors.push(color, color, color);
-        pushMeta(3);
-        cmts.push("", "", "");
-        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-        lastValidPtIdx = y.length - 3;
-        markDnf(
-          hasCmt,
-          rec,
-          lastValidPtIdx,
-          dnfCommentPtIdx,
-          (idx) => {
-            dnfCommentPtIdx = idx;
-            dnfCmtStageIdx = si;
-          },
-          pointStyles,
-          pointRadii,
-          pointColors,
-          cmts,
-          color
-        );
-        isDnf = true;
-        continue;
-      }
-      const t2 = rec.time2;
-      if (rec.time3 === null) {
-        y.push(cum + t1, cum + t2, null);
-        pointStyles.push("circle", "circle", "circle");
-        pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, 0);
-        pointColors.push(color, color, color);
-        pushMeta(3);
-        cmts.push("", "", "");
-        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-        lastValidPtIdx = y.length - 2;
-        markDnf(
-          hasCmt,
-          rec,
-          lastValidPtIdx,
-          dnfCommentPtIdx,
-          (idx) => {
-            dnfCommentPtIdx = idx;
-            dnfCmtStageIdx = si;
-          },
-          pointStyles,
-          pointRadii,
-          pointColors,
-          cmts,
-          color
-        );
-        isDnf = true;
-        continue;
-      }
-      const t3 = rec.time3;
-      y.push(cum + t1, cum + t2, cum + t3);
-      pointStyles.push("circle", "circle", hasCmt ? "rectRot" : "circle");
-      pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, hasCmt ? POINT_RADIUS_COMMENT : POINT_RADIUS_FINAL);
-      pointColors.push(color, color, hasCmt ? "#fff" : color);
-      pushMeta(3);
-      cmts.push("", "", rec.comment ?? "");
-      stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-      cum = cum + t3;
-      lastValidPtIdx = y.length - 1;
     }
     return {
       y,
@@ -891,10 +857,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       cumSR,
       hasSR,
       cmts,
-      stageLabels,
       dnfCommentPtIdx,
-      dnfCmtStageIdx,
-      lastValidPtIdx
+      dnfCmtStageIdx
     };
   }
 
@@ -929,47 +893,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     };
   }
 
-  // src/renderer/chart/pluginDnfLine.ts
-  var DNF_DASH_ON = 6;
-  var DNF_DASH_OFF = 4;
-  var DNF_LINE_W = 1.8;
-  function buildDnfLinePlugin(getHoveredKey, getPinnedIdxs, getHoveredIdx, getDimAlpha) {
-    return {
-      id: "dnfLine",
-      afterDatasetsDraw(chart) {
-        const pinnedIdxs = getPinnedIdxs();
-        const active = resolveActiveIdxs(chart, getHoveredKey, getPinnedIdxs, getHoveredIdx);
-        const { ctx } = chart;
-        chart.data.datasets.forEach((ds, di) => {
-          if (ds.hidden) return;
-          if (pinnedIdxs.includes(di)) return;
-          const dnfPtIdx = ds._dnfCommentPtIdx;
-          const lastPtIdx = ds._lastValidPtIdx;
-          if (dnfPtIdx == null || lastPtIdx == null) return;
-          const meta = chart.getDatasetMeta(di);
-          const fromPt = meta.data[lastPtIdx];
-          const toPt = meta.data[dnfPtIdx];
-          if (!fromPt || !toPt) return;
-          const isDimmed = active !== null && !active.has(di);
-          ctx.save();
-          if (isDimmed) ctx.globalAlpha = getDimAlpha();
-          ctx.beginPath();
-          ctx.setLineDash([DNF_DASH_ON, DNF_DASH_OFF]);
-          ctx.strokeStyle = ds.borderColor;
-          ctx.lineWidth = DNF_LINE_W;
-          ctx.moveTo(fromPt.x, fromPt.y);
-          ctx.lineTo(toPt.x, toPt.y);
-          ctx.stroke();
-          ctx.restore();
-        });
-      }
-    };
-  }
-
   // src/renderer/chart/chartComments.ts
-  function stageIdxOfPoint(ptIdx) {
-    return Math.floor((ptIdx - 1) / 3);
-  }
   function commentStageIdx(ds, ptIdx) {
     return ptIdx === ds._dnfCmtPtIdx && ds._dnfCmtStageIdx !== null ? ds._dnfCmtStageIdx : stageIdxOfPoint(ptIdx);
   }
@@ -1021,8 +945,41 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     return counts;
   }
 
+  // src/renderer/chart/theme.ts
+  var AXIS_FONT_SIZE = 11;
+  var cached = null;
+  function chartTheme() {
+    if (cached) return cached;
+    const css = getComputedStyle(document.documentElement);
+    const token = (name, fallback) => css.getPropertyValue(name).trim() || fallback;
+    cached = {
+      font: token("--ff", "monospace"),
+      axisText: "#8a8a8a",
+      axisTextHover: "#c8c8c8",
+      stageNum: token("--red-text", "#ef5b4c"),
+      stageNumHover: "#ff7a6b",
+      accent: token("--red", "#c0392b"),
+      highlight: token("--gold", "#f1c40f"),
+      gridStage: "#2a2a2a",
+      gridSplit: "#1a1a1a",
+      gridY: "#1c1c1c",
+      axisBorder: "#3a3a3a",
+      bandEven: "#1c1c1c",
+      bandOdd: "#181818",
+      bandEvenHover: "#262626",
+      bandOddHover: "#222222",
+      counterBg: "rgba(255,255,255,0.08)",
+      counterBgHover: "rgba(241,196,15,0.25)",
+      counterText: "#c8c8c8",
+      counterTextHover: "#fff",
+      pillBg: "rgba(10,10,10,0.88)",
+      pillText: "#eee"
+    };
+    return cached;
+  }
+
   // src/renderer/chart/pluginPinnedComments.ts
-  var FONT = "bold 9px 'Fira Code', monospace";
+  var FONT_SIZE = 9;
   var PILL_H = 13;
   var PILL_PAD_X = 4;
   var PILL_GAP = 9;
@@ -1039,7 +996,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         const active = getActive();
         const { ctx, chartArea: area } = ch;
         ctx.save();
-        ctx.font = FONT;
+        ctx.font = `bold ${FONT_SIZE}px ${chartTheme().font}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         for (const di of pinnedIdxs) {
@@ -1051,22 +1008,22 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
             const pt = pts[i];
             if (!cmts[i] || !pt || pt.skip) continue;
             if (pt.y < area.top - 1 || pt.y > area.bottom + 1) continue;
-            const si = i === ds._dnfCmtPtIdx && ds._dnfCmtStageIdx !== null ? ds._dnfCmtStageIdx : Math.floor((i - 1) / 3);
+            const si = commentStageIdx(ds, i);
             const label = stages[si] ? String(stages[si].num) : "";
             const w = ctx.measureText(label).width + PILL_PAD_X * 2;
             const above = pt.y - PILL_GAP - PILL_H >= area.top;
             const y = above ? pt.y - PILL_GAP - PILL_H / 2 : pt.y + PILL_GAP + PILL_H / 2;
-            ctx.fillStyle = "rgba(10,10,10,0.88)";
+            ctx.fillStyle = chartTheme().pillBg;
             ctx.strokeStyle = ds.borderColor;
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.roundRect(pt.x - w / 2, y - PILL_H / 2, w, PILL_H, 3);
             ctx.fill();
             ctx.stroke();
-            ctx.fillStyle = "#eee";
+            ctx.fillStyle = chartTheme().pillText;
             ctx.fillText(label, pt.x, y + 0.5);
             if (active && active.key === ds.driverKey && active.ptIdx === i) {
-              ctx.strokeStyle = "#f1c40f";
+              ctx.strokeStyle = chartTheme().highlight;
               ctx.lineWidth = 2;
               ctx.beginPath();
               ctx.arc(pt.x, pt.y, RING_R, 0, Math.PI * 2);
@@ -1140,12 +1097,8 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/chart/pluginStageNames.ts
-  var FONT_FAMILY = "'Fira Code', monospace";
-  var FONT_SIZE_SS = 11;
-  var FONT_SIZE_NM = 10;
-  var HOVER_BG_EVEN = "#262626";
-  var HOVER_BG_ODD = "#222222";
-  var HOVER_BORDER = "#c0392b";
+  var FONT_SIZE_SS = AXIS_FONT_SIZE;
+  var FONT_SIZE_NM = AXIS_FONT_SIZE - 1;
   var ROTATE_45_AT = 9;
   var ROTATE_90_AT = 20;
   var COMMENT_ROW_H = 16;
@@ -1173,25 +1126,26 @@ ${hit.ptIdx}` : null;
     };
   }
   function drawStageBand(ctx, stage, i, xs, bot, rot45, rot90, hovered) {
-    const xL = xs.getPixelForTick(i * 3);
-    const xR = xs.getPixelForTick(i * 3 + 3);
+    const xL = xs.getPixelForTick(stageStartTick(i));
+    const xR = xs.getPixelForTick(stageEndTick(i));
     if (xL >= xR) return;
     const bandH = (rot90 ? 108 : rot45 ? 88 : 40) + COMMENT_ROW_H;
+    const th = chartTheme();
     if (hovered) {
-      ctx.fillStyle = i % 2 === 0 ? HOVER_BG_EVEN : HOVER_BG_ODD;
+      ctx.fillStyle = i % 2 === 0 ? th.bandEvenHover : th.bandOddHover;
     } else {
-      ctx.fillStyle = i % 2 === 0 ? "#1c1c1c" : "#181818";
+      ctx.fillStyle = i % 2 === 0 ? th.bandEven : th.bandOdd;
     }
     ctx.fillRect(xL, bot + 2, xR - xL, bandH);
     if (hovered) {
-      ctx.strokeStyle = HOVER_BORDER;
+      ctx.strokeStyle = th.accent;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(xL, bot + 2);
       ctx.lineTo(xR, bot + 2);
       ctx.stroke();
     }
-    ctx.strokeStyle = "#2a2a2a";
+    ctx.strokeStyle = th.gridStage;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(xL, bot + 2);
@@ -1208,39 +1162,42 @@ ${hit.ptIdx}` : null;
   }
   function drawCommentCounter(ctx, count, i, xs, bot, hovered) {
     if (!count) return;
-    const xL = xs.getPixelForTick(i * 3);
-    const xR = xs.getPixelForTick(i * 3 + 3);
+    const xL = xs.getPixelForTick(stageStartTick(i));
+    const xR = xs.getPixelForTick(stageEndTick(i));
     if (xL >= xR) return;
-    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    const th = chartTheme();
+    ctx.font = `${FONT_SIZE_NM}px ${th.font}`;
     const num = String(count);
     const full = `\u{1F4AC} ${num}`;
     const text = ctx.measureText(full).width + 8 <= xR - xL ? full : num;
     const w = Math.min(ctx.measureText(text).width + 8, xR - xL - 2);
     const xMid = (xL + xR) / 2;
     const yMid = bot + 2 + COMMENT_ROW_H / 2;
-    ctx.fillStyle = hovered ? "rgba(241,196,15,0.25)" : "rgba(255,255,255,0.08)";
+    ctx.fillStyle = hovered ? th.counterBgHover : th.counterBg;
     ctx.beginPath();
     ctx.roundRect(xMid - w / 2, yMid - 6.5, w, 13, 6);
     ctx.fill();
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = hovered ? "#fff" : "#c8c8c8";
+    ctx.fillStyle = hovered ? th.counterTextHover : th.counterText;
     ctx.fillText(text, xMid, yMid + 0.5);
   }
   function drawHorizontalLabel(ctx, stage, xL, xR, bot, hovered) {
+    const th = chartTheme();
     const xMid = (xL + xR) / 2;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillStyle = hovered ? "#ff7a6b" : "#ef5b4c";
-    ctx.font = `bold ${FONT_SIZE_SS}px ${FONT_FAMILY}`;
+    ctx.fillStyle = hovered ? th.stageNumHover : th.stageNum;
+    ctx.font = `bold ${FONT_SIZE_SS}px ${th.font}`;
     ctx.fillText(`SS${stage.num}`, xMid, bot + 6);
     const maxChars = Math.max(4, Math.floor((xR - xL - 4) / 7));
     const name = stage.name.length > maxChars ? stage.name.slice(0, maxChars - 1) + "\u2026" : stage.name;
-    ctx.fillStyle = hovered ? "#c8c8c8" : "#8a8a8a";
-    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    ctx.fillStyle = hovered ? th.axisTextHover : th.axisText;
+    ctx.font = `${FONT_SIZE_NM}px ${th.font}`;
     ctx.fillText(name, xMid, bot + 21);
   }
   function drawRotatedLabel(ctx, stage, xL, xR, bot, angle, hovered) {
+    const th = chartTheme();
     const MAX_CHARS = angle === Math.PI / 4 ? 22 : 28;
     const PAD = 4;
     const translateX = angle === Math.PI / 2 ? (xL + xR) / 2 + FONT_SIZE_NM / 2 : xL + PAD;
@@ -1249,14 +1206,14 @@ ${hit.ptIdx}` : null;
     ctx.rotate(angle);
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
-    ctx.fillStyle = hovered ? "#ff7a6b" : "#ef5b4c";
-    ctx.font = `bold ${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    ctx.fillStyle = hovered ? th.stageNumHover : th.stageNum;
+    ctx.font = `bold ${FONT_SIZE_NM}px ${th.font}`;
     const ssLabel = `SS${stage.num} `;
     ctx.fillText(ssLabel, 0, 0);
     const ssW = ctx.measureText(ssLabel).width;
     const name = stage.name.length > MAX_CHARS ? stage.name.slice(0, MAX_CHARS - 1) + "\u2026" : stage.name;
-    ctx.fillStyle = hovered ? "#c8c8c8" : "#8a8a8a";
-    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    ctx.fillStyle = hovered ? th.axisTextHover : th.axisText;
+    ctx.font = `${FONT_SIZE_NM}px ${th.font}`;
     ctx.fillText(name, ssW, 0);
     ctx.restore();
   }
@@ -1307,7 +1264,7 @@ ${hit.ptIdx}` : null;
       if (ds.hidden) return;
       if (pinnedIdxs.length && !pinnedIdxs.includes(di)) return;
       const yv = ds.data[xIdx];
-      const isDnf = xIdx === ds._dnfCommentPtIdx;
+      const isDnf = xIdx === ds._dnfCmtPtIdx;
       if (yv !== null && Math.abs(yv - y0) < 1) matches2.push({ ds, y: yv, isDnf });
     });
     return matches2;
@@ -1355,12 +1312,13 @@ ${hit.ptIdx}` : null;
       if (car) html += `<span class="tt-car">\u{1F697} ${car}</span>`;
       html += `<span class="tt-sep"></span>`;
       const abs = ds._abs[xIdx] ?? null;
-      html += isDnf || abs === null ? `<span class="tt-red">DNF</span>` : `<span class="tt-row">\u23F1 ${formatTime(abs)}</span>`;
-      if (!isDnf && y !== null && yMode === "position") {
+      html += abs === null ? `<span class="tt-red">DNF</span>` : `<span class="tt-row">\u23F1 ${formatTime(abs)}</span>`;
+      if (isDnf && abs !== null) html += `<span class="tt-red">DNF</span>`;
+      if (y !== null && yMode === "position") {
         html += `<span class="tt-row">${t.tooltipPosition}: ${y}</span>`;
         if (abs !== null && leaderAbs !== null && abs > leaderAbs)
           html += `<span class="tt-row">${t.tooltipGapLeader}: ${formatTimeSigned(abs - leaderAbs)}</span>`;
-      } else if (!isDnf && y !== null && yMode !== "abs")
+      } else if (y !== null && yMode !== "abs")
         html += `<span class="tt-row">${yMode === "leader" ? t.tooltipGapLeader : t.tooltipGapPinned}: ${formatTimeSigned(y)}</span>`;
       if (pen > 0) html += `<span class="tt-red">${t.tooltipPenalty}: +${formatTime(pen)}</span>`;
       if (sp > 0) html += `<span class="tt-red">${t.tooltipServicePenalty}: +${formatTime(sp)}</span>`;
@@ -1372,13 +1330,14 @@ ${hit.ptIdx}` : null;
   }
   function resolveStageFromIndex(idx, stages) {
     if (idx === 0) return null;
-    const si = Math.floor((idx - 1) / 3);
-    const split = (idx - 1) % 3 + 1;
+    const si = stageIdxOfPoint(idx);
+    const split = splitOfPoint(idx);
     const stage = stages[si];
     if (!stage) return null;
     const suffix = split === 1 ? " \xB7 SP1" : split === 2 ? " \xB7 SP2" : "";
     return { label: `SS${stage.num} ${stage.name}${suffix}` };
   }
+  var VIEW_EDGE = 10;
   function positionTooltip(el, context, marginPx, offsetY) {
     const rect = context.chart.canvas.getBoundingClientRect();
     let tx = rect.left + context.tooltip.caretX + marginPx;
@@ -1387,8 +1346,8 @@ ${hit.ptIdx}` : null;
     el.style.top = `${ty}px`;
     requestAnimationFrame(() => {
       const tr = el.getBoundingClientRect();
-      if (tr.right > window.innerWidth - 10) tx = rect.left + context.tooltip.caretX - tr.width - marginPx;
-      if (tr.bottom > window.innerHeight - 10) ty = rect.top + context.tooltip.caretY - tr.height;
+      if (tr.right > window.innerWidth - VIEW_EDGE) tx = rect.left + context.tooltip.caretX - tr.width - marginPx;
+      if (tr.bottom > window.innerHeight - VIEW_EDGE) ty = rect.top + context.tooltip.caretY - tr.height;
       el.style.left = `${tx}px`;
       el.style.top = `${ty}px`;
     });
@@ -1613,7 +1572,7 @@ ${hit.ptIdx}` : null;
         const useRot45 = stages.length > ROTATE_45_AT && stages.length <= ROTATE_90_AT;
         const useRot90 = stages.length > ROTATE_90_AT;
         currentBotPad = useRot90 ? BOT_PAD_90 : useRot45 ? BOT_PAD_45 : BOT_PAD_NORMAL;
-        const nPts = 1 + stages.length * 3;
+        const nPts = pointCount(stages.length);
         const labels = new Array(nPts).fill("");
         const datasets = buildDatasets(
           data2,
@@ -1709,7 +1668,6 @@ ${hit.ptIdx}` : null;
               (ch) => countCommentsByStage(ch, activeStages.length, commentSourceIdxs(ch, pinnedIdxs)),
               () => hoveredCounterIdx
             ),
-            buildDnfLinePlugin(() => hoveredDsKey, () => pinnedIdxs, () => hoveredDsIdx, dimAlpha),
             buildPinnedCommentsPlugin(
               () => pinnedIdxs,
               () => activeStages,
@@ -1732,7 +1690,7 @@ ${hit.ptIdx}` : null;
           const counts = countCommentsByStage(chart, activeStages.length, commentSourceIdxs(chart, pinnedIdxs));
           if (!counts[idx]) return null;
           const xs = chart.scales.x;
-          const xMid = (xs.getPixelForTick(idx * 3) + xs.getPixelForTick(idx * 3 + 3)) / 2;
+          const xMid = (xs.getPixelForTick(stageStartTick(idx)) + xs.getPixelForTick(stageEndTick(idx))) / 2;
           return { idx, anchor: { x: rect.left + xMid, y: rect.top + bot + 2 } };
         };
         clickHandler = (e) => {
@@ -1796,7 +1754,7 @@ ${hit.ptIdx}` : null;
   function stageIdxAtX(chart, mx, nStages) {
     const xs = chart.scales.x;
     for (let i = 0; i < nStages; i++) {
-      if (mx >= xs.getPixelForTick(i * 3) && mx <= xs.getPixelForTick(i * 3 + 3)) return i;
+      if (mx >= xs.getPixelForTick(stageStartTick(i)) && mx <= xs.getPixelForTick(stageEndTick(i))) return i;
     }
     return null;
   }
@@ -1809,17 +1767,19 @@ ${hit.ptIdx}` : null;
     if (my <= ca.bottom + 1 || my >= ca.bottom + 1 + botPad) return null;
     const xs = chart.scales.x;
     for (let i = 0; i < stages.length; i++) {
-      const xL = xs.getPixelForTick(i * 3);
-      const xR = xs.getPixelForTick(i * 3 + 3);
+      const xL = xs.getPixelForTick(stageStartTick(i));
+      const xR = xs.getPixelForTick(stageEndTick(i));
       if (mx >= xL && mx <= xR) return i;
     }
     return null;
   }
   function buildScales(getMode) {
     const isGapMode = () => getMode() === "leader" || getMode() === "pinned";
+    const theme = chartTheme();
+    const axisFont = { size: AXIS_FONT_SIZE, family: theme.font };
     const yTickConfig = {
-      color: "#8a8a8a",
-      font: { size: 11, family: "'Fira Code', monospace" },
+      color: theme.axisText,
+      font: axisFont,
       callback: (v) => {
         const n = v;
         if (getMode() === "position") return Math.abs(n - Math.round(n)) < 1e-6 ? String(Math.round(n)) : "";
@@ -1841,10 +1801,10 @@ ${hit.ptIdx}` : null;
         ticks: { display: false },
         grid: {
           drawTicks: false,
-          color: (ctx) => ctx.index > 0 && ctx.index % 3 === 0 ? "#2a2a2a" : "#1a1a1a",
-          lineWidth: (ctx) => ctx.index > 0 && ctx.index % 3 === 0 ? 1.5 : 0.5
+          color: (ctx) => isStageFinish(ctx.index) ? theme.gridStage : theme.gridSplit,
+          lineWidth: (ctx) => isStageFinish(ctx.index) ? 1.5 : 0.5
         },
-        border: { color: "#3a3a3a" }
+        border: { color: theme.axisBorder }
       },
       y: {
         type: "linear",
@@ -1852,15 +1812,15 @@ ${hit.ptIdx}` : null;
         ticks: { ...yTickConfig },
         afterBuildTicks: positionTicks,
         grid: {
-          color: (ctx) => isGapMode() && ctx.tick?.value === 0 ? "#3a3a3a" : "#1c1c1c",
+          color: (ctx) => isGapMode() && ctx.tick?.value === 0 ? theme.axisBorder : theme.gridY,
           lineWidth: 1
         },
-        border: { color: "#3a3a3a" },
+        border: { color: theme.axisBorder },
         title: {
           display: true,
           text: i18n.t().axisTimeTitle,
-          color: "#8a8a8a",
-          font: { size: 11, family: "'Fira Code', monospace" }
+          color: theme.axisText,
+          font: axisFont
         }
       },
       y2: {
@@ -1869,12 +1829,12 @@ ${hit.ptIdx}` : null;
         ticks: { ...yTickConfig },
         afterBuildTicks: positionTicks,
         grid: { drawOnChartArea: false },
-        border: { color: "#3a3a3a" },
+        border: { color: theme.axisBorder },
         title: {
           display: true,
           text: i18n.t().axisTimeTitle,
-          color: "#8a8a8a",
-          font: { size: 11, family: "'Fira Code', monospace" }
+          color: theme.axisText,
+          font: axisFont
         }
       }
     };
@@ -1888,8 +1848,8 @@ ${hit.ptIdx}` : null;
     if (my > ca.bottom + 1 && my < ca.bottom + 1 + botPad) {
       const xs = chart.scales.x;
       for (let i = 0; i < stages.length; i++) {
-        const xL = xs.getPixelForTick(i * 3);
-        const xR = xs.getPixelForTick(i * 3 + 3);
+        const xL = xs.getPixelForTick(stageStartTick(i));
+        const xR = xs.getPixelForTick(stageEndTick(i));
         if (mx >= xL && mx <= xR) {
           window.__onStageBandClick?.(stages[i].num);
           return "ignore";
@@ -2052,7 +2012,7 @@ ${hit.ptIdx}` : null;
       const name = createElement(
         "span",
         "legend-name",
-        drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
+        driverDisplayName(drv)
       );
       prependFlag(name, drv.country);
       item.appendChild(dot);
@@ -2292,7 +2252,7 @@ ${hit.ptIdx}` : null;
       const name = createElement(
         "span",
         "pinned-name",
-        drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
+        driverDisplayName(drv)
       );
       prependFlag(name, drv.country);
       const x = createElement("button", "pinned-chip-x", "\xD7");
@@ -2310,10 +2270,15 @@ ${hit.ptIdx}` : null;
 
   // src/renderer/chart/stageCommentsPopover.ts
   var CLOSE_DELAY_MS = 180;
+  var VIEW_MARGIN = 8;
+  var ANCHOR_GAP = 6;
+  var MIN_HEIGHT = 160;
+  var MAX_HEIGHT = 380;
+  var TOP_RESERVE = 70;
   var getComments = null;
   var openIdx = null;
   var sticky = false;
-  var closeTimer = null;
+  var closeTimer;
   var popEl = () => document.getElementById("stage-comments");
   function initStageCommentsPopover(get) {
     getComments = get;
@@ -2401,32 +2366,32 @@ ${hit.ptIdx}` : null;
   }
   function position(anchor) {
     const pop = popEl();
-    const margin = 8;
-    pop.style.maxHeight = `${Math.max(160, Math.min(380, anchor.y - 70))}px`;
+    pop.style.maxHeight = `${Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, anchor.y - TOP_RESERVE))}px`;
     const w = pop.offsetWidth;
     const h = pop.offsetHeight;
-    const left = Math.min(Math.max(anchor.x - w / 2, margin), window.innerWidth - w - margin);
-    const top = Math.max(anchor.y - h - 6, margin);
+    const left = Math.min(Math.max(anchor.x - w / 2, VIEW_MARGIN), window.innerWidth - w - VIEW_MARGIN);
+    const top = Math.max(anchor.y - h - ANCHOR_GAP, VIEW_MARGIN);
     pop.style.left = `${left}px`;
     pop.style.top = `${top}px`;
   }
   function scheduleClose() {
     cancelClose();
-    closeTimer = setTimeout(closeStageComments, CLOSE_DELAY_MS);
+    closeTimer = window.setTimeout(closeStageComments, CLOSE_DELAY_MS);
   }
   function cancelClose() {
-    if (closeTimer !== null) {
-      clearTimeout(closeTimer);
-      closeTimer = null;
-    }
+    window.clearTimeout(closeTimer);
+    closeTimer = void 0;
   }
 
   // src/renderer/comments/index.ts
-  var STYLES_ID = "comments-module-styles";
-  var CARD_WIDTH = 220;
-  var DRIVER_COL_W = 190;
+  var rankMap = /* @__PURE__ */ new Map();
+  var totalTimes = /* @__PURE__ */ new Map();
   var renderedFor = null;
   var lastData = null;
+  function initCommentsModule(ranks, allStats) {
+    rankMap = ranks;
+    totalTimes = new Map(allStats.map((s) => [s.username, s.totalTime]));
+  }
   function ensureCommentsRendered(data2) {
     if (renderedFor !== data2) renderCommentsView(data2);
   }
@@ -2436,7 +2401,6 @@ ${hit.ptIdx}` : null;
   function renderCommentsView(data2) {
     const isNewData = data2 !== lastData;
     renderedFor = lastData = data2;
-    injectStyles();
     renderSidebarSearch();
     const container = document.getElementById("view-comments");
     const drivers = buildCommentsData(data2);
@@ -2507,10 +2471,7 @@ ${hit.ptIdx}` : null;
     }
   }
   function buildCommentsData(data2) {
-    const recordMap = buildRecordMap(data2.records);
     const leaderTimes = buildLeaderTimes(data2.records);
-    const totalTimes = buildTotalTimes(data2, recordMap);
-    const positions = buildPositions(data2, recordMap);
     const result = [];
     const commented = /* @__PURE__ */ new Map();
     for (const r of data2.records) {
@@ -2537,7 +2498,7 @@ ${hit.ptIdx}` : null;
           country: driver.country,
           car: driver.car,
           group: driver.group,
-          position: positions.get(driver.username) ?? 0,
+          position: rankMap.get(driver.username) ?? null,
           totalTime: totalTimes.get(driver.username) ?? null,
           entries
         });
@@ -2545,48 +2506,6 @@ ${hit.ptIdx}` : null;
     }
     result.sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
     return result;
-  }
-  function buildRecordMap(records) {
-    const map = /* @__PURE__ */ new Map();
-    for (const r of records) {
-      if (!map.has(r.username)) map.set(r.username, /* @__PURE__ */ new Map());
-      map.get(r.username).set(r.stageNum, r);
-    }
-    return map;
-  }
-  function buildPositions(data2, recordMap) {
-    const stageNums = [...data2.stages].sort((a, b) => a.num - b.num).map((s) => s.num);
-    const totals = data2.drivers.map((drv) => {
-      let total = 0;
-      for (const sn of stageNums) {
-        const t3 = recordMap.get(drv.username)?.get(sn)?.time3 ?? null;
-        if (t3 === null) {
-          total = null;
-          break;
-        } else total += t3;
-      }
-      return { username: drv.username, total };
-    });
-    totals.sort((a, b) => nullableCompare(a.total, b.total));
-    const map = /* @__PURE__ */ new Map();
-    totals.forEach((d, i) => map.set(d.username, i + 1));
-    return map;
-  }
-  function buildTotalTimes(data2, recordMap) {
-    const stageNums = [...data2.stages].sort((a, b) => a.num - b.num).map((s) => s.num);
-    const map = /* @__PURE__ */ new Map();
-    for (const drv of data2.drivers) {
-      let total = 0;
-      for (const sn of stageNums) {
-        const t3 = recordMap.get(drv.username)?.get(sn)?.time3 ?? null;
-        if (t3 === null) {
-          total = null;
-          break;
-        } else total += t3;
-      }
-      map.set(drv.username, total);
-    }
-    return map;
   }
   function buildLeaderTimes(records) {
     const map = /* @__PURE__ */ new Map();
@@ -2609,8 +2528,8 @@ ${hit.ptIdx}` : null;
   }
   function buildPositionBlock(position2) {
     const el = document.createElement("div");
-    el.className = resolvePositionClass(position2);
-    el.textContent = String(position2);
+    el.className = position2 === null ? "cmt-pos pos-dnf" : resolvePositionClass(position2);
+    el.textContent = position2 === null ? "DNF" : String(position2);
     return el;
   }
   function resolvePositionClass(position2) {
@@ -2627,7 +2546,7 @@ ${hit.ptIdx}` : null;
     username.textContent = driver.username;
     prependFlag(username, driver.country);
     col.appendChild(username);
-    if (driver.realName && driver.realName !== driver.username) {
+    if (hasRealName(driver)) {
       const realName = document.createElement("div");
       realName.className = "cmt-drv-realname";
       realName.textContent = driver.realName;
@@ -2726,206 +2645,6 @@ ${hit.ptIdx}` : null;
     }
     return badges;
   }
-  function injectStyles() {
-    if (document.getElementById(STYLES_ID)) return;
-    const style = document.createElement("style");
-    style.id = STYLES_ID;
-    style.textContent = `
-        /* \u0418\u043C\u0435\u043D\u0430 \u043F\u0435\u0440\u0435\u043C\u0435\u043D\u043D\u044B\u0445 \u043D\u0438\u0436\u0435 \u043D\u0438\u0433\u0434\u0435 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u043E\u0431\u044A\u044F\u0432\u043B\u044F\u043B\u0438\u0441\u044C \u2014 \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0438 \u043E\u0441\u0442\u0430\u0432\u0430\u043B\u0438\u0441\u044C
-           \u0431\u0435\u0437 \u0444\u043E\u043D\u0430 \u0438 \u0440\u0430\u043C\u043A\u0438 \u0438 \u0441 \u0441\u0438\u0441\u0442\u0435\u043C\u043D\u044B\u043C \u0448\u0440\u0438\u0444\u0442\u043E\u043C. \u0421\u0432\u043E\u0434\u0438\u043C \u0438\u0445 \u043A \u0442\u043E\u043A\u0435\u043D\u0430\u043C \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u044F. */
-        :root {
-            --font-mono:                var(--ff);
-            --color-text-primary:       var(--text);
-            --color-text-secondary:     var(--text-2);
-            --color-text-tertiary:      var(--muted);
-            --color-background-secondary: var(--surface);
-            --color-border-tertiary:    var(--border);
-            --color-border-secondary:   #444;
-        }
-        #view-comments, .cmt-search-wrap { font-family: var(--ff); }
-        #view-comments {
-            flex: 1;
-            overflow-y: auto;
-            padding: 12px 20px 24px;
-        }
-        .cmt-empty {
-            color: var(--color-text-tertiary);
-            text-align: center;
-            margin-top: 80px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-        }
-        .cmt-list { display: flex; flex-direction: column; }
-        .cmt-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            padding: 18px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.12);
-            transition: background 0.15s;
-            /* \u0421\u0442\u0440\u043E\u043A\u0438 \u0437\u0430 \u043F\u0440\u0435\u0434\u0435\u043B\u0430\u043C\u0438 \u044D\u043A\u0440\u0430\u043D\u0430 \u043D\u0435 \u0440\u0430\u0441\u043A\u043B\u0430\u0434\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u2014 \u043D\u0430 \u0431\u043E\u043B\u044C\u0448\u0438\u0445 \u0440\u0430\u043B\u043B\u0438 \u0438\u0445 \u0441\u043E\u0442\u043D\u0438.
-               auto \u0437\u0430\u043F\u043E\u043C\u0438\u043D\u0430\u0435\u0442 \u043D\u0430\u0441\u0442\u043E\u044F\u0449\u0443\u044E \u0432\u044B\u0441\u043E\u0442\u0443, \u043A\u043E\u0433\u0434\u0430 \u0441\u0442\u0440\u043E\u043A\u0430 \u0445\u043E\u0442\u044C \u0440\u0430\u0437 \u043F\u043E\u043A\u0430\u0437\u0430\u043D\u0430 */
-            content-visibility: auto;
-            contain-intrinsic-size: auto 400px;
-        }
-        .cmt-row:last-child { border-bottom: none; }
-        .cmt-row--highlighted {
-            background: rgba(46,204,113,0.12);
-            outline: 1px solid rgba(46,204,113,0.4);
-            border-radius: 6px;
-        }
-        .cmt-pos {
-            font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--color-text-tertiary);
-            width: 28px;
-            min-width: 28px;
-            text-align: right;
-            padding-top: 2px;
-            flex-shrink: 0;
-        }
-        .cmt-pos--gold   { color: #f1c40f; }
-        .cmt-pos--silver { color: #bdc3c7; }
-        .cmt-pos--bronze { color: #e67e22; }
-        .cmt-driver {
-            width: ${DRIVER_COL_W}px;
-            min-width: ${DRIVER_COL_W}px;
-            padding-top: 2px;
-        }
-        .cmt-drv-username {
-            font-family: var(--font-mono);
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .cmt-drv-realname {
-            font-size: 11px;
-            color: var(--color-text-tertiary);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .cmt-drv-car {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            margin-top: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .cmt-drv-count {
-            display: inline-block;
-            margin-top: 8px;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--muted);
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--color-border-tertiary);
-            border-radius: 4px;
-            padding: 1px 6px;
-        }
-        .cmt-cards { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
-        .cmt-card {
-            width: ${CARD_WIDTH}px;
-            min-width: ${CARD_WIDTH}px;
-            background: var(--color-background-secondary);
-            border: 1px solid var(--color-border-tertiary);
-            border-radius: 8px;
-            padding: 10px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            transition: border-color 0.15s;
-        }
-        .cmt-card:hover { border-color: var(--color-border-secondary); }
-        .cmt-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
-        .cmt-badge {
-            background: #cc2222;
-            color: #fff;
-            font-family: var(--font-mono);
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-        .cmt-stage-name {
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .cmt-card-meta { display: flex; flex-direction: column; gap: 3px; }
-        .cmt-time {
-            font-family: var(--font-mono);
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--color-text-primary);
-        }
-        .cmt-gap {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            color: var(--color-text-tertiary);
-        }
-        .cmt-gap--leader { color: #44aa66; font-size: 10px; font-weight: 500; }
-        .cmt-card-badges { display: flex; flex-wrap: wrap; gap: 4px; }
-        .cmt-badge-sr {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--red-text);
-            background: rgba(204,34,34,0.12);
-            border: 1px solid rgba(204,34,34,0.25);
-            padding: 1px 6px;
-            border-radius: 3px;
-        }
-        .cmt-badge-penalty {
-            font-family: var(--font-mono);
-            font-size: 10px;
-            font-weight: 700;
-            color: var(--red-text);
-            background: rgba(204,34,34,0.07);
-            border: 1px solid rgba(204,34,34,0.18);
-            padding: 1px 6px;
-            border-radius: 3px;
-        }
-        .cmt-card-text {
-            font-size: 13px;
-            line-height: 1.55;
-            color: var(--color-text-primary);
-            word-break: break-word;
-            border-top: 1px solid var(--color-border-tertiary);
-            padding-top: 6px;
-            margin-top: 2px;
-        }
-        .cmt-search-wrap {
-            padding: 8px 12px 12px;
-            border-bottom: 1px solid var(--color-border-tertiary);
-            margin-bottom: 4px;
-        }
-        .cmt-search-input {
-            width: 100%;
-            margin-top: 6px;
-            padding: 5px 8px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            background: var(--color-background-secondary);
-            border: 1px solid var(--color-border-secondary);
-            border-radius: 4px;
-            color: var(--color-text-primary);
-            box-sizing: border-box;
-            outline: none;
-        }
-        .cmt-search-input:focus { border-color: #cc2222; }
-    `;
-    document.head.appendChild(style);
-  }
 
   // src/renderer/rallyName.ts
   var RALLY_NAME_ENDPOINT = "https://script.google.com/macros/s/AKfycbwv4wdJpWe-Zpuwm9_CW34_r4002VgWxB_u3yxm2LgEbR-KvFNhWhwPQwuJ3T9plpY7pQ/exec";
@@ -3009,9 +2728,7 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/filters/driverSearch.ts
-  var DEBOUNCE_MS = 200;
   var MIN_CHARS = 2;
-  var _searchTimer = null;
   function applyDriverSearch(q, body) {
     const s = q.trim().toLowerCase();
     qsa(".filter-item[data-driver-key]", body).forEach((item) => {
@@ -3036,13 +2753,10 @@ ${hit.ptIdx}` : null;
     sw.appendChild(si);
     sw.appendChild(sc);
     body.appendChild(sw);
+    const search = debounce(onSearch, SEARCH_DEBOUNCE_MS);
     si.addEventListener("input", () => {
       sc.classList.toggle("hidden", si.value.length === 0);
-      if (_searchTimer !== null) clearTimeout(_searchTimer);
-      _searchTimer = setTimeout(
-        () => onSearch(si.value),
-        DEBOUNCE_MS
-      );
+      search(si.value);
     });
     sc.addEventListener("click", () => {
       si.value = "";
@@ -3138,12 +2852,12 @@ ${hit.ptIdx}` : null;
     }
     cont.appendChild(group);
   }
-  function buildDriverFilterUI(drivers, data2, state, callbacks3, rankMap2, prefix) {
+  function buildDriverFilterUI(drivers, data2, state, callbacks3, rankMap3, prefix) {
     const wrap = document.getElementById(filterId(prefix, "filter-drivers-wrap"));
     wrap.innerHTML = "";
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterParticipants, filterId(prefix, "counter-drivers"));
     const t = i18n.t();
-    const rankOf = (d) => rankMap2.get(d.username) ?? null;
+    const rankOf = (d) => rankMap3.get(d.username) ?? null;
     const sorted = [...drivers].sort((a, b) => {
       const ra = rankOf(a), rb = rankOf(b);
       if (ra !== null && rb !== null) return ra - rb;
@@ -3209,7 +2923,7 @@ ${hit.ptIdx}` : null;
       const nameSpan = createElement(
         "span",
         "filter-driver-name",
-        drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
+        driverDisplayName(drv)
       );
       prependFlag(nameSpan, drv.country);
       content.appendChild(nameSpan);
@@ -3367,10 +3081,10 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/filters/chartFilters.ts
-  function buildChartFilterPanel(data2, state, callbacks3, rankMap2, prefix = "") {
+  function buildChartFilterPanel(data2, state, callbacks3, rankMap3, prefix = "") {
     const refilter = () => applyGroupOrCarFilterToDriverList(data2, state, prefix);
     buildStageFilterUI(data2.stages, state, callbacks3, prefix);
-    buildDriverFilterUI(data2.drivers, data2, state, callbacks3, rankMap2, prefix);
+    buildDriverFilterUI(data2.drivers, data2, state, callbacks3, rankMap3, prefix);
     buildGroupFilterUI(data2.groups, data2, state, callbacks3, refilter, prefix);
     buildCarFilterUI(data2.drivers, state, callbacks3, refilter, prefix);
     buildCountryFilterUI(data2, state, callbacks3, refilter, prefix);
@@ -3433,58 +3147,40 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/results/compute.ts
-  function computeAllDriverStats(data2, recordMap) {
-    const stages = [...data2.stages].sort((a, b) => a.num - b.num);
-    return data2.drivers.map((drv) => {
-      const snaps = [];
-      let total = 0;
-      let sr = 0;
-      let totalPen = 0;
-      for (const st of stages) {
-        const r = recordMap.get(drv.username)?.get(st.num);
-        const t3 = r?.time3 ?? null;
-        const hasSR = r?.superRally ?? false;
-        const pen = (r?.penalty ?? 0) + (r?.servicePenalty ?? 0);
-        snaps.push({ time3: t3, hasSR, penalty: r?.penalty ?? 0, servicePenalty: r?.servicePenalty ?? 0 });
-        if (t3 === null) total = null;
-        else if (total !== null) total += t3;
-        if (hasSR) sr++;
-        totalPen += pen;
-      }
-      const dn = drv.realName && drv.realName !== drv.username ? `${drv.username} | ${drv.realName}` : drv.username;
-      return {
-        username: drv.username,
-        realName: drv.realName,
-        country: drv.country,
-        car: drv.car,
-        group: drv.group,
-        displayName: dn,
-        totalTime: total,
-        totalPenalty: totalPen,
-        srCount: sr,
-        snaps
-      };
-    });
-  }
-  function recalculateStatsForStages(stats, stageNums, allStageNums, recordMap) {
-    if (stageNums.size === allStageNums.length) return stats;
-    const filteredStages = allStageNums.filter((n) => stageNums.has(n)).sort((a, b) => a - b);
+  function summarizeStages(username, stageNums, recordMap) {
+    const snaps = [];
     let total = 0;
     let sr = 0;
     let totalPen = 0;
-    const snaps = [];
-    for (const sn of filteredStages) {
-      const r = recordMap.get(stats.username)?.get(sn);
+    for (const sn of stageNums) {
+      const r = recordMap.get(username)?.get(sn);
       const t3 = r?.time3 ?? null;
       const hasSR = r?.superRally ?? false;
-      const pen = (r?.penalty ?? 0) + (r?.servicePenalty ?? 0);
-      snaps.push({ time3: t3, hasSR, penalty: r?.penalty ?? 0, servicePenalty: r?.servicePenalty ?? 0 });
+      const penalty = r?.penalty ?? 0;
+      const servicePenalty = r?.servicePenalty ?? 0;
+      snaps.push({ time3: t3, hasSR, penalty, servicePenalty });
       if (t3 === null) total = null;
       else if (total !== null) total += t3;
       if (hasSR) sr++;
-      totalPen += pen;
+      totalPen += penalty + servicePenalty;
     }
-    return { ...stats, totalTime: total, totalPenalty: totalPen, srCount: sr, snaps };
+    return { totalTime: total, totalPenalty: totalPen, srCount: sr, snaps };
+  }
+  function computeAllDriverStats(data2, recordMap) {
+    const stageNums = data2.stages.map((s) => s.num).sort((a, b) => a - b);
+    return data2.drivers.map((drv) => ({
+      username: drv.username,
+      realName: drv.realName,
+      country: drv.country,
+      car: drv.car,
+      group: drv.group,
+      ...summarizeStages(drv.username, stageNums, recordMap)
+    }));
+  }
+  function recalculateStatsForStages(stats, stageNums, allStageNums, recordMap) {
+    if (stageNums.size === allStageNums.length) return stats;
+    const filtered = allStageNums.filter((n) => stageNums.has(n)).sort((a, b) => a - b);
+    return { ...stats, ...summarizeStages(stats.username, filtered, recordMap) };
   }
   function computeDriverResults(stats, stageKm = null) {
     const n = stats[0]?.snaps.length ?? 0;
@@ -3680,7 +3376,7 @@ ${hit.ptIdx}` : null;
     const user = createElement("span", "td-name-user", stats.username);
     prependFlag(user, stats.country);
     td.appendChild(user);
-    if (stats.realName && stats.realName !== stats.username) {
+    if (hasRealName(stats)) {
       const real = createElement("span", "td-name-real", ` | ${stats.realName}`);
       td.appendChild(real);
     }
@@ -3743,7 +3439,7 @@ ${hit.ptIdx}` : null;
   function gapColor(val) {
     if (val > 0) return "var(--red-text)";
     if (val < 0) return "var(--green)";
-    return "#888";
+    return "var(--muted)";
   }
 
   // src/renderer/data/stages.json
@@ -4311,7 +4007,7 @@ ${hit.ptIdx}` : null;
     _filterState = fullFilterState(data2);
     updateApplyBar();
   }
-  function buildResultsFilters(rankMap2) {
+  function buildResultsFilters(rankMap3) {
     if (!_data) return;
     const callbacks3 = {
       onStagesChanged: () => {
@@ -4325,7 +4021,7 @@ ${hit.ptIdx}` : null;
       onDriverHover: () => {
       }
     };
-    buildChartFilterPanel(_data, _filterState, callbacks3, rankMap2, PREFIX);
+    buildChartFilterPanel(_data, _filterState, callbacks3, rankMap3, PREFIX);
     updateDriverItemsByStageAndFilter(_data, _filterState, _recordMap, PREFIX);
     updateFilterControls();
     wireApplyButton();
@@ -4436,11 +4132,8 @@ ${hit.ptIdx}` : null;
     inp.type = "text";
     th.appendChild(inp);
     inp.focus();
-    let debounce = null;
-    inp.addEventListener("input", () => {
-      if (debounce !== null) clearTimeout(debounce);
-      debounce = setTimeout(() => scrollToMatchingParticipant(inp.value), 150);
-    });
+    const search = debounce(scrollToMatchingParticipant, SEARCH_DEBOUNCE_MS);
+    inp.addEventListener("input", () => search(inp.value));
     inp.addEventListener("blur", () => {
       _searchActive = false;
       th.textContent = origLabel;
@@ -4478,7 +4171,7 @@ ${hit.ptIdx}` : null;
   var legendExpanded = false;
   var prevStageFilter = null;
   var rallyName = null;
-  var rankMap = /* @__PURE__ */ new Map();
+  var rankMap2 = /* @__PURE__ */ new Map();
   var lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [], countries: [] });
   var chartState = {
     activeStageNums: /* @__PURE__ */ new Set(),
@@ -4496,10 +4189,10 @@ ${hit.ptIdx}` : null;
       updateHeaderTitle();
       updateResumeButton();
       if (data) {
-        buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
+        buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap2);
         updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
         afterFilterChange2();
-        buildResultsFilters(rankMap);
+        buildResultsFilters(rankMap2);
         updateHeaderStats();
         invalidateResults();
         invalidateComments();
@@ -4610,9 +4303,10 @@ ${hit.ptIdx}` : null;
       lookups = buildRallyLookups(data);
       const allStats = computeAllDriverStats(data, lookups.recordMap);
       initResultsModule(data, lookups.recordMap, allStats);
-      rankMap = /* @__PURE__ */ new Map();
-      [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime)).forEach((s, i) => rankMap.set(s.username, s.totalTime !== null ? i + 1 : null));
-      const order = (k) => rankMap.get(k) ?? Number.MAX_SAFE_INTEGER;
+      rankMap2 = /* @__PURE__ */ new Map();
+      [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime)).forEach((s, i) => rankMap2.set(s.username, s.totalTime !== null ? i + 1 : null));
+      initCommentsModule(rankMap2, allStats);
+      const order = (k) => rankMap2.get(k) ?? Number.MAX_SAFE_INTEGER;
       data.drivers.sort((a, b) => order(a.username) - order(b.username));
       eventName = qs("#inp-event-name").value.trim();
       info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
@@ -4622,7 +4316,7 @@ ${hit.ptIdx}` : null;
       showChart();
       if (rallyId) void refreshRallyName(rallyId);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = err instanceof CsvParseError ? i18n.t().csvErrors[err.code] : err instanceof Error ? err.message : String(err);
       info.textContent = `${i18n.t().fileError}: ${msg}`;
       info.className = "file-info error";
       showWelcome();
@@ -4682,9 +4376,9 @@ ${hit.ptIdx}` : null;
     document.getElementById("screen-chart").style.display = "flex";
     updateHeaderTitle();
     applyDomTranslations();
-    buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
+    buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap2);
     updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
-    buildResultsFilters(rankMap);
+    buildResultsFilters(rankMap2);
     switchTab("chart");
     if (urlState) applyUrlView(urlState);
     if (chartCtrl.getYMode() === "pinned" && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode("leader");
@@ -4967,6 +4661,10 @@ ${hit.ptIdx}` : null;
     const el = target;
     return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
   }
+  var CELL_TIP_DX = 12;
+  var CELL_TIP_DY = 30;
+  var CELL_TIP_DY_FLIP = 16;
+  var CELL_TIP_MARGIN = 8;
   function onCellTooltipMove(e) {
     const tipEl = document.getElementById("cell-tooltip");
     const tip = e.target.dataset["tooltip"];
@@ -4976,11 +4674,11 @@ ${hit.ptIdx}` : null;
     }
     tipEl.textContent = tip;
     tipEl.style.display = "block";
-    let tx = e.clientX + 12;
-    let ty = e.clientY - 30;
+    let tx = e.clientX + CELL_TIP_DX;
+    let ty = e.clientY - CELL_TIP_DY;
     const tr = tipEl.getBoundingClientRect();
-    if (tx + tr.width > window.innerWidth - 8) tx = e.clientX - tr.width - 12;
-    if (ty < 8) ty = e.clientY + 16;
+    if (tx + tr.width > window.innerWidth - CELL_TIP_MARGIN) tx = e.clientX - tr.width - CELL_TIP_DX;
+    if (ty < CELL_TIP_MARGIN) ty = e.clientY + CELL_TIP_DY_FLIP;
     tipEl.style.left = `${tx}px`;
     tipEl.style.top = `${ty}px`;
   }

@@ -1,4 +1,4 @@
-import type { IParsedRallyData, IStageInfo, IDriverInfo } from '../../shared/types.js';
+import type { IParsedRallyData, IStageInfo, IDriverInfo, TRecordMap } from '../../shared/types.js';
 import { i18n } from "../../i18n/index.js";
 import {
     createElement,
@@ -21,6 +21,7 @@ import {
 } from "./filterState.js";
 import { prependFlag } from "../flags";
 import { buildCountryItems } from "./countryFilter";
+import { driverDisplayName } from "../../shared/driverName";
 
 export function buildStageFilterUI(
     stages:    IStageInfo[],
@@ -148,9 +149,7 @@ export function buildDriverFilterUI(
             rank !== null ? String(rank) : 'DNF');
         const content  = createElement('div', 'filter-driver-content');
         const nameSpan = createElement('span', 'filter-driver-name',
-            drv.realName && drv.realName !== drv.username
-                ? `${drv.username} (${drv.realName})`
-                : drv.username,
+            driverDisplayName(drv),
         );
         prependFlag(nameSpan, drv.country);
         content.appendChild(nameSpan);
@@ -282,7 +281,7 @@ export function applyGroupOrCarFilterToDriverList(
 export function updateDriverItemsByStageAndFilter(
     data:      IParsedRallyData,
     state:     IChartFilterState,
-    recordMap: Map<string, Map<number, any>>,
+    recordMap: TRecordMap,
     prefix    = '',
 ): void {
     const body = driverListBody(prefix);

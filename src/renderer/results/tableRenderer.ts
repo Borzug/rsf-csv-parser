@@ -1,5 +1,6 @@
 import type { IStageInfo } from '../../shared/types.js';
-import type { IDriverResult, IDriverStageSnap } from './types.js';
+import type { IDriverResult, IDriverStageSnap, IDriverStats } from './types.js';
+import { hasRealName } from '../../shared/driverName';
 import { i18n } from "../../i18n/index.js";
 import {
     createElement,
@@ -178,12 +179,12 @@ function buildPositionCell(pos: number | null): HTMLTableCellElement {
     return td;
 }
 
-function buildNameCell(stats: any): HTMLTableCellElement {
+function buildNameCell(stats: IDriverStats): HTMLTableCellElement {
     const td   = createTd('td-name sticky-col sticky-col-2');
     const user = createElement('span', 'td-name-user', stats.username);
     prependFlag(user, stats.country);
     td.appendChild(user);
-    if (stats.realName && stats.realName !== stats.username) {
+    if (hasRealName(stats)) {
         const real = createElement('span', 'td-name-real', ` | ${stats.realName}`);
         td.appendChild(real);
     }
@@ -268,5 +269,5 @@ function colorGap(el: HTMLElement, val: number | null, vs: TGapRef): void {
 function gapColor(val: number): string {
     if (val > 0) return 'var(--red-text)';
     if (val < 0) return 'var(--green)';
-    return '#888';
+    return 'var(--muted)';
 }

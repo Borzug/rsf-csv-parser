@@ -18,6 +18,12 @@
     /* Красный для текста на тёмном фоне (--red как цвет текста даёт лишь 3:1) */
     --red-text: #ef5b4c;
     --green:    #2ecc71;
+    /* Подсветка (фокус, поиск, активный комментарий) и цвета призовых мест */
+    --gold:     #f1c40f;
+    --silver:   #bdc3c7;
+    --bronze:   #e67e22;
+    /* Рамка всплывающих панелей и карточек при наведении — светлее --border */
+    --border-hi: #404040;
     --radius:   6px;
     --ff:       'Fira Code', 'Consolas', monospace;
     /* Использовались переключателем языка, но не были объявлены — активный язык не выделялся */
@@ -26,7 +32,7 @@
 }
 
 /* Видимый фокус для навигации с клавиатуры */
-:focus-visible { outline: 2px solid #f1c40f; outline-offset: 1px; }
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
 
 html, body { height: 100%; overflow: hidden; }
 
@@ -422,10 +428,10 @@ body {
 .results-table tr:hover td { background: rgba(255,255,255,0.025); }
 
 .td-pos  { font-weight: 700; font-size: 13px; color: var(--dim); width: 36px; text-align: right; padding-right: 14px; }
-.pos-gold   { color: #f1c40f; }
+.pos-gold   { color: var(--gold); }
 .pos-dnf    { font-size: 10px; font-weight: 600; }
-.pos-silver { color: #bdc3c7; }
-.pos-bronze { color: #e67e22; }
+.pos-silver { color: var(--silver); }
+.pos-bronze { color: var(--bronze); }
 .td-name        { color: var(--text); max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
 
 /* Место и участник остаются на месте при горизонтальной прокрутке */
@@ -452,10 +458,10 @@ body {
 .td-name-user   { color: var(--text); font-weight: 500; }
 .td-name-real   { color: var(--muted); font-size: 11px; }
 .td-time        { color: #aaa; }
-.td-leader      { color: #888; }
+.td-leader      { color: var(--muted); }
 .td-gap-pos     { color: var(--red-text); }
 .td-gap-neg     { color: var(--green); }
-.td-gap-zero    { color: #888; }
+.td-gap-zero    { color: var(--muted); }
 .td-clean       { cursor: help; border-bottom: 1px dashed #555; display: inline-block; }
 /* Отставание от лидера есть почти у всех — нейтральный цвет; красный/зелёный только для сравнения с соседом */
 .td-gap-leader  { color: var(--text-2); }
@@ -490,7 +496,7 @@ body {
     color: var(--text); font: inherit; text-align: left; cursor: pointer;
 }
 .cs-entry:hover, .cs-entry.cs-active { background: rgba(241,196,15,0.12); }
-.cs-entry.cs-active { box-shadow: inset 2px 0 0 #f1c40f; }
+.cs-entry.cs-active { box-shadow: inset 2px 0 0 var(--gold); }
 .cs-dot    { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; align-self: center; }
 .cs-ss     { font-family: var(--ff); font-size: 11px; font-weight: 700; color: var(--red-text); flex-shrink: 0; }
 .cs-stage  { font-family: var(--ff); font-size: 11px; color: var(--muted); flex-shrink: 0; max-width: 140px;
@@ -503,7 +509,7 @@ body {
 .stage-comments {
     position: fixed; z-index: 600; width: min(380px, calc(100vw - 16px));
     display: flex; flex-direction: column; overflow: hidden;
-    background: rgba(12,12,12,0.98); border: 1px solid #404040; border-radius: 8px;
+    background: rgba(12,12,12,0.98); border: 1px solid var(--border-hi); border-radius: 8px;
     box-shadow: 0 6px 28px rgba(0,0,0,0.85);
 }
 .stage-comments[hidden] { display: none; }
@@ -525,7 +531,7 @@ body {
 /* ── Chart HTML tooltip ──────────────────────────────────────── */
 .chart-tooltip {
     position: fixed; z-index: 500; display: none;
-    background: rgba(8,8,8,0.97); border: 1px solid #404040; border-radius: 8px;
+    background: rgba(8,8,8,0.97); border: 1px solid var(--border-hi); border-radius: 8px;
     padding: 11px 15px;
     font-family: var(--ff); font-size: 14px; color: #ccc;
     pointer-events: none; max-width: 360px;
@@ -534,11 +540,11 @@ body {
 }
 .tt-block   { margin-bottom: 2px; }
 .tt-divider { border-top: 1px solid #2a2a2a; margin: 6px 0; }
-.tt-stage   { font-size: 11px; color: #888; display: block; margin-bottom: 3px; }
+.tt-stage   { font-size: 11px; color: var(--muted); display: block; margin-bottom: 3px; }
 .tt-name    { font-weight: 600; font-size: 15px; color: #fff; display: block; }
 .tt-car     { color: #999; font-size: 12px; display: block; }
 .tt-row     { display: block; color: #ddd; }
-.tt-red     { color: #e74c3c; display: block; }
+.tt-red     { color: var(--red-hi); display: block; }
 .tt-sep     { display: block; border-top: 1px solid #1e1e1e; margin: 4px 0 2px; }
 .tt-cmt     { display: block; color: #aaa; font-size: 12px; word-break: break-word; }
 .chart-tooltip:has(.tt-compare) { max-width: 560px; font-size: 13px; line-height: 1.6; }
@@ -548,7 +554,7 @@ body {
 .tt-compare td + td { padding-left: 12px; }
 .tt-dot     { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 .tt-num     { text-align: right; }
-.tt-delta   { color: #e74c3c; }
+.tt-delta   { color: var(--red-hi); }
 
 /* ── Cell tooltip ────────────────────────────────────────────── */
 .cell-tooltip {
@@ -603,12 +609,12 @@ body {
 }
 .ctl-line {
     display: inline-block; width: 18px; height: 2px; flex-shrink: 0;
-    background: #888;
+    background: var(--muted);
 }
-.ctl-solid  { background: #888; }
+.ctl-solid  { background: var(--muted); }
 .ctl-dashed {
     background: none;
-    border-top: 2px dashed #888;
+    border-top: 2px dashed var(--muted);
 }
 .ctl-diamond { font-size: 11px; color: #bbb; flex-shrink: 0; line-height: 1; }
 
@@ -632,7 +638,7 @@ body {
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #303030; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #404040; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
 
 /* Таблица результатов при многих СУ шире экрана — горизонтальная полоса должна быть заметной */
 .results-wrap::-webkit-scrollbar       { width: 10px; height: 12px; }
@@ -692,10 +698,85 @@ body {
 }
 .sidebar-close {
     width: 32px; height: 32px; margin-left: 6px;
-    background: transparent; border: none; color: #888;
+    background: transparent; border: none; color: var(--muted);
     font-size: 22px; line-height: 1; cursor: pointer; border-radius: var(--radius);
 }
 .sidebar-close:hover { color: var(--text); background: var(--surface2); }
+
+/* ── Comments view (comments/index.ts) ─────────────────────────── */
+#view-comments, .cmt-search-wrap { font-family: var(--ff); }
+#view-comments { flex: 1; overflow-y: auto; padding: 12px 20px 24px; }
+.cmt-empty { color: var(--muted); text-align: center; margin-top: 80px; font-size: 13px; }
+.cmt-list  { display: flex; flex-direction: column; }
+.cmt-row {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.12); transition: background 0.15s;
+    /* Строки за пределами экрана не раскладываются — на больших ралли их сотни.
+       auto запоминает настоящую высоту, когда строка хоть раз показана */
+    content-visibility: auto; contain-intrinsic-size: auto 400px;
+}
+.cmt-row:last-child { border-bottom: none; }
+.cmt-row--highlighted {
+    background: rgba(46,204,113,0.12); outline: 1px solid rgba(46,204,113,0.4); border-radius: var(--radius);
+}
+.cmt-pos {
+    font-size: 13px; font-weight: 700; color: var(--muted);
+    width: 28px; min-width: 28px; text-align: right; padding-top: 2px; flex-shrink: 0;
+}
+.cmt-pos.pos-dnf { font-size: 10px; font-weight: 600; }
+.cmt-pos--gold   { color: var(--gold); }
+.cmt-pos--silver { color: var(--silver); }
+.cmt-pos--bronze { color: var(--bronze); }
+.cmt-driver { width: 190px; min-width: 190px; padding-top: 2px; }
+.cmt-drv-username {
+    font-size: 14px; font-weight: 500; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cmt-drv-realname, .cmt-drv-car {
+    font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cmt-drv-realname { color: var(--muted); margin-top: 2px; }
+.cmt-drv-car      { color: var(--text-2); margin-top: 4px; }
+.cmt-drv-count {
+    display: inline-block; margin-top: 8px; padding: 1px 6px;
+    font-size: 10px; color: var(--muted);
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 4px;
+}
+.cmt-cards { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+.cmt-card {
+    width: 220px; min-width: 220px; padding: 10px 12px;
+    display: flex; flex-direction: column; gap: 6px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    transition: border-color 0.15s;
+}
+.cmt-card:hover { border-color: var(--border-hi); }
+.cmt-card-header { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cmt-badge {
+    background: var(--red); color: #fff; font-size: 10px; font-weight: 600;
+    padding: 2px 6px; border-radius: 4px; flex-shrink: 0;
+}
+.cmt-stage-name { font-size: 11px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmt-card-meta  { display: flex; flex-direction: column; gap: 3px; }
+.cmt-time       { font-size: 14px; font-weight: 500; color: var(--text); }
+.cmt-gap        { font-size: 11px; color: var(--muted); }
+.cmt-gap--leader { color: var(--green); font-size: 10px; font-weight: 500; }
+.cmt-card-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.cmt-badge-sr, .cmt-badge-penalty {
+    font-size: 10px; font-weight: 700; color: var(--red-text); padding: 1px 6px; border-radius: 3px;
+}
+.cmt-badge-sr      { background: rgba(204,34,34,0.12); border: 1px solid rgba(204,34,34,0.25); }
+.cmt-badge-penalty { background: rgba(204,34,34,0.07); border: 1px solid rgba(204,34,34,0.18); }
+.cmt-card-text {
+    font-size: 13px; line-height: 1.55; color: var(--text); word-break: break-word;
+    border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px;
+}
+.cmt-search-wrap  { padding: 8px 12px 12px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.cmt-search-input {
+    width: 100%; margin-top: 6px; padding: 5px 8px; box-sizing: border-box; outline: none;
+    font-family: var(--ff); font-size: 12px; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border-hi); border-radius: 4px;
+}
+.cmt-search-input:focus { border-color: var(--red); }
 
 /* ── Narrow screens: drawer sidebar, legend under the chart ───── */
 @media (max-width: 768px) {

@@ -4,6 +4,7 @@ import { driverColor } from '../colors';
 import { createElement } from "../dom";
 import { isCoarsePointer } from "../utils";
 import { prependFlag } from "../flags";
+import { driverDisplayName } from "../../shared/driverName";
 
 export function updatePinnedBar(
     data:       IParsedRallyData | null,
@@ -27,9 +28,7 @@ export function updatePinnedBar(
         const dot  = createElement('span', 'pinned-dot');
         dot.style.background = driverColor(data.drivers.indexOf(drv!));
         const name = createElement('span', 'pinned-name',
-            drv!.realName && drv!.realName !== drv!.username
-                ? `${drv!.username} (${drv!.realName})`
-                : drv!.username,
+            driverDisplayName(drv!),
         );
         prependFlag(name, drv!.country);
         const x =createElement('button', 'pinned-chip-x', '×');

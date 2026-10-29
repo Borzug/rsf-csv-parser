@@ -49,6 +49,18 @@ export function escapeHtml(s: string): string {
         .replace(/>/g, '&gt;');
 }
 
+/** Пауза после ввода в поле поиска, прежде чем искать (меньше — дёргается на каждой букве). */
+export const SEARCH_DEBOUNCE_MS = 200;
+
+/** Вызывает fn через ms после последнего вызова обёртки. */
+export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms: number): (...args: A) => void {
+    let timer: number | undefined;
+    return (...args: A) => {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => fn(...args), ms);
+    };
+}
+
 export function nullableCompare(a: number | null, b: number | null): number {
     if (a === null && b === null) return 0;
     if (a === null) return 1;

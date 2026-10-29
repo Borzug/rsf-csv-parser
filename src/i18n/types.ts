@@ -24,6 +24,7 @@ export interface ITranslations {
     fileReading:            string;
     fileLoaded:             (stages: number, drivers: number) => string;
     fileError:              string;
+    csvErrors:              Record<'tooFewLines' | 'noData', string>;
     fileReadError:          string;
 
     // Навбар / шапка

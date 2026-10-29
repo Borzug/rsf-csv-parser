@@ -1,11 +1,9 @@
 import type { IStageInfo } from '../../shared/types';
+import { stageEndTick, stageStartTick } from "./points";
+import { AXIS_FONT_SIZE, chartTheme } from "./theme";
 
-const FONT_FAMILY     = "'Fira Code', monospace";
-const FONT_SIZE_SS    = 11;
-const FONT_SIZE_NM    = 10;
-const HOVER_BG_EVEN   = '#262626';
-const HOVER_BG_ODD    = '#222222';
-const HOVER_BORDER    = '#c0392b';
+const FONT_SIZE_SS    = AXIS_FONT_SIZE;
+const FONT_SIZE_NM    = AXIS_FONT_SIZE - 1;
 
 /** С какого числа СУ подписи под осью поворачиваются на 45° и на 90°. */
 export const ROTATE_45_AT = 9;
@@ -54,21 +52,22 @@ function drawStageBand(
     rot90:   boolean,
     hovered: boolean,
 ): void {
-    const xL = xs.getPixelForTick(i * 3);
-    const xR = xs.getPixelForTick(i * 3 + 3);
+    const xL = xs.getPixelForTick(stageStartTick(i));
+    const xR = xs.getPixelForTick(stageEndTick(i));
     if (xL >= xR) return;
 
     const bandH = (rot90 ? 108 : rot45 ? 88 : 40) + COMMENT_ROW_H;
 
+    const th = chartTheme();
     if (hovered) {
-        ctx.fillStyle = i % 2 === 0 ? HOVER_BG_EVEN : HOVER_BG_ODD;
+        ctx.fillStyle = i % 2 === 0 ? th.bandEvenHover : th.bandOddHover;
     } else {
-        ctx.fillStyle = i % 2 === 0 ? '#1c1c1c' : '#181818';
+        ctx.fillStyle = i % 2 === 0 ? th.bandEven : th.bandOdd;
     }
     ctx.fillRect(xL, bot + 2, xR - xL, bandH);
 
     if (hovered) {
-        ctx.strokeStyle = HOVER_BORDER;
+        ctx.strokeStyle = th.accent;
         ctx.lineWidth   = 1.5;
         ctx.beginPath();
         ctx.moveTo(xL, bot + 2);
@@ -76,7 +75,7 @@ function drawStageBand(
         ctx.stroke();
     }
 
-    ctx.strokeStyle = '#2a2a2a';
+    ctx.strokeStyle = th.gridStage;
     ctx.lineWidth   = 1;
     ctx.beginPath();
     ctx.moveTo(xL, bot + 2);
@@ -103,11 +102,12 @@ function drawCommentCounter(
     hovered: boolean,
 ): void {
     if (!count) return;
-    const xL = xs.getPixelForTick(i * 3);
-    const xR = xs.getPixelForTick(i * 3 + 3);
+    const xL = xs.getPixelForTick(stageStartTick(i));
+    const xR = xs.getPixelForTick(stageEndTick(i));
     if (xL >= xR) return;
 
-    ctx.font = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    const th = chartTheme();
+    ctx.font = `${FONT_SIZE_NM}px ${th.font}`;
     const num   = String(count);
     const full  = `💬 ${num}`;
     const text  = ctx.measureText(full).width + 8 <= xR - xL ? full : num;
@@ -115,13 +115,13 @@ function drawCommentCounter(
     const xMid  = (xL + xR) / 2;
     const yMid  = bot + 2 + COMMENT_ROW_H / 2;
 
-    ctx.fillStyle = hovered ? 'rgba(241,196,15,0.25)' : 'rgba(255,255,255,0.08)';
+    ctx.fillStyle = hovered ? th.counterBgHover : th.counterBg;
     ctx.beginPath();
     ctx.roundRect(xMid - w / 2, yMid - 6.5, w, 13, 6);
     ctx.fill();
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle    = hovered ? '#fff' : '#c8c8c8';
+    ctx.fillStyle    = hovered ? th.counterTextHover : th.counterText;
     ctx.fillText(text, xMid, yMid + 0.5);
 }
 
@@ -133,19 +133,20 @@ function drawHorizontalLabel(
     bot:     number,
     hovered: boolean,
 ): void {
+    const th   = chartTheme();
     const xMid = (xL + xR) / 2;
     ctx.textAlign    = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillStyle    = hovered ? '#ff7a6b' : '#ef5b4c';
-    ctx.font         = `bold ${FONT_SIZE_SS}px ${FONT_FAMILY}`;
+    ctx.fillStyle    = hovered ? th.stageNumHover : th.stageNum;
+    ctx.font         = `bold ${FONT_SIZE_SS}px ${th.font}`;
     ctx.fillText(`SS${stage.num}`, xMid, bot + 6);
 
     const maxChars = Math.max(4, Math.floor((xR - xL - 4) / 7));
     const name     = stage.name.length > maxChars
         ? stage.name.slice(0, maxChars - 1) + '…'
         : stage.name;
-    ctx.fillStyle = hovered ? '#c8c8c8' : '#8a8a8a';
-    ctx.font      = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    ctx.fillStyle = hovered ? th.axisTextHover : th.axisText;
+    ctx.font      = `${FONT_SIZE_NM}px ${th.font}`;
     ctx.fillText(name, xMid, bot + 21);
 }
 
@@ -158,6 +159,7 @@ function drawRotatedLabel(
     angle:   number,
     hovered: boolean,
 ): void {
+    const th         = chartTheme();
     const MAX_CHARS  = angle === Math.PI / 4 ? 22 : 28;
     const PAD        = 4;
 
@@ -173,8 +175,8 @@ function drawRotatedLabel(
     ctx.textAlign    = 'left';
     ctx.textBaseline = 'top';
 
-    ctx.fillStyle = hovered ? '#ff7a6b' : '#ef5b4c';
-    ctx.font      = `bold ${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    ctx.fillStyle = hovered ? th.stageNumHover : th.stageNum;
+    ctx.font      = `bold ${FONT_SIZE_NM}px ${th.font}`;
     const ssLabel = `SS${stage.num} `;
     ctx.fillText(ssLabel, 0, 0);
 
@@ -182,8 +184,8 @@ function drawRotatedLabel(
     const name = stage.name.length > MAX_CHARS
         ? stage.name.slice(0, MAX_CHARS - 1) + '…'
         : stage.name;
-    ctx.fillStyle = hovered ? '#c8c8c8' : '#8a8a8a';
-    ctx.font      = `${FONT_SIZE_NM}px ${FONT_FAMILY}`;
+    ctx.fillStyle = hovered ? th.axisTextHover : th.axisText;
+    ctx.font      = `${FONT_SIZE_NM}px ${th.font}`;
     ctx.fillText(name, ssW, 0);
     ctx.restore();
 }

@@ -17,6 +17,9 @@ export interface ILapRecord {
     comment:        string;
 }
 
+/** Записи по участнику и номеру СУ: recordMap.get(username)?.get(stageNum) */
+export type TRecordMap = Map<string, Map<number, ILapRecord>>;
+
 /** Информация о спецучастке */
 export interface IStageInfo {
     num:  number;

@@ -1,6 +1,8 @@
-import type { IParsedRallyData, IStageInfo } from '../../shared/types';
+import type { IDriverInfo, IParsedRallyData, IStageInfo, TRecordMap } from '../../shared/types';
+import { POINTS_PER_STAGE } from "./points";
 import { driverColor } from "../colors";
 import { passesAttrFilters } from "../filters/filterState";
+import { driverDisplayName } from "../../shared/driverName";
 
 export interface IChartDataset {
     label:               string;
@@ -28,7 +30,6 @@ export interface IChartDataset {
     _cumSR:              number[];
     _hasSR:              boolean[];
     _cmts:               string[];
-    _stageLabels:        string[];
     /** Точка и СУ комментария к сходу (комментарий может висеть на точке предыдущего СУ). */
     _dnfCmtPtIdx:        number | null;
     _dnfCmtStageIdx:     number | null;
@@ -41,11 +42,13 @@ const POINT_HOVER_RADIUS   = 7;
 const BORDER_WIDTH         = 1.8;
 const DASH_ON  = 6;
 const DASH_OFF = 4;
+/** Заливка ромба-комментария — белая, чтобы ромб читался поверх любой линии */
+const COMMENT_POINT_FILL = "#fff";
 
 export function buildDatasets(
     data:             IParsedRallyData,
     stages:           IStageInfo[],
-    recordMap:        Map<string, Map<number, any>>,
+    recordMap:        TRecordMap,
     cumPenMap:        Map<string, Map<number, number>>,
     cumSPMap:         Map<string, Map<number, number>>,
     cumSRMap:         Map<string, Map<number, number>>,
@@ -59,9 +62,7 @@ export function buildDatasets(
         const pts          = buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color);
         const dnfCommentPtIdx = pts.dnfCommentPtIdx;
         const attrOk = passesAttrFilters(data, { activeGroups, activeCars, activeCountries }, drv);
-        const dn   = drv.realName && drv.realName !== drv.username
-            ? `${drv.username} (${drv.realName})`
-            : drv.username;
+        const dn   = driverDisplayName(drv);
 
         return {
             label:               drv.label,
@@ -95,42 +96,23 @@ export function buildDatasets(
             _cumSR:       pts.cumSR,
             _hasSR:       pts.hasSR,
             _cmts:        pts.cmts,
-            _stageLabels: pts.stageLabels,
             _dnfCmtPtIdx:    pts.dnfCommentPtIdx,
             _dnfCmtStageIdx: pts.dnfCmtStageIdx,
         };
     });
 }
 
-function markDnf(
-    hasCmt:          boolean,
-    rec:             any,
-    lastValidPtIdx:  number,
-    dnfCommentPtIdx: number | null,
-    setDnfIdx:       (idx: number) => void,
-    pointStyles:     string[],
-    pointRadii:      number[],
-    pointColors:     string[],
-    cmts:            string[],
-    color:           string,
-): void {
-    if (!hasCmt || dnfCommentPtIdx !== null || lastValidPtIdx === 0) return;
-    pointStyles[lastValidPtIdx] = 'rectRot';
-    pointRadii[lastValidPtIdx]  = POINT_RADIUS_COMMENT;
-    pointColors[lastValidPtIdx] = '#fff';
-    cmts[lastValidPtIdx]        = rec.comment;
-    setDnfIdx(lastValidPtIdx);
-}
-
+/** Точки линии участника и данные для подсказки — по POINTS_PER_STAGE на каждый СУ. */
 function buildDriverPoints(
-    drv:       any,
+    drv:       IDriverInfo,
     stages:    IStageInfo[],
-    recordMap: Map<string, Map<number, any>>,
+    recordMap: TRecordMap,
     cumPenMap: Map<string, Map<number, number>>,
     cumSPMap:  Map<string, Map<number, number>>,
     cumSRMap:  Map<string, Map<number, number>>,
     color:     string,
 ) {
+    // Точка 0 — старт
     const y:           (number | null)[] = [0];
     const pointStyles: string[]          = ['circle'];
     const pointRadii:  number[]          = [0];
@@ -140,119 +122,64 @@ function buildDriverPoints(
     const cumSR:       number[]          = [0];
     const hasSR:       boolean[]         = [false];
     const cmts:        string[]          = [''];
-    const stageLabels: string[]          = ['Старт'];
 
-    let cum                            = 0;
-    let isDnf                          = false;
-    let lastValidPtIdx                 = 0;
+    let cum            = 0;
+    let isDnf          = false;
+    let lastValidPtIdx = 0;
     let dnfCommentPtIdx: number | null = null;
     // СУ, где сошёл участник: комментарий висит на последней пройденной точке,
     // а она может относиться к предыдущему СУ
     let dnfCmtStageIdx:  number | null = null;
 
     for (let si = 0; si < stages.length; si++) {
-        const st = stages[si];
+        const st     = stages[si];
         const rec    = recordMap.get(drv.username)?.get(st.num) ?? null;
         const pen    = cumPenMap.get(drv.username)?.get(st.num) ?? 0;
         const sp     = cumSPMap.get(drv.username)?.get(st.num)  ?? 0;
-        const srBase = cumSRMap.get(drv.username)?.get(st.num)  ?? 0;
-        const srThis = rec?.superRally ? 1 : 0;
-        const thisSR = srThis > 0;
-        const hasCmt = !!rec?.comment?.trim();
-        const slFull = `SS${st.num} ${st.name}`;
+        const sr     = (cumSRMap.get(drv.username)?.get(st.num) ?? 0) + (rec?.superRally ? 1 : 0);
+        const thisSR = !!rec?.superRally;
+        const comment = rec?.comment?.trim() ? rec.comment : '';
 
-        const pushMeta = (count: 1 | 2 | 3) => {
-            for (let k = 0; k < count; k++) {
-                cumPen.push(pen); cumSP.push(sp);
-                cumSR.push(srBase + srThis); hasSR.push(thisSR);
+        // Сколько сплитов СУ пройдено подряд: 0 — не стартовал (или уже сошёл), 3 — финишировал
+        const splits = [rec?.time1 ?? null, rec?.time2 ?? null, rec?.time3 ?? null];
+        let reached = 0;
+        if (!isDnf) while (reached < POINTS_PER_STAGE && splits[reached] !== null) reached++;
+        const finished = reached === POINTS_PER_STAGE;
+
+        for (let k = 0; k < POINTS_PER_STAGE; k++) {
+            const passed   = k < reached;
+            const isFinish = k === POINTS_PER_STAGE - 1;
+            // Комментарий к пройденному СУ — ромб на финише; к сходу — см. markDnfComment
+            const cmtHere  = finished && isFinish && !!comment;
+            y.push(passed ? cum + splits[k]! : null);
+            pointStyles.push(cmtHere ? 'rectRot' : 'circle');
+            pointRadii.push(!passed ? 0 : cmtHere ? POINT_RADIUS_COMMENT : isFinish ? POINT_RADIUS_FINAL : POINT_RADIUS_NORMAL);
+            pointColors.push(cmtHere ? COMMENT_POINT_FILL : color);
+            cmts.push(cmtHere ? comment : '');
+            cumPen.push(pen); cumSP.push(sp); cumSR.push(sr); hasSR.push(thisSR);
+        }
+
+        if (finished) {
+            cum += splits[POINTS_PER_STAGE - 1]!;
+            lastValidPtIdx = y.length - 1;
+        } else if (!isDnf) {
+            if (reached > 0) lastValidPtIdx = y.length - POINTS_PER_STAGE + reached - 1;
+            // Комментарий к сходу вешаем на последнюю пройденную точку (не на старт)
+            if (comment && lastValidPtIdx > 0) {
+                pointStyles[lastValidPtIdx] = 'rectRot';
+                pointRadii[lastValidPtIdx]  = POINT_RADIUS_COMMENT;
+                pointColors[lastValidPtIdx] = COMMENT_POINT_FILL;
+                cmts[lastValidPtIdx]        = comment;
+                dnfCommentPtIdx = lastValidPtIdx;
+                dnfCmtStageIdx  = si;
             }
-        };
-
-        // Уже DNF — тянем нули до конца
-        if (isDnf) {
-            y.push(null, null, null);
-            pointStyles.push('circle', 'circle', 'circle');
-            pointRadii.push(0, 0, 0);
-            pointColors.push(color, color, color);
-            pushMeta(3);
-            cmts.push('', '', '');
-            stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-            continue;
-        }
-
-        // Нет записи вообще или нет time1 — DNF без продвижения
-        if (!rec || rec.time1 === null) {
-            markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
-                (idx) => { dnfCommentPtIdx = idx; dnfCmtStageIdx = si; },
-                pointStyles, pointRadii, pointColors, cmts, color,
-            );
-            y.push(null, null, null);
-            pointStyles.push('circle', 'circle', 'circle');
-            pointRadii.push(0, 0, 0);
-            pointColors.push(color, color, color);
-            pushMeta(3);
-            cmts.push('', '', '');
-            stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
             isDnf = true;
-            continue;
         }
-
-        const t1 = rec.time1;
-
-        // Есть только time1 — DNF после SP1
-        if (rec.time2 === null) {
-            y.push(cum + t1, null, null);
-            pointStyles.push('circle', 'circle', 'circle');
-            pointRadii.push(POINT_RADIUS_NORMAL, 0, 0);
-            pointColors.push(color, color, color);
-            pushMeta(3);
-            cmts.push('', '', '');
-            stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-            lastValidPtIdx = y.length - 3;
-            markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
-                (idx) => { dnfCommentPtIdx = idx; dnfCmtStageIdx = si; },
-                pointStyles, pointRadii, pointColors, cmts, color,
-            );
-            isDnf = true;
-            continue;
-        }
-
-        const t2 = rec.time2;
-
-        // Есть time1 и time2, нет time3 — DNF после SP2
-        if (rec.time3 === null) {
-            y.push(cum + t1, cum + t2, null);
-            pointStyles.push('circle', 'circle', 'circle');
-            pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, 0);
-            pointColors.push(color, color, color);
-            pushMeta(3);
-            cmts.push('', '', '');
-            stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-            lastValidPtIdx = y.length - 2;
-            markDnf(hasCmt, rec, lastValidPtIdx, dnfCommentPtIdx,
-                (idx) => { dnfCommentPtIdx = idx; dnfCmtStageIdx = si; },
-                pointStyles, pointRadii, pointColors, cmts, color,
-            );
-            isDnf = true;
-            continue;
-        }
-
-        // Полный этап
-        const t3 = rec.time3;
-        y.push(cum + t1, cum + t2, cum + t3);
-        pointStyles.push('circle', 'circle', hasCmt ? 'rectRot' : 'circle');
-        pointRadii.push(POINT_RADIUS_NORMAL, POINT_RADIUS_NORMAL, hasCmt ? POINT_RADIUS_COMMENT : POINT_RADIUS_FINAL);
-        pointColors.push(color, color, hasCmt ? '#fff' : color);
-        pushMeta(3);
-        cmts.push('', '', rec.comment ?? '');
-        stageLabels.push(`${slFull} SP1`, `${slFull} SP2`, slFull);
-        cum = cum + t3;
-        lastValidPtIdx = y.length - 1;
     }
 
     return {
         y, pointStyles, pointRadii, pointColors,
-        cumPen, cumSP, cumSR, hasSR, cmts, stageLabels,
-        dnfCommentPtIdx, dnfCmtStageIdx, lastValidPtIdx,
+        cumPen, cumSP, cumSR, hasSR, cmts,
+        dnfCommentPtIdx, dnfCmtStageIdx,
     };
 }

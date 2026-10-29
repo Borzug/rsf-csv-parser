@@ -1,10 +1,8 @@
 import { i18n } from "../../i18n/index.js";
 import { qsa } from "../dom.js";
+import { debounce, SEARCH_DEBOUNCE_MS } from "../utils";
 
-const DEBOUNCE_MS = 200;
 const MIN_CHARS   = 2;
-
-let _searchTimer: number | null = null;
 
 /**
  * Поиск только помогает найти строку: прячет несовпавшие классом .search-hidden и не
@@ -47,13 +45,10 @@ export function buildSearchBox(
     sw.appendChild(sc);
     body.appendChild(sw);
 
+    const search = debounce(onSearch, SEARCH_DEBOUNCE_MS);
     si.addEventListener('input', () => {
         sc.classList.toggle('hidden', si.value.length === 0);
-        if (_searchTimer !== null) clearTimeout(_searchTimer);
-        _searchTimer = setTimeout(
-            () => onSearch(si.value),
-            DEBOUNCE_MS,
-        ) as unknown as number;
+        search(si.value);
     });
 
     sc.addEventListener('click', () => {

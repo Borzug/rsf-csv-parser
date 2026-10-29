@@ -1,4 +1,4 @@
-import type { IParsedRallyData } from '../../shared/types';
+import type { IParsedRallyData, TRecordMap } from '../../shared/types';
 import type { IDriverResult, IDriverStats } from './types';
 import { i18n } from "../../i18n/index.js";
 import {
@@ -15,6 +15,7 @@ import {
 } from "../filters/chartFilters";
 import { passesAttrFilters } from "../filters/filterState";
 import { qsa } from "../dom";
+import { debounce, SEARCH_DEBOUNCE_MS } from "../utils";
 import {
     buildResultsTableHeader,
     renderResultsRows
@@ -24,7 +25,7 @@ import { stageLengthKm } from "../data/stageLengths";
 export { computeAllDriverStats } from './compute';
 
 let _data:       IParsedRallyData | null = null;
-let _recordMap:  Map<string, Map<number, any>> = new Map();
+let _recordMap:  TRecordMap = new Map();
 let _allStats:   IDriverStats[] = [];
 let _selectedRows = new Set<string>();
 let _searchActive = false;
@@ -55,7 +56,7 @@ function fullFilterState(data: IParsedRallyData | null): IChartFilterState {
 
 export function initResultsModule(
     data:      IParsedRallyData,
-    recordMap: Map<string, Map<number, any>>,
+    recordMap: TRecordMap,
     allStats:  IDriverStats[],
 ): void {
     _data       = data;
@@ -217,11 +218,8 @@ function activateParticipantSearch(th: HTMLElement): void {
     th.appendChild(inp);
     inp.focus();
 
-    let debounce: number | null = null;
-    inp.addEventListener('input', () => {
-        if (debounce !== null) clearTimeout(debounce);
-        debounce = setTimeout(() => scrollToMatchingParticipant(inp.value), 150) as unknown as number;
-    });
+    const search = debounce(scrollToMatchingParticipant, SEARCH_DEBOUNCE_MS);
+    inp.addEventListener('input', () => search(inp.value));
     inp.addEventListener('blur', () => {
         _searchActive = false;
         th.textContent = origLabel;

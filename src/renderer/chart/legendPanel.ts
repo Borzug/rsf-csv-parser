@@ -1,8 +1,9 @@
-import type { IParsedRallyData, IStageInfo } from '../../shared/types';
+import type { IParsedRallyData, IStageInfo, TRecordMap } from '../../shared/types';
 import { driverColor } from "../colors";
 import { createElement } from "../dom";
 import { isCoarsePointer } from "../utils";
 import { prependFlag } from "../flags";
+import { driverDisplayName } from "../../shared/driverName";
 
 export interface ILegendPanelCallbacks {
     onDriverHover: (key: string | null) => void;
@@ -13,7 +14,7 @@ export function updateLegendPanel(
     data:             IParsedRallyData,
     chart:            any,
     activeStages:     IStageInfo[],
-    recordMap:        Map<string, Map<number, any>>,
+    recordMap:        TRecordMap,
     isExpanded:       boolean,
     pinnedKeys:       string[],
     leaderFirst:      boolean,
@@ -57,7 +58,7 @@ function buildSortedVisibleDrivers(
     data:         IParsedRallyData,
     chart:        any,
     activeStages: IStageInfo[],
-    recordMap:    Map<string, Map<number, any>>,
+    recordMap:    TRecordMap,
 ): Array<{ drv: any; cum: number | null }> {
     const dsByKey = new Map<string, any>();
     for (const ds of chart?.data.datasets ?? []) dsByKey.set(ds.driverKey, ds);
@@ -166,9 +167,7 @@ function renderLegendItems(
         dot.setAttribute('aria-hidden', 'true');
         dot.style.background = color;
         const name = createElement('span', 'legend-name',
-            drv.realName && drv.realName !== drv.username
-                ? `${drv.username} (${drv.realName})`
-                : drv.username,
+            driverDisplayName(drv),
         );
         prependFlag(name, drv.country);
         item.appendChild(dot);

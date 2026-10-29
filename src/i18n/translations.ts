@@ -10,6 +10,10 @@ export const ru: ITranslations = {
     fileReading:            'Чтение файла…',
     fileLoaded:             (stages, drivers) => `✓ Загружено: ${stages} участков, ${drivers} участников`,
     fileError:              '✗ Ошибка',
+    csvErrors: {
+        tooFewLines: 'Файл содержит слишком мало строк',
+        noData:      'Не удалось распознать данные в файле',
+    },
     fileReadError:          'Не удалось прочитать файл',
 
     defaultTitle:           'Rally Race Chart',
@@ -143,6 +147,10 @@ export const en: ITranslations = {
     fileReading:            'Reading file…',
     fileLoaded:             (stages, drivers) => `✓ Loaded: ${stages} stages, ${drivers} participants`,
     fileError:              '✗ Error',
+    csvErrors: {
+        tooFewLines: 'The file has too few lines',
+        noData:      'Could not recognise any data in the file',
+    },
     fileReadError:          'Failed to read file',
 
     defaultTitle:           'Rally Race Chart',
@@ -272,6 +280,10 @@ export const hu: ITranslations = {
     fileReading:            'Fájl olvasása…',
     fileLoaded:             (stages, drivers) => `✓ Betöltve: ${stages} szakasz, ${drivers} résztvevő`,
     fileError:              '✗ Hiba',
+    csvErrors: {
+        tooFewLines: 'A fájl túl kevés sort tartalmaz',
+        noData:      'Nem sikerült adatot felismerni a fájlban',
+    },
     fileReadError:          'A fájl olvasása sikertelen',
 
     defaultTitle:           'Rally Race Chart',

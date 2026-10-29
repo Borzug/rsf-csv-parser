@@ -1,4 +1,5 @@
 import type { IStageInfo } from '../../shared/types';
+import { stageIdxOfPoint } from "./points";
 
 /** Комментарий участника в точке графика. */
 export interface IChartComment {
@@ -15,16 +16,11 @@ export interface IChartComment {
     text:      string;
 }
 
-/** Индекс СУ по индексу точки графика (0 — старт, затем по три точки на СУ). */
-export function stageIdxOfPoint(ptIdx: number): number {
-    return Math.floor((ptIdx - 1) / 3);
-}
-
 /**
  * СУ, к которому относится комментарий в точке. Комментарий к сходу висит на последней
  * пройденной точке — она бывает на предыдущем СУ.
  */
-function commentStageIdx(ds: any, ptIdx: number): number {
+export function commentStageIdx(ds: any, ptIdx: number): number {
     return ptIdx === ds._dnfCmtPtIdx && ds._dnfCmtStageIdx !== null
         ? ds._dnfCmtStageIdx
         : stageIdxOfPoint(ptIdx);
