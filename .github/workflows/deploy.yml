@@ -35,10 +35,13 @@ jobs:
           mkdir -p _site/dist/renderer
           cp index.html style.css favicon.svg _site/
           cp dist/renderer/index.js _site/dist/renderer/index.js
+          cp -r flags _site/flags
           touch _site/.nojekyll
 
       - name: Verify
-        run: ls -la _site/dist/renderer/index.js
+        run: |
+          ls -la _site/dist/renderer/index.js
+          test -f _site/flags/de.svg
 
       - uses: actions/configure-pages@v4
         with:
