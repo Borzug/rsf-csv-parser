@@ -13,24 +13,21 @@ import {
     buildCountryFilterUI,
 } from './filterBuilders';
 
+/**
+ * Панель фильтров: одна и та же для графика (prefix '') и результатов (prefix 'res-') —
+ * отличаются только id контейнеров и что делают колбэки.
+ */
 export function buildChartFilterPanel(
     data:      IParsedRallyData,
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
     rankMap:   Map<string, number | null>,
+    prefix     = '',
 ): void {
-    buildStageFilterUI(data.stages, state, callbacks);
-    buildDriverFilterUI(data.drivers, data, state, callbacks, rankMap);
-    buildGroupFilterUI(
-        data.groups, data, state, callbacks,
-        () => applyGroupOrCarFilterToDriverList(data, state),
-    );
-    buildCarFilterUI(
-        data.drivers, state, callbacks,
-        () => applyGroupOrCarFilterToDriverList(data, state),
-    );
-    buildCountryFilterUI(
-        data, state, callbacks,
-        () => applyGroupOrCarFilterToDriverList(data, state),
-    );
+    const refilter = () => applyGroupOrCarFilterToDriverList(data, state, prefix);
+    buildStageFilterUI(data.stages, state, callbacks, prefix);
+    buildDriverFilterUI(data.drivers, data, state, callbacks, rankMap, prefix);
+    buildGroupFilterUI(data.groups, data, state, callbacks, refilter, prefix);
+    buildCarFilterUI(data.drivers, state, callbacks, refilter, prefix);
+    buildCountryFilterUI(data, state, callbacks, refilter, prefix);
 }

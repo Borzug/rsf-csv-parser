@@ -5,6 +5,7 @@ import {
     formatYAxisTick
 } from "../utils";
 import { buildDatasets } from "./datasets";
+import { passesAttrFilters } from "../filters/filterState";
 import { buildDnfLinePlugin } from "./pluginDnfLine";
 import { buildHoverDimPlugin } from "./pluginHoverDim";
 import {
@@ -339,10 +340,9 @@ export function createChartController(): IChartController {
             if (!chart || !data) return;
             chart.data.datasets.forEach((ds: any) => {
                 const drv   = data.drivers.find(d => d.username === ds.driverKey);
-                const grpOk = !data.groups.length || !drv || activeGroups.has(drv.group);
-                const carOk = !activeCars.size || !drv || activeCars.has(drv.car);
-                const ctyOk = !data.countries.length || !drv || activeCountries.has(drv.country);
-                ds.hidden   = !activeDriverKeys.has(ds.driverKey) || !grpOk || !carOk || !ctyOk;
+                const attrOk = !drv
+                    || passesAttrFilters(data, { activeGroups, activeCars, activeCountries }, drv);
+                ds.hidden   = !activeDriverKeys.has(ds.driverKey) || !attrOk;
             });
             applyYMode();
             chart.update('none');

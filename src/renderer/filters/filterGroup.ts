@@ -8,6 +8,18 @@ export interface IFilterGroupRefs {
     btnNone: HTMLButtonElement;
 }
 
+/** Сколько участников у каждого значения (класса, машины, страны). */
+export function countBy<T>(items: T[], key: (item: T) => string): Map<string, number> {
+    const counts = new Map<string, number>();
+    for (const it of items) counts.set(key(it), (counts.get(key(it)) ?? 0) + 1);
+    return counts;
+}
+
+/** Число участников справа в пункте фильтра. */
+export function createFilterCount(n: number): HTMLElement {
+    return createElement('span', 'filter-count', String(n));
+}
+
 export function buildCollapsibleFilterGroup(
     title:     string,
     counterId: string,

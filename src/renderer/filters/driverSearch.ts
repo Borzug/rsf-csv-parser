@@ -22,8 +22,8 @@ export function applyDriverSearch(q: string, body: HTMLElement): void {
 
 /** Повторно применяет поиск после перестройки или фильтрации списка. */
 export function reapplyDriverSearch(body: HTMLElement): void {
-    const sv = (document.getElementById('driver-search-input') as HTMLInputElement | null)
-        ?.value ?? '';
+    // Поле поиска — внутри того же списка: на графике и в результатах у каждого своё
+    const sv = body.querySelector<HTMLInputElement>('.filter-search')?.value ?? '';
     applyDriverSearch(sv, body);
 }
 
@@ -37,7 +37,6 @@ export function buildSearchBox(
     const si = document.createElement('input');
     si.className   = 'filter-search';
     si.type        = 'text';
-    si.id          = 'driver-search-input';
     si.placeholder = i18n.t().filterSearch;
 
     const sc = document.createElement('button');

@@ -1,5 +1,6 @@
 import type { IParsedRallyData, IStageInfo } from '../../shared/types';
 import { driverColor } from "../colors";
+import { passesAttrFilters } from "../filters/filterState";
 
 export interface IChartDataset {
     label:               string;
@@ -57,9 +58,7 @@ export function buildDatasets(
         const color = driverColor(gi);
         const pts          = buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color);
         const dnfCommentPtIdx = pts.dnfCommentPtIdx;
-        const grpOk = !data.groups.length || activeGroups.has(drv.group);
-        const carOk = !activeCars.size || activeCars.has(drv.car);
-        const ctyOk = !data.countries.length || activeCountries.has(drv.country);
+        const attrOk = passesAttrFilters(data, { activeGroups, activeCars, activeCountries }, drv);
         const dn   = drv.realName && drv.realName !== drv.username
             ? `${drv.username} (${drv.realName})`
             : drv.username;
@@ -82,7 +81,7 @@ export function buildDatasets(
             _ptColor:            pts.pointColors,
             tension:             0,
             spanGaps:            false,
-            hidden:              !activeDriverKeys.has(drv.username) || !grpOk || !carOk || !ctyOk,
+            hidden:              !activeDriverKeys.has(drv.username) || !attrOk,
             // Функция стиля отрезков вызывается на каждый отрезок при каждом update(),
             // поэтому подключаем её только линиям, где пунктир действительно есть
             segment: pts.hasSR.some(Boolean) || dnfCommentPtIdx !== null

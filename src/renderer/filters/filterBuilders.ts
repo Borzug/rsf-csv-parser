@@ -9,10 +9,12 @@ import {
     buildSearchBox,
     reapplyDriverSearch
 } from "./driverSearch.js";
-import { buildCollapsibleFilterGroup } from "./filterGroup.js";
+import { buildCollapsibleFilterGroup, countBy, createFilterCount } from "./filterGroup.js";
 import {
     IChartFilterCallbacks,
     IChartFilterState,
+    filterId,
+    passesAttrFilters,
     refreshVisibleDriverKeys,
     setAllCheckboxes,
     syncVisibleCheckboxes
@@ -24,11 +26,12 @@ export function buildStageFilterUI(
     stages:    IStageInfo[],
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
+    prefix:    string,
 ): void {
-    const cont = document.getElementById('filter-stages')!;
+    const cont = document.getElementById(filterId(prefix, 'filter-stages'))!;
     cont.innerHTML = '';
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup(i18n.t().filterChartStages, 'counter-stages');
+        buildCollapsibleFilterGroup(i18n.t().filterChartStages, filterId(prefix, 'counter-stages'));
 
     btnAll.addEventListener('click', () => {
         stages.forEach(s => state.activeStageNums.add(s.num));
@@ -66,11 +69,12 @@ export function buildDriverFilterUI(
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
     rankMap:   Map<string, number | null>,
+    prefix:    string,
 ): void {
-    const wrap = document.getElementById('filter-drivers-wrap')!;
+    const wrap = document.getElementById(filterId(prefix, 'filter-drivers-wrap'))!;
     wrap.innerHTML = '';
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup(i18n.t().filterParticipants, 'counter-drivers');
+        buildCollapsibleFilterGroup(i18n.t().filterParticipants, filterId(prefix, 'counter-drivers'));
     const t = i18n.t();
 
     // Сначала финишировавшие по месту, затем сошедшие по алфавиту
@@ -175,13 +179,14 @@ export function buildGroupFilterUI(
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
     onRefilterDrivers: () => void,
+    prefix:    string,
 ): void {
-    const cont = document.getElementById('filter-groups')!;
+    const cont = document.getElementById(filterId(prefix, 'filter-groups'))!;
     cont.innerHTML = '';
     if (!groups.length) { cont.style.display = 'none'; return; }
 
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup(i18n.t().filterGroupClass, 'counter-groups');
+        buildCollapsibleFilterGroup(i18n.t().filterGroupClass, filterId(prefix, 'counter-groups'));
 
     btnAll.addEventListener('click', () => {
         groups.forEach(g => state.activeGroups.add(g));
@@ -196,6 +201,7 @@ export function buildGroupFilterUI(
         callbacks.onGroupsChanged();
     });
 
+    const counts = countBy(data.drivers, d => d.group);
     for (const grp of groups) {
         const lbl = createElement('label', 'filter-item');
         const cb  = createElement('input') as HTMLInputElement;
@@ -207,6 +213,7 @@ export function buildGroupFilterUI(
         });
         lbl.appendChild(cb);
         lbl.appendChild(createElement('span', 'filter-group-label', grp));
+        lbl.appendChild(createFilterCount(counts.get(grp) ?? 0));
         body.appendChild(lbl);
     }
     cont.appendChild(group);
@@ -217,14 +224,15 @@ export function buildCarFilterUI(
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
     onRefilterDrivers: () => void,
+    prefix:    string,
 ): void {
-    const cont = document.getElementById('filter-cars')!;
+    const cont = document.getElementById(filterId(prefix, 'filter-cars'))!;
     cont.innerHTML = '';
     const cars = [...new Set(drivers.map(d => d.car).filter(Boolean))].sort();
     if (!cars.length) { cont.style.display = 'none'; return; }
 
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup(i18n.t().filterCar, 'counter-cars');
+        buildCollapsibleFilterGroup(i18n.t().filterCar, filterId(prefix, 'counter-cars'));
 
     btnAll.addEventListener('click', () => {
         cars.forEach(c => state.activeCars.add(c));
@@ -239,6 +247,7 @@ export function buildCarFilterUI(
         callbacks.onCarsChanged();
     });
 
+    const counts = countBy(drivers, d => d.car);
     for (const car of cars) {
         const lbl = createElement('label', 'filter-item');
         const cb  = createElement('input') as HTMLInputElement;
@@ -250,19 +259,21 @@ export function buildCarFilterUI(
         });
         lbl.appendChild(cb);
         lbl.appendChild(createElement('span', 'filter-car-label', car));
+        lbl.appendChild(createFilterCount(counts.get(car) ?? 0));
         body.appendChild(lbl);
     }
     cont.appendChild(group);
 }
 
 export function applyGroupOrCarFilterToDriverList(
-    data:  IParsedRallyData,
-    state: IChartFilterState,
+    data:   IParsedRallyData,
+    state:  IChartFilterState,
+    prefix: string,
 ): void {
-    const body = document.querySelector<HTMLElement>('#filter-drivers-wrap .filter-body');
+    const body = driverListBody(prefix);
     if (!body) return;
     qsa<HTMLElement>('.filter-item[data-driver-key]', body).forEach(item => {
-        item.style.display = passesAttrFilters(item, data, state) ? '' : 'none';
+        item.style.display = itemPassesAttrFilters(item, data, state) ? '' : 'none';
     });
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
@@ -272,8 +283,9 @@ export function updateDriverItemsByStageAndFilter(
     data:      IParsedRallyData,
     state:     IChartFilterState,
     recordMap: Map<string, Map<number, any>>,
+    prefix    = '',
 ): void {
-    const body = document.querySelector<HTMLElement>('#filter-drivers-wrap .filter-body');
+    const body = driverListBody(prefix);
     if (!body) return;
     const allSelected = state.activeStageNums.size === data.stages.length;
 
@@ -281,7 +293,7 @@ export function updateDriverItemsByStageAndFilter(
         const key   = item.dataset['driverKey']!;
         const stageOk = allSelected
             || [...state.activeStageNums].some(sn => recordMap.get(key)?.has(sn));
-        item.style.display = (passesAttrFilters(item, data, state) && stageOk) ? '' : 'none';
+        item.style.display = (itemPassesAttrFilters(item, data, state) && stageOk) ? '' : 'none';
     });
 
     reapplyDriverSearch(body);
@@ -289,11 +301,16 @@ export function updateDriverItemsByStageAndFilter(
 }
 
 /** Класс, автомобиль и страна участника из data-атрибутов пункта списка. */
-function passesAttrFilters(item: HTMLElement, data: IParsedRallyData, state: IChartFilterState): boolean {
-    const grpOk = !data.groups.length || state.activeGroups.has(item.dataset['group'] ?? '');
-    const carOk = !state.activeCars.size || state.activeCars.has(item.dataset['car'] ?? '');
-    const ctyOk = !data.countries.length || state.activeCountries.has(item.dataset['country'] ?? '');
-    return grpOk && carOk && ctyOk;
+function itemPassesAttrFilters(item: HTMLElement, data: IParsedRallyData, state: IChartFilterState): boolean {
+    return passesAttrFilters(data, state, {
+        group:   item.dataset['group']   ?? '',
+        car:     item.dataset['car']     ?? '',
+        country: item.dataset['country'] ?? '',
+    });
+}
+
+function driverListBody(prefix: string): HTMLElement | null {
+    return document.querySelector<HTMLElement>(`#${filterId(prefix, 'filter-drivers-wrap')} .filter-body`);
 }
 
 export function buildCountryFilterUI(
@@ -301,14 +318,15 @@ export function buildCountryFilterUI(
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
     onRefilterDrivers: () => void,
+    prefix:    string,
 ): void {
-    const cont = document.getElementById('filter-countries')!;
+    const cont = document.getElementById(filterId(prefix, 'filter-countries'))!;
     cont.innerHTML = '';
     if (!data.countries.length) { cont.style.display = 'none'; return; }
     cont.style.display = '';
 
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup(i18n.t().filterCountry, 'counter-countries');
+        buildCollapsibleFilterGroup(i18n.t().filterCountry, filterId(prefix, 'counter-countries'));
 
     btnAll.addEventListener('click', () => {
         data.countries.forEach(c => state.activeCountries.add(c));

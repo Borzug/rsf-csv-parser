@@ -104,8 +104,6 @@ export interface ITranslations {
     countryUnknown:         string;
 
     // Фильтры — вкладка «Результаты»
-    filterResultsStages:    string;
-    filterResultsClass:     string;
 
     // Фильтры — общие
     filterAll:              string;

@@ -1,6 +1,7 @@
 import type { IParsedRallyData } from '../../shared/types';
 import { createElement } from '../dom';
 import { countryName, prependFlag } from '../flags';
+import { countBy, createFilterCount } from './filterGroup';
 
 /**
  * Пункты фильтра по стране: флаг, название на языке интерфейса и число участников.
@@ -12,8 +13,7 @@ export function buildCountryItems(
     isChecked: (code: string) => boolean,
     onToggle:  (code: string, checked: boolean) => void,
 ): void {
-    const counts = new Map<string, number>();
-    for (const d of data.drivers) counts.set(d.country, (counts.get(d.country) ?? 0) + 1);
+    const counts = countBy(data.drivers, d => d.country);
 
     const items = data.countries
         .map(code => ({ code, name: countryName(code) }))
@@ -30,7 +30,7 @@ export function buildCountryItems(
         prependFlag(label, code);
         lbl.appendChild(cb);
         lbl.appendChild(label);
-        lbl.appendChild(createElement('span', 'filter-country-count', String(counts.get(code) ?? 0)));
+        lbl.appendChild(createFilterCount(counts.get(code) ?? 0));
         body.appendChild(lbl);
     }
 }

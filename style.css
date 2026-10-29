@@ -232,7 +232,7 @@ body {
     flex-shrink: 0; accent-color: var(--red); cursor: pointer;
 }
 .filter-ss, .filter-name, .filter-driver-name, .filter-driver-rank,
-.filter-group-label, .filter-car-label, .filter-country-label, .filter-country-count { line-height: 16px; }
+.filter-group-label, .filter-car-label, .filter-country-label, .filter-count { line-height: 16px; }
 
 .filter-ss           { font-size: 11px; font-weight: 600; color: var(--red-text); font-family: var(--ff); white-space: nowrap; flex-shrink: 0; }
 .filter-name         { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; }
@@ -248,10 +248,10 @@ body {
 .filter-driver-name    { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; }
 .filter-driver-car     { font-size: 10px; color: var(--dim); font-family: var(--ff); word-break: break-word; line-height: 1.4; }
 
-.filter-group-label  { font-size: 11px; color: var(--text); font-family: var(--ff); }
-.filter-car-label    { font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; }
+.filter-group-label  { flex: 1; min-width: 0; font-size: 11px; color: var(--text); font-family: var(--ff); }
+.filter-car-label    { flex: 1; min-width: 0; font-size: 11px; color: var(--text); font-family: var(--ff); word-break: break-word; }
 .filter-country-label { flex: 1; min-width: 0; font-size: 11px; color: var(--text); font-family: var(--ff); }
-.filter-country-count { margin-left: auto; font-size: 10px; color: var(--dim); font-family: var(--ff); }
+.filter-count { margin-left: auto; padding-left: 6px; flex-shrink: 0; font-size: 10px; color: var(--dim); font-family: var(--ff); }
 
 /* ── Main content ────────────────────────────────────────────── */
 .chart-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }

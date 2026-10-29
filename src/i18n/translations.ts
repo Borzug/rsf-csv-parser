@@ -76,8 +76,6 @@ export const ru: ITranslations = {
     filterCountry:          'Страна',
     countryUnknown:         'Не указана',
 
-    filterResultsStages:    'Этапы',
-    filterResultsClass:     'Класс',
 
     filterAll:              'Все',
     filterNone:             'Ничего',
@@ -211,8 +209,6 @@ export const en: ITranslations = {
     filterCountry:          'Country',
     countryUnknown:         'Not specified',
 
-    filterResultsStages:    'Stages',
-    filterResultsClass:     'Class',
 
     filterAll:              'All',
     filterNone:             'None',
@@ -342,8 +338,6 @@ export const hu: ITranslations = {
     filterCountry:          'Ország',
     countryUnknown:         'Nincs megadva',
 
-    filterResultsStages:    'Szakaszok',
-    filterResultsClass:     'Osztály',
 
     filterAll:              'Mind',
     filterNone:             'Senki',

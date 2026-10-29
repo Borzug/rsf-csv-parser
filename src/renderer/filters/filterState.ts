@@ -1,3 +1,4 @@
+import type { IParsedRallyData } from '../../shared/types';
 import { qsa } from "../dom";
 
 export interface IChartFilterState {
@@ -16,6 +17,27 @@ export interface IChartFilterCallbacks {
     onCarsChanged:    () => void;
     onCountriesChanged: () => void;
     onDriverHover:    (key: string | null) => void;
+}
+
+/**
+ * Проходит ли участник фильтры класса, автомобиля и страны. Одна проверка для графика,
+ * результатов и списка участников в боковой панели. «Ничего» везде значит «никого»;
+ * участник без машины автомобильным фильтром не отсекается.
+ */
+export function passesAttrFilters(
+    data:  IParsedRallyData,
+    state: Pick<IChartFilterState, 'activeGroups' | 'activeCars' | 'activeCountries'>,
+    drv:   { group: string; car: string; country: string },
+): boolean {
+    const grpOk = !data.groups.length || state.activeGroups.has(drv.group);
+    const carOk = !drv.car || state.activeCars.has(drv.car);
+    const ctyOk = !data.countries.length || state.activeCountries.has(drv.country);
+    return grpOk && carOk && ctyOk;
+}
+
+/** id элемента панели фильтров: prefix '' — график, 'res-' — результаты. */
+export function filterId(prefix: string, name: string): string {
+    return `${prefix}${name}`;
 }
 
 export function setAllCheckboxes(body: HTMLElement, value: boolean): void {

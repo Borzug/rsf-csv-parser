@@ -103,7 +103,7 @@ window.addEventListener('DOMContentLoaded', () => {
             buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
             updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
             afterFilterChange();
-            buildResultsFilters(() => {});
+            buildResultsFilters(rankMap);
             updateHeaderStats();
             // Скрытые вкладки перестроятся при открытии
             invalidateResults();
@@ -323,7 +323,7 @@ function showChart(): void {
     applyDomTranslations();
     buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
     updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
-    buildResultsFilters(() => {});
+    buildResultsFilters(rankMap);
     switchTab('chart');
     if (urlState) applyUrlView(urlState);
     // Режим оси переживает смену файла, но «от выбранного» без закреплённых теряет смысл

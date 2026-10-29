@@ -221,8 +221,6 @@
     filterCar: "\u0410\u0432\u0442\u043E\u043C\u043E\u0431\u0438\u043B\u044C",
     filterCountry: "\u0421\u0442\u0440\u0430\u043D\u0430",
     countryUnknown: "\u041D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0430",
-    filterResultsStages: "\u042D\u0442\u0430\u043F\u044B",
-    filterResultsClass: "\u041A\u043B\u0430\u0441\u0441",
     filterAll: "\u0412\u0441\u0435",
     filterNone: "\u041D\u0438\u0447\u0435\u0433\u043E",
     filterSearch: "\u041F\u043E\u0438\u0441\u043A\u2026",
@@ -336,8 +334,6 @@
     filterCar: "Car",
     filterCountry: "Country",
     countryUnknown: "Not specified",
-    filterResultsStages: "Stages",
-    filterResultsClass: "Class",
     filterAll: "All",
     filterNone: "None",
     filterSearch: "Search\u2026",
@@ -447,8 +443,6 @@ Only stages without SR for both drivers`,
     filterCar: "Aut\xF3",
     filterCountry: "Orsz\xE1g",
     countryUnknown: "Nincs megadva",
-    filterResultsStages: "Szakaszok",
-    filterResultsClass: "Oszt\xE1ly",
     filterAll: "Mind",
     filterNone: "Senki",
     filterSearch: "Keres\xE9s\u2026",
@@ -637,6 +631,61 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     return `hsl(${Math.round(hue)}, ${sat}%, 52%)`;
   }
 
+  // src/renderer/dom.ts
+  function qs(sel, ctx = document) {
+    return ctx.querySelector(sel);
+  }
+  function qsa(sel, ctx = document) {
+    return Array.from(ctx.querySelectorAll(sel));
+  }
+  function createElement(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text !== void 0) el.textContent = text;
+    return el;
+  }
+  function createTd(className, text) {
+    return createElement("td", className, text);
+  }
+
+  // src/renderer/filters/filterState.ts
+  function passesAttrFilters(data2, state, drv) {
+    const grpOk = !data2.groups.length || state.activeGroups.has(drv.group);
+    const carOk = !drv.car || state.activeCars.has(drv.car);
+    const ctyOk = !data2.countries.length || state.activeCountries.has(drv.country);
+    return grpOk && carOk && ctyOk;
+  }
+  function filterId(prefix, name) {
+    return `${prefix}${name}`;
+  }
+  function setAllCheckboxes(body, value) {
+    qsa('input[type="checkbox"]', body).forEach((cb) => {
+      cb.checked = value;
+    });
+  }
+  function syncVisibleCheckboxes(body, value) {
+    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
+      if (item.style.display !== "none") {
+        const cb = item.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = value;
+      }
+    });
+  }
+  function setCounterText(id, current2, total) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `(${current2}/${total})`;
+  }
+  function setToggleActive(selector, active) {
+    document.querySelector(selector)?.classList.toggle("btn-fa-active", active);
+  }
+  function refreshVisibleDriverKeys(body, state) {
+    state.visibleDriverKeys = /* @__PURE__ */ new Set();
+    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
+      if (item.style.display !== "none")
+        state.visibleDriverKeys.add(item.dataset["driverKey"]);
+    });
+  }
+
   // src/renderer/chart/datasets.ts
   var POINT_RADIUS_NORMAL = 2;
   var POINT_RADIUS_FINAL = 3;
@@ -650,9 +699,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const color = driverColor(gi);
       const pts = buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color);
       const dnfCommentPtIdx = pts.dnfCommentPtIdx;
-      const grpOk = !data2.groups.length || activeGroups.has(drv.group);
-      const carOk = !activeCars.size || activeCars.has(drv.car);
-      const ctyOk = !data2.countries.length || activeCountries.has(drv.country);
+      const attrOk = passesAttrFilters(data2, { activeGroups, activeCars, activeCountries }, drv);
       const dn = drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username;
       return {
         label: drv.label,
@@ -672,7 +719,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         _ptColor: pts.pointColors,
         tension: 0,
         spanGaps: false,
-        hidden: !activeDriverKeys.has(drv.username) || !grpOk || !carOk || !ctyOk,
+        hidden: !activeDriverKeys.has(drv.username) || !attrOk,
         // Функция стиля отрезков вызывается на каждый отрезок при каждом update(),
         // поэтому подключаем её только линиям, где пунктир действительно есть
         segment: pts.hasSR.some(Boolean) || dnfCommentPtIdx !== null ? {
@@ -1555,10 +1602,8 @@ ${hit.ptIdx}` : null;
         if (!chart || !data2) return;
         chart.data.datasets.forEach((ds) => {
           const drv = data2.drivers.find((d) => d.username === ds.driverKey);
-          const grpOk = !data2.groups.length || !drv || activeGroups.has(drv.group);
-          const carOk = !activeCars.size || !drv || activeCars.has(drv.car);
-          const ctyOk = !data2.countries.length || !drv || activeCountries.has(drv.country);
-          ds.hidden = !activeDriverKeys.has(ds.driverKey) || !grpOk || !carOk || !ctyOk;
+          const attrOk = !drv || passesAttrFilters(data2, { activeGroups, activeCars, activeCountries }, drv);
+          ds.hidden = !activeDriverKeys.has(ds.driverKey) || !attrOk;
         });
         applyYMode();
         chart.update("none");
@@ -1860,23 +1905,6 @@ ${hit.ptIdx}` : null;
     const pt = meta.data[el.index];
     if (!pt || Math.hypot(pt.x - mx, pt.y - my) > HOVER_DIST_PX) return null;
     return el.datasetIndex;
-  }
-
-  // src/renderer/dom.ts
-  function qs(sel, ctx = document) {
-    return ctx.querySelector(sel);
-  }
-  function qsa(sel, ctx = document) {
-    return Array.from(ctx.querySelectorAll(sel));
-  }
-  function createElement(tag, className, text) {
-    const el = document.createElement(tag);
-    if (className) el.className = className;
-    if (text !== void 0) el.textContent = text;
-    return el;
-  }
-  function createTd(className, text) {
-    return createElement("td", className, text);
   }
 
   // src/renderer/flags.ts
@@ -2933,72 +2961,45 @@ ${hit.ptIdx}` : null;
     }
   }
 
-  // src/renderer/filters/filterState.ts
-  function setAllCheckboxes(body, value) {
-    qsa('input[type="checkbox"]', body).forEach((cb) => {
-      cb.checked = value;
-    });
-  }
-  function syncVisibleCheckboxes(body, value) {
-    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      if (item.style.display !== "none") {
-        const cb = item.querySelector('input[type="checkbox"]');
-        if (cb) cb.checked = value;
-      }
-    });
-  }
-  function setCounterText(id, current2, total) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = `(${current2}/${total})`;
-  }
-  function setToggleActive(selector, active) {
-    document.querySelector(selector)?.classList.toggle("btn-fa-active", active);
-  }
-  function refreshVisibleDriverKeys(body, state) {
-    state.visibleDriverKeys = /* @__PURE__ */ new Set();
-    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      if (item.style.display !== "none")
-        state.visibleDriverKeys.add(item.dataset["driverKey"]);
-    });
-  }
-
   // src/renderer/filters/filterCounters.ts
-  function updateFilterCounters(data2, state) {
+  function updateFilterCounters(data2, state, prefix = "") {
     const { activeStageNums, activeDriverKeys, activeGroups, activeCars, visibleDriverKeys } = state;
-    setCounterText("counter-stages", activeStageNums.size, data2.stages.length);
+    const id = (name) => filterId(prefix, name);
+    setCounterText(id("counter-stages"), activeStageNums.size, data2.stages.length);
     const activeVisible = data2.drivers.filter(
       (d) => visibleDriverKeys.has(d.username) && activeDriverKeys.has(d.username)
     ).length;
-    setCounterText("counter-drivers", activeVisible, visibleDriverKeys.size);
+    setCounterText(id("counter-drivers"), activeVisible, visibleDriverKeys.size);
     if (data2.groups.length)
-      setCounterText("counter-groups", activeGroups.size, data2.groups.length);
+      setCounterText(id("counter-groups"), activeGroups.size, data2.groups.length);
     const allCars = [...new Set(data2.drivers.map((d) => d.car).filter(Boolean))];
     if (allCars.length)
-      setCounterText("counter-cars", activeCars.size, allCars.length);
+      setCounterText(id("counter-cars"), activeCars.size, allCars.length);
     if (data2.countries.length)
-      setCounterText("counter-countries", state.activeCountries.size, data2.countries.length);
+      setCounterText(id("counter-countries"), state.activeCountries.size, data2.countries.length);
   }
-  function updateToggleButtonStates(data2, state) {
+  function updateToggleButtonStates(data2, state, prefix = "") {
     const { activeStageNums, activeDriverKeys, activeGroups, activeCars, visibleDriverKeys } = state;
+    const sel = (name, n) => `#${filterId(prefix, name)} .filter-header .btn-fa:nth-child(${n})`;
     const allSS = activeStageNums.size === data2.stages.length && data2.stages.length > 0;
-    setToggleActive("#filter-stages .btn-fa:nth-child(1)", allSS);
-    setToggleActive("#filter-stages .btn-fa:nth-child(2)", activeStageNums.size === 0);
+    setToggleActive(sel("filter-stages", 1), allSS);
+    setToggleActive(sel("filter-stages", 2), activeStageNums.size === 0);
     const vis = [...visibleDriverKeys];
     const selVis = vis.filter((k) => activeDriverKeys.has(k)).length;
-    setToggleActive("#filter-drivers-wrap .btn-fa:nth-child(1)", selVis === vis.length && vis.length > 0);
-    setToggleActive("#filter-drivers-wrap .btn-fa:nth-child(2)", selVis === 0);
+    setToggleActive(sel("filter-drivers-wrap", 1), selVis === vis.length && vis.length > 0);
+    setToggleActive(sel("filter-drivers-wrap", 2), selVis === 0);
     const allGrp = activeGroups.size === data2.groups.length && data2.groups.length > 0;
-    setToggleActive("#filter-groups .btn-fa:nth-child(1)", allGrp);
-    setToggleActive("#filter-groups .btn-fa:nth-child(2)", activeGroups.size === 0);
+    setToggleActive(sel("filter-groups", 1), allGrp);
+    setToggleActive(sel("filter-groups", 2), activeGroups.size === 0);
     const allCars = [...new Set(data2.drivers.map((d) => d.car).filter(Boolean))];
-    setToggleActive("#filter-cars .btn-fa:nth-child(1)", activeCars.size === allCars.length && allCars.length > 0);
-    setToggleActive("#filter-cars .btn-fa:nth-child(2)", activeCars.size === 0);
+    setToggleActive(sel("filter-cars", 1), activeCars.size === allCars.length && allCars.length > 0);
+    setToggleActive(sel("filter-cars", 2), activeCars.size === 0);
     const nCty = data2.countries.length;
-    setToggleActive("#filter-countries .btn-fa:nth-child(1)", state.activeCountries.size === nCty && nCty > 0);
-    setToggleActive("#filter-countries .btn-fa:nth-child(2)", state.activeCountries.size === 0);
+    setToggleActive(sel("filter-countries", 1), state.activeCountries.size === nCty && nCty > 0);
+    setToggleActive(sel("filter-countries", 2), state.activeCountries.size === 0);
   }
-  function syncStageCheckboxes(activeStageNums) {
-    const body = document.querySelector("#filter-stages .filter-body");
+  function syncStageCheckboxes(activeStageNums, prefix = "") {
+    const body = document.querySelector(`#${filterId(prefix, "filter-stages")} .filter-body`);
     if (!body) return;
     body.querySelectorAll(".filter-item[data-stage-num]").forEach((item) => {
       const num = parseInt(item.dataset["stageNum"]);
@@ -3019,7 +3020,7 @@ ${hit.ptIdx}` : null;
     });
   }
   function reapplyDriverSearch(body) {
-    const sv = document.getElementById("driver-search-input")?.value ?? "";
+    const sv = body.querySelector(".filter-search")?.value ?? "";
     applyDriverSearch(sv, body);
   }
   function buildSearchBox(body, onSearch) {
@@ -3028,7 +3029,6 @@ ${hit.ptIdx}` : null;
     const si = document.createElement("input");
     si.className = "filter-search";
     si.type = "text";
-    si.id = "driver-search-input";
     si.placeholder = i18n.t().filterSearch;
     const sc = document.createElement("button");
     sc.className = "filter-search-clear hidden";
@@ -3052,6 +3052,14 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/filters/filterGroup.ts
+  function countBy(items2, key) {
+    const counts = /* @__PURE__ */ new Map();
+    for (const it of items2) counts.set(key(it), (counts.get(key(it)) ?? 0) + 1);
+    return counts;
+  }
+  function createFilterCount(n) {
+    return createElement("span", "filter-count", String(n));
+  }
   function buildCollapsibleFilterGroup(title, counterId) {
     const t = i18n.t();
     const group = createElement("div", "filter-group collapsed");
@@ -3081,8 +3089,7 @@ ${hit.ptIdx}` : null;
 
   // src/renderer/filters/countryFilter.ts
   function buildCountryItems(data2, body, isChecked, onToggle) {
-    const counts = /* @__PURE__ */ new Map();
-    for (const d of data2.drivers) counts.set(d.country, (counts.get(d.country) ?? 0) + 1);
+    const counts = countBy(data2.drivers, (d) => d.country);
     const items2 = data2.countries.map((code) => ({ code, name: countryName(code) })).sort((a, b) => (a.code ? 0 : 1) - (b.code ? 0 : 1) || a.name.localeCompare(b.name));
     for (const { code, name } of items2) {
       const lbl = createElement("label", "filter-item");
@@ -3094,16 +3101,16 @@ ${hit.ptIdx}` : null;
       prependFlag(label, code);
       lbl.appendChild(cb);
       lbl.appendChild(label);
-      lbl.appendChild(createElement("span", "filter-country-count", String(counts.get(code) ?? 0)));
+      lbl.appendChild(createFilterCount(counts.get(code) ?? 0));
       body.appendChild(lbl);
     }
   }
 
   // src/renderer/filters/filterBuilders.ts
-  function buildStageFilterUI(stages, state, callbacks3) {
-    const cont = document.getElementById("filter-stages");
+  function buildStageFilterUI(stages, state, callbacks3, prefix) {
+    const cont = document.getElementById(filterId(prefix, "filter-stages"));
     cont.innerHTML = "";
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterChartStages, "counter-stages");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterChartStages, filterId(prefix, "counter-stages"));
     btnAll.addEventListener("click", () => {
       stages.forEach((s) => state.activeStageNums.add(s.num));
       setAllCheckboxes(body, true);
@@ -3131,10 +3138,10 @@ ${hit.ptIdx}` : null;
     }
     cont.appendChild(group);
   }
-  function buildDriverFilterUI(drivers, data2, state, callbacks3, rankMap2) {
-    const wrap = document.getElementById("filter-drivers-wrap");
+  function buildDriverFilterUI(drivers, data2, state, callbacks3, rankMap2, prefix) {
+    const wrap = document.getElementById(filterId(prefix, "filter-drivers-wrap"));
     wrap.innerHTML = "";
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterParticipants, "counter-drivers");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterParticipants, filterId(prefix, "counter-drivers"));
     const t = i18n.t();
     const rankOf = (d) => rankMap2.get(d.username) ?? null;
     const sorted = [...drivers].sort((a, b) => {
@@ -3222,14 +3229,14 @@ ${hit.ptIdx}` : null;
     }
     wrap.appendChild(group);
   }
-  function buildGroupFilterUI(groups, data2, state, callbacks3, onRefilterDrivers) {
-    const cont = document.getElementById("filter-groups");
+  function buildGroupFilterUI(groups, data2, state, callbacks3, onRefilterDrivers, prefix) {
+    const cont = document.getElementById(filterId(prefix, "filter-groups"));
     cont.innerHTML = "";
     if (!groups.length) {
       cont.style.display = "none";
       return;
     }
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterGroupClass, "counter-groups");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterGroupClass, filterId(prefix, "counter-groups"));
     btnAll.addEventListener("click", () => {
       groups.forEach((g) => state.activeGroups.add(g));
       setAllCheckboxes(body, true);
@@ -3242,6 +3249,7 @@ ${hit.ptIdx}` : null;
       onRefilterDrivers();
       callbacks3.onGroupsChanged();
     });
+    const counts = countBy(data2.drivers, (d) => d.group);
     for (const grp of groups) {
       const lbl = createElement("label", "filter-item");
       const cb = createElement("input");
@@ -3254,19 +3262,20 @@ ${hit.ptIdx}` : null;
       });
       lbl.appendChild(cb);
       lbl.appendChild(createElement("span", "filter-group-label", grp));
+      lbl.appendChild(createFilterCount(counts.get(grp) ?? 0));
       body.appendChild(lbl);
     }
     cont.appendChild(group);
   }
-  function buildCarFilterUI(drivers, state, callbacks3, onRefilterDrivers) {
-    const cont = document.getElementById("filter-cars");
+  function buildCarFilterUI(drivers, state, callbacks3, onRefilterDrivers, prefix) {
+    const cont = document.getElementById(filterId(prefix, "filter-cars"));
     cont.innerHTML = "";
     const cars = [...new Set(drivers.map((d) => d.car).filter(Boolean))].sort();
     if (!cars.length) {
       cont.style.display = "none";
       return;
     }
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterCar, "counter-cars");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterCar, filterId(prefix, "counter-cars"));
     btnAll.addEventListener("click", () => {
       cars.forEach((c) => state.activeCars.add(c));
       setAllCheckboxes(body, true);
@@ -3279,6 +3288,7 @@ ${hit.ptIdx}` : null;
       onRefilterDrivers();
       callbacks3.onCarsChanged();
     });
+    const counts = countBy(drivers, (d) => d.car);
     for (const car of cars) {
       const lbl = createElement("label", "filter-item");
       const cb = createElement("input");
@@ -3291,46 +3301,51 @@ ${hit.ptIdx}` : null;
       });
       lbl.appendChild(cb);
       lbl.appendChild(createElement("span", "filter-car-label", car));
+      lbl.appendChild(createFilterCount(counts.get(car) ?? 0));
       body.appendChild(lbl);
     }
     cont.appendChild(group);
   }
-  function applyGroupOrCarFilterToDriverList(data2, state) {
-    const body = document.querySelector("#filter-drivers-wrap .filter-body");
+  function applyGroupOrCarFilterToDriverList(data2, state, prefix) {
+    const body = driverListBody(prefix);
     if (!body) return;
     qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      item.style.display = passesAttrFilters(item, data2, state) ? "" : "none";
+      item.style.display = itemPassesAttrFilters(item, data2, state) ? "" : "none";
     });
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
   }
-  function updateDriverItemsByStageAndFilter(data2, state, recordMap) {
-    const body = document.querySelector("#filter-drivers-wrap .filter-body");
+  function updateDriverItemsByStageAndFilter(data2, state, recordMap, prefix = "") {
+    const body = driverListBody(prefix);
     if (!body) return;
     const allSelected = state.activeStageNums.size === data2.stages.length;
     qsa(".filter-item[data-driver-key]", body).forEach((item) => {
       const key = item.dataset["driverKey"];
       const stageOk = allSelected || [...state.activeStageNums].some((sn) => recordMap.get(key)?.has(sn));
-      item.style.display = passesAttrFilters(item, data2, state) && stageOk ? "" : "none";
+      item.style.display = itemPassesAttrFilters(item, data2, state) && stageOk ? "" : "none";
     });
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
   }
-  function passesAttrFilters(item, data2, state) {
-    const grpOk = !data2.groups.length || state.activeGroups.has(item.dataset["group"] ?? "");
-    const carOk = !state.activeCars.size || state.activeCars.has(item.dataset["car"] ?? "");
-    const ctyOk = !data2.countries.length || state.activeCountries.has(item.dataset["country"] ?? "");
-    return grpOk && carOk && ctyOk;
+  function itemPassesAttrFilters(item, data2, state) {
+    return passesAttrFilters(data2, state, {
+      group: item.dataset["group"] ?? "",
+      car: item.dataset["car"] ?? "",
+      country: item.dataset["country"] ?? ""
+    });
   }
-  function buildCountryFilterUI(data2, state, callbacks3, onRefilterDrivers) {
-    const cont = document.getElementById("filter-countries");
+  function driverListBody(prefix) {
+    return document.querySelector(`#${filterId(prefix, "filter-drivers-wrap")} .filter-body`);
+  }
+  function buildCountryFilterUI(data2, state, callbacks3, onRefilterDrivers, prefix) {
+    const cont = document.getElementById(filterId(prefix, "filter-countries"));
     cont.innerHTML = "";
     if (!data2.countries.length) {
       cont.style.display = "none";
       return;
     }
     cont.style.display = "";
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterCountry, "counter-countries");
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterCountry, filterId(prefix, "counter-countries"));
     btnAll.addEventListener("click", () => {
       data2.countries.forEach((c) => state.activeCountries.add(c));
       setAllCheckboxes(body, true);
@@ -3352,28 +3367,13 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/filters/chartFilters.ts
-  function buildChartFilterPanel(data2, state, callbacks3, rankMap2) {
-    buildStageFilterUI(data2.stages, state, callbacks3);
-    buildDriverFilterUI(data2.drivers, data2, state, callbacks3, rankMap2);
-    buildGroupFilterUI(
-      data2.groups,
-      data2,
-      state,
-      callbacks3,
-      () => applyGroupOrCarFilterToDriverList(data2, state)
-    );
-    buildCarFilterUI(
-      data2.drivers,
-      state,
-      callbacks3,
-      () => applyGroupOrCarFilterToDriverList(data2, state)
-    );
-    buildCountryFilterUI(
-      data2,
-      state,
-      callbacks3,
-      () => applyGroupOrCarFilterToDriverList(data2, state)
-    );
+  function buildChartFilterPanel(data2, state, callbacks3, rankMap2, prefix = "") {
+    const refilter = () => applyGroupOrCarFilterToDriverList(data2, state, prefix);
+    buildStageFilterUI(data2.stages, state, callbacks3, prefix);
+    buildDriverFilterUI(data2.drivers, data2, state, callbacks3, rankMap2, prefix);
+    buildGroupFilterUI(data2.groups, data2, state, callbacks3, refilter, prefix);
+    buildCarFilterUI(data2.drivers, state, callbacks3, refilter, prefix);
+    buildCountryFilterUI(data2, state, callbacks3, refilter, prefix);
   }
 
   // src/renderer/i18n-dom.ts
@@ -3543,212 +3543,6 @@ ${hit.ptIdx}` : null;
       return this.count ? this.gap / this.weight : null;
     }
   };
-
-  // src/renderer/results/filterPanel.ts
-  function buildResultsFilterPanel(data2, state, onChange, onApply) {
-    const cont = document.getElementById("sidebar-results-filters");
-    cont.innerHTML = "";
-    buildResultsStageFilter(data2, state, onChange, cont);
-    buildResultsDriverFilter(data2, state, onChange, cont);
-    if (data2.groups.length) buildResultsGroupFilter(data2, state, onChange, cont);
-    if (data2.countries.length) buildResultsCountryFilter(data2, state, onChange, cont);
-    updateResultsFilterCounters(data2, state);
-    wireApplyButton(onApply);
-  }
-  function updateResultsFilterCounters(data2, state) {
-    setCounter("counter-res-stages", state.stageFilter.size, data2.stages.length);
-    if (data2.groups.length) setCounter("counter-res-groups", state.groupFilter.size, data2.groups.length);
-    if (data2.countries.length)
-      setCounter("counter-res-countries", state.countryFilter.size, data2.countries.length);
-    const active = state.driverFilter.size > 0 ? state.driverFilter.size : data2.drivers.length;
-    setCounter("counter-res-drivers", active, data2.drivers.length);
-  }
-  function syncResultsDriverCheckboxes(data2, state) {
-    const body = document.querySelector(
-      '#sidebar-results-filters .filter-body[data-filter="drivers"]'
-    );
-    if (!body) return;
-    const applied = state.driverFilter;
-    state.activeDriverKeys.clear();
-    qsa(".filter-item", body).forEach((item) => {
-      const cb = item.querySelector("input[type=checkbox]");
-      const nmEl = item.querySelector(".filter-driver-name");
-      if (!cb || !nmEl) return;
-      const text = nmEl.textContent ?? "";
-      const drv = data2.drivers.find(
-        (d) => (d.realName && d.realName !== d.username ? `${d.username} (${d.realName})` : d.username) === text
-      );
-      if (drv) {
-        const checked = applied.size === 0 || applied.has(drv.username);
-        cb.checked = checked;
-        if (checked) state.activeDriverKeys.add(drv.username);
-      }
-    });
-  }
-  function buildResultsStageFilter(data2, state, onChange, cont) {
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-      i18n.t().filterResultsStages,
-      "counter-res-stages"
-    );
-    btnAll.addEventListener("click", () => {
-      data2.stages.forEach((s) => state.stageFilter.add(s.num));
-      setAllCb(body, true);
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    btnNone.addEventListener("click", () => {
-      state.stageFilter.clear();
-      setAllCb(body, false);
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    for (const st of data2.stages) {
-      const lbl = createElement("label", "filter-item");
-      const cb = createElement("input");
-      cb.type = "checkbox";
-      cb.checked = true;
-      cb.dataset["stageNum"] = String(st.num);
-      cb.addEventListener("change", () => {
-        cb.checked ? state.stageFilter.add(st.num) : state.stageFilter.delete(st.num);
-        updateResultsFilterCounters(data2, state);
-        onChange();
-      });
-      lbl.appendChild(cb);
-      lbl.appendChild(createElement("span", "filter-ss", `SS${st.num}`));
-      lbl.appendChild(createElement("span", "filter-name", st.name));
-      body.appendChild(lbl);
-    }
-    cont.appendChild(group);
-  }
-  function buildResultsDriverFilter(data2, state, onChange, cont) {
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-      i18n.t().filterParticipants,
-      "counter-res-drivers"
-    );
-    body.dataset["filter"] = "drivers";
-    if (state.activeDriverKeys.size === 0)
-      data2.drivers.forEach((d) => state.activeDriverKeys.add(d.username));
-    function syncDriverFilter() {
-      state.driverFilter = state.activeDriverKeys.size === data2.drivers.length ? /* @__PURE__ */ new Set() : new Set(state.activeDriverKeys);
-    }
-    btnAll.addEventListener("click", () => {
-      data2.drivers.forEach((d) => state.activeDriverKeys.add(d.username));
-      setAllCb(body, true);
-      syncDriverFilter();
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    btnNone.addEventListener("click", () => {
-      state.activeDriverKeys.clear();
-      setAllCb(body, false);
-      syncDriverFilter();
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    for (const drv of data2.drivers) {
-      const lbl = createElement("label", "filter-item");
-      const cb = createElement("input");
-      cb.type = "checkbox";
-      cb.checked = true;
-      cb.addEventListener("change", () => {
-        cb.checked ? state.activeDriverKeys.add(drv.username) : state.activeDriverKeys.delete(drv.username);
-        syncDriverFilter();
-        updateResultsFilterCounters(data2, state);
-        onChange();
-      });
-      const content = createElement("div", "filter-driver-content");
-      const nm = createElement(
-        "span",
-        "filter-driver-name",
-        drv.realName && drv.realName !== drv.username ? `${drv.username} (${drv.realName})` : drv.username
-      );
-      prependFlag(nm, drv.country);
-      content.appendChild(nm);
-      if (drv.car) content.appendChild(createElement("span", "filter-driver-car", drv.car));
-      lbl.appendChild(cb);
-      lbl.appendChild(content);
-      body.appendChild(lbl);
-    }
-    cont.appendChild(group);
-  }
-  function buildResultsGroupFilter(data2, state, onChange, cont) {
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-      i18n.t().filterResultsClass,
-      "counter-res-groups"
-    );
-    btnAll.addEventListener("click", () => {
-      data2.groups.forEach((g) => state.groupFilter.add(g));
-      setAllCb(body, true);
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    btnNone.addEventListener("click", () => {
-      state.groupFilter.clear();
-      setAllCb(body, false);
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    for (const grp of data2.groups) {
-      const lbl = createElement("label", "filter-item");
-      const cb = createElement("input");
-      cb.type = "checkbox";
-      cb.checked = true;
-      cb.addEventListener("change", () => {
-        cb.checked ? state.groupFilter.add(grp) : state.groupFilter.delete(grp);
-        updateResultsFilterCounters(data2, state);
-        onChange();
-      });
-      lbl.appendChild(cb);
-      lbl.appendChild(createElement("span", "filter-group-label", grp));
-      body.appendChild(lbl);
-    }
-    cont.appendChild(group);
-  }
-  function buildResultsCountryFilter(data2, state, onChange, cont) {
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(
-      i18n.t().filterCountry,
-      "counter-res-countries"
-    );
-    btnAll.addEventListener("click", () => {
-      data2.countries.forEach((c) => state.countryFilter.add(c));
-      setAllCb(body, true);
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    btnNone.addEventListener("click", () => {
-      state.countryFilter.clear();
-      setAllCb(body, false);
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    buildCountryItems(data2, body, (c) => state.countryFilter.has(c), (c, checked) => {
-      checked ? state.countryFilter.add(c) : state.countryFilter.delete(c);
-      updateResultsFilterCounters(data2, state);
-      onChange();
-    });
-    cont.appendChild(group);
-  }
-  function wireApplyButton(onApply) {
-    const btn = document.getElementById("btn-apply-filter");
-    if (!btn) return;
-    const fresh = btn.cloneNode(true);
-    btn.replaceWith(fresh);
-    fresh.addEventListener("click", () => {
-      const selected = new Set(
-        qsa("#results-tbody tr.row-selected").map((r) => r.dataset["username"]).filter(Boolean)
-      );
-      onApply(selected);
-    });
-  }
-  function setAllCb(body, value) {
-    qsa("input[type=checkbox]", body).forEach((cb) => {
-      cb.checked = value;
-    });
-  }
-  function setCounter(id, current2, total) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = `(${current2}/${total})`;
-  }
 
   // src/renderer/results/tableRenderer.ts
   var COLUMNS = [
@@ -4494,13 +4288,19 @@ ${hit.ptIdx}` : null;
   var _searchActive = false;
   var _dirty = true;
   var _resetScroll = true;
-  var _filterState = {
-    stageFilter: /* @__PURE__ */ new Set(),
-    groupFilter: /* @__PURE__ */ new Set(),
-    countryFilter: /* @__PURE__ */ new Set(),
-    driverFilter: /* @__PURE__ */ new Set(),
-    activeDriverKeys: /* @__PURE__ */ new Set()
-  };
+  var PREFIX = "res-";
+  var _filterState = fullFilterState(null);
+  function fullFilterState(data2) {
+    const drivers = data2?.drivers ?? [];
+    return {
+      activeStageNums: new Set(data2?.stages.map((s) => s.num) ?? []),
+      activeDriverKeys: new Set(drivers.map((d) => d.username)),
+      activeGroups: new Set(data2?.groups ?? []),
+      activeCars: new Set(drivers.map((d) => d.car).filter(Boolean)),
+      activeCountries: new Set(data2?.countries ?? []),
+      visibleDriverKeys: new Set(drivers.map((d) => d.username))
+    };
+  }
   function initResultsModule(data2, recordMap, allStats) {
     _data = data2;
     _recordMap = recordMap;
@@ -4508,26 +4308,27 @@ ${hit.ptIdx}` : null;
     _selectedRows = /* @__PURE__ */ new Set();
     _dirty = true;
     _resetScroll = true;
-    _filterState = {
-      stageFilter: new Set(data2.stages.map((s) => s.num)),
-      groupFilter: new Set(data2.groups),
-      countryFilter: new Set(data2.countries),
-      driverFilter: /* @__PURE__ */ new Set(),
-      activeDriverKeys: new Set(data2.drivers.map((d) => d.username))
-    };
+    _filterState = fullFilterState(data2);
     updateApplyBar();
   }
-  function buildResultsFilters(onChange) {
+  function buildResultsFilters(rankMap2) {
     if (!_data) return;
-    buildResultsFilterPanel(
-      _data,
-      _filterState,
-      () => {
-        renderResultsTable();
-        onChange();
+    const callbacks3 = {
+      onStagesChanged: () => {
+        updateDriverItemsByStageAndFilter(_data, _filterState, _recordMap, PREFIX);
+        afterFilterChange();
       },
-      (selected) => applyRowSelectionAsFilter(selected)
-    );
+      onDriversChanged: afterFilterChange,
+      onGroupsChanged: afterFilterChange,
+      onCarsChanged: afterFilterChange,
+      onCountriesChanged: afterFilterChange,
+      onDriverHover: () => {
+      }
+    };
+    buildChartFilterPanel(_data, _filterState, callbacks3, rankMap2, PREFIX);
+    updateDriverItemsByStageAndFilter(_data, _filterState, _recordMap, PREFIX);
+    updateFilterControls();
+    wireApplyButton();
   }
   function ensureResultsRendered() {
     if (_dirty) renderResultsTable();
@@ -4539,7 +4340,7 @@ ${hit.ptIdx}` : null;
     if (!_data) return;
     _dirty = false;
     const stats = getFilteredStats();
-    const stages = _data.stages.filter((s) => _filterState.stageFilter.has(s.num)).sort((a, b) => a.num - b.num);
+    const stages = _data.stages.filter((s) => _filterState.activeStageNums.has(s.num)).sort((a, b) => a.num - b.num);
     const lengths = stages.map((s) => stageLengthKm(s.name));
     const stageKm = lengths.every((l) => l !== null) ? lengths : null;
     const results = computeDriverResults(stats, stageKm);
@@ -4571,17 +4372,25 @@ ${hit.ptIdx}` : null;
   }
   function getFilteredStats() {
     if (!_data) return [];
-    const allStageNums = _data.stages.map((s) => s.num);
-    let stats = _allStats;
-    if (_data.groups.length && _filterState.groupFilter.size > 0)
-      stats = stats.filter((s) => _filterState.groupFilter.has(s.group));
-    if (_data.countries.length)
-      stats = stats.filter((s) => _filterState.countryFilter.has(s.country));
-    if (_filterState.driverFilter.size > 0)
-      stats = stats.filter((s) => _filterState.driverFilter.has(s.username));
-    return stats.map(
-      (s) => recalculateStatsForStages(s, _filterState.stageFilter, allStageNums, _recordMap)
-    );
+    const data2 = _data;
+    const allStageNums = data2.stages.map((s) => s.num);
+    return _allStats.filter((s) => _filterState.activeDriverKeys.has(s.username) && passesAttrFilters(data2, _filterState, s)).map((s) => recalculateStatsForStages(s, _filterState.activeStageNums, allStageNums, _recordMap));
+  }
+  function afterFilterChange() {
+    renderResultsTable();
+    updateFilterControls();
+  }
+  function updateFilterControls() {
+    if (!_data) return;
+    updateFilterCounters(_data, _filterState, PREFIX);
+    updateToggleButtonStates(_data, _filterState, PREFIX);
+  }
+  function wireApplyButton() {
+    const btn = document.getElementById("btn-apply-filter");
+    if (!btn) return;
+    const fresh = btn.cloneNode(true);
+    btn.replaceWith(fresh);
+    fresh.addEventListener("click", () => applyRowSelectionAsFilter(new Set(_selectedRows)));
   }
   function toggleRowSelection(username, row) {
     if (_selectedRows.has(username)) {
@@ -4607,12 +4416,14 @@ ${hit.ptIdx}` : null;
   }
   function applyRowSelectionAsFilter(selected) {
     if (!_data) return;
-    _filterState.driverFilter = selected.size > 0 ? new Set(selected) : /* @__PURE__ */ new Set();
+    _filterState.activeDriverKeys = selected.size > 0 ? new Set(selected) : new Set(_data.drivers.map((d) => d.username));
     _selectedRows = /* @__PURE__ */ new Set();
     updateApplyBar();
-    syncResultsDriverCheckboxes(_data, _filterState);
-    updateResultsFilterCounters(_data, _filterState);
-    renderResultsTable();
+    qsa(`#${PREFIX}filter-drivers-wrap .filter-item[data-driver-key]`).forEach((item) => {
+      const cb = item.querySelector('input[type="checkbox"]');
+      if (cb) cb.checked = _filterState.activeDriverKeys.has(item.dataset["driverKey"]);
+    });
+    afterFilterChange();
   }
   function activateParticipantSearch(th) {
     if (_searchActive) return;
@@ -4687,9 +4498,8 @@ ${hit.ptIdx}` : null;
       if (data) {
         buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
         updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
-        afterFilterChange();
-        buildResultsFilters(() => {
-        });
+        afterFilterChange2();
+        buildResultsFilters(rankMap);
         updateHeaderStats();
         invalidateResults();
         invalidateComments();
@@ -4874,8 +4684,7 @@ ${hit.ptIdx}` : null;
     applyDomTranslations();
     buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
     updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
-    buildResultsFilters(() => {
-    });
+    buildResultsFilters(rankMap);
     switchTab("chart");
     if (urlState) applyUrlView(urlState);
     if (chartCtrl.getYMode() === "pinned" && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode("leader");
@@ -5015,19 +4824,19 @@ ${hit.ptIdx}` : null;
       },
       onDriversChanged: () => {
         syncDatasetVisibility();
-        afterFilterChange();
+        afterFilterChange2();
       },
       onGroupsChanged: () => {
         syncDatasetVisibility();
-        afterFilterChange();
+        afterFilterChange2();
       },
       onCarsChanged: () => {
         syncDatasetVisibility();
-        afterFilterChange();
+        afterFilterChange2();
       },
       onCountriesChanged: () => {
         syncDatasetVisibility();
-        afterFilterChange();
+        afterFilterChange2();
       },
       onDriverHover: (key) => {
         chartCtrl.setHoveredKey(key);
@@ -5048,7 +4857,7 @@ ${hit.ptIdx}` : null;
     closeStageComments();
     renderCommentStrip(chartCtrl.getPinnedComments(), chartCtrl.getPinnedKeys().length);
   }
-  function afterFilterChange() {
+  function afterFilterChange2() {
     if (!data) return;
     updateFilterCounters(data, chartState);
     updateToggleButtonStates(data, chartState);
@@ -5115,7 +4924,7 @@ ${hit.ptIdx}` : null;
     updatePinnedBar(data, chartCtrl.getPinnedKeys(), (key) => chartCtrl.togglePin(key, true));
     syncYModeSwitch();
     refreshComments();
-    afterFilterChange();
+    afterFilterChange2();
   }
   function toggleLegendExpand() {
     legendExpanded = !legendExpanded;

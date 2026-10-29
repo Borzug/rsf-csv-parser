@@ -6,11 +6,15 @@ import {
     recalculateStatsForStages
 } from "./compute";
 import {
-    buildResultsFilterPanel,
-    IResultsFilterState,
-    syncResultsDriverCheckboxes,
-    updateResultsFilterCounters
-} from "./filterPanel";
+    buildChartFilterPanel,
+    updateDriverItemsByStageAndFilter,
+    updateFilterCounters,
+    updateToggleButtonStates,
+    type IChartFilterCallbacks,
+    type IChartFilterState,
+} from "../filters/chartFilters";
+import { passesAttrFilters } from "../filters/filterState";
+import { qsa } from "../dom";
 import {
     buildResultsTableHeader,
     renderResultsRows
@@ -29,13 +33,23 @@ let _dirty = true;
 /** Новый файл: прокрутку прошлой таблицы (вкладка теперь её сохраняет) сбрасываем. */
 let _resetScroll = true;
 
-let _filterState: IResultsFilterState = {
-    stageFilter:      new Set(),
-    groupFilter:      new Set(),
-    countryFilter:    new Set(),
-    driverFilter:     new Set(),
-    activeDriverKeys: new Set(),
-};
+/** Префикс id панели фильтров результатов — она строится теми же функциями, что и у графика. */
+const PREFIX = 'res-';
+
+/** Фильтры результатов устроены так же, как у графика, но независимы от них. */
+let _filterState: IChartFilterState = fullFilterState(null);
+
+function fullFilterState(data: IParsedRallyData | null): IChartFilterState {
+    const drivers = data?.drivers ?? [];
+    return {
+        activeStageNums:   new Set(data?.stages.map(s => s.num) ?? []),
+        activeDriverKeys:  new Set(drivers.map(d => d.username)),
+        activeGroups:      new Set(data?.groups ?? []),
+        activeCars:        new Set(drivers.map(d => d.car).filter(Boolean)),
+        activeCountries:   new Set(data?.countries ?? []),
+        visibleDriverKeys: new Set(drivers.map(d => d.username)),
+    };
+}
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -50,24 +64,28 @@ export function initResultsModule(
     _selectedRows = new Set();
     _dirty        = true;
     _resetScroll  = true;
-    _filterState = {
-        stageFilter:      new Set(data.stages.map(s => s.num)),
-        groupFilter:      new Set(data.groups),
-        countryFilter:    new Set(data.countries),
-        driverFilter:     new Set(),
-        activeDriverKeys: new Set(data.drivers.map(d => d.username)),
-    };
+    _filterState  = fullFilterState(data);
     updateApplyBar();
 }
 
-export function buildResultsFilters(onChange: () => void): void {
+/** rankMap — итоговые места: по ним упорядочен список участников, как на графике. */
+export function buildResultsFilters(rankMap: Map<string, number | null>): void {
     if (!_data) return;
-    buildResultsFilterPanel(
-        _data,
-        _filterState,
-        () => { renderResultsTable(); onChange(); },
-        (selected) => applyRowSelectionAsFilter(selected),
-    );
+    const callbacks: IChartFilterCallbacks = {
+        onStagesChanged: () => {
+            updateDriverItemsByStageAndFilter(_data!, _filterState, _recordMap, PREFIX);
+            afterFilterChange();
+        },
+        onDriversChanged:   afterFilterChange,
+        onGroupsChanged:    afterFilterChange,
+        onCarsChanged:      afterFilterChange,
+        onCountriesChanged: afterFilterChange,
+        onDriverHover:      () => {},
+    };
+    buildChartFilterPanel(_data, _filterState, callbacks, rankMap, PREFIX);
+    updateDriverItemsByStageAndFilter(_data, _filterState, _recordMap, PREFIX);
+    updateFilterControls();
+    wireApplyButton();
 }
 
 /** Перестраивает таблицу, только если она устарела (смена файла или языка). */
@@ -84,7 +102,7 @@ export function renderResultsTable(): void {
     _dirty = false;
     const stats   = getFilteredStats();
     const stages  = _data.stages
-        .filter(s => _filterState.stageFilter.has(s.num))
+        .filter(s => _filterState.activeStageNums.has(s.num))
         .sort((a, b) => a.num - b.num);
     // Темп на км — только если известны длины всех выбранных СУ, иначе смесь бессмысленна
     const lengths = stages.map(s => stageLengthKm(s.name));
@@ -104,14 +122,6 @@ export function renderResultsTable(): void {
     }
 }
 
-export function setResultsGroupFilter(groups: Set<string>): void {
-    _filterState.groupFilter = groups;
-}
-
-export function getSelectedRows(): Set<string> {
-    return _selectedRows;
-}
-
 // ── Private ───────────────────────────────────────────────────────────────────
 
 /** Место на каждом СУ среди участников, попавших в таблицу (с учётом фильтра класса). */
@@ -129,22 +139,31 @@ function computeStageRanks(results: IDriverResult[], nStages: number): Map<strin
 
 function getFilteredStats(): IDriverStats[] {
     if (!_data) return [];
-    const allStageNums = _data.stages.map(s => s.num);
-    let stats = _allStats;
+    const data = _data;
+    const allStageNums = data.stages.map(s => s.num);
+    return _allStats
+        .filter(s => _filterState.activeDriverKeys.has(s.username) && passesAttrFilters(data, _filterState, s))
+        .map(s => recalculateStatsForStages(s, _filterState.activeStageNums, allStageNums, _recordMap));
+}
 
-    if (_data.groups.length && _filterState.groupFilter.size > 0)
-        stats = stats.filter(s => _filterState.groupFilter.has(s.group));
+function afterFilterChange(): void {
+    renderResultsTable();
+    updateFilterControls();
+}
 
-    // В отличие от класса, «Ничего» по стране действительно никого не оставляет
-    if (_data.countries.length)
-        stats = stats.filter(s => _filterState.countryFilter.has(s.country));
+function updateFilterControls(): void {
+    if (!_data) return;
+    updateFilterCounters(_data, _filterState, PREFIX);
+    updateToggleButtonStates(_data, _filterState, PREFIX);
+}
 
-    if (_filterState.driverFilter.size > 0)
-        stats = stats.filter(s => _filterState.driverFilter.has(s.username));
-
-    return stats.map(s =>
-        recalculateStatsForStages(s, _filterState.stageFilter, allStageNums, _recordMap),
-    );
+/** «Применить фильтр по участникам»: отмеченные в таблице строки становятся выбором в фильтре. */
+function wireApplyButton(): void {
+    const btn = document.getElementById('btn-apply-filter');
+    if (!btn) return;
+    const fresh = btn.cloneNode(true) as HTMLElement;
+    btn.replaceWith(fresh);
+    fresh.addEventListener('click', () => applyRowSelectionAsFilter(new Set(_selectedRows)));
 }
 
 function toggleRowSelection(username: string, row: HTMLElement): void {
@@ -173,12 +192,16 @@ function updateApplyBar(): void {
 
 function applyRowSelectionAsFilter(selected: Set<string>): void {
     if (!_data) return;
-    _filterState.driverFilter = selected.size > 0 ? new Set(selected) : new Set();
+    _filterState.activeDriverKeys = selected.size > 0
+        ? new Set(selected)
+        : new Set(_data.drivers.map(d => d.username));
     _selectedRows = new Set();
     updateApplyBar();
-    syncResultsDriverCheckboxes(_data, _filterState);
-    updateResultsFilterCounters(_data, _filterState);
-    renderResultsTable();
+    qsa<HTMLElement>(`#${PREFIX}filter-drivers-wrap .filter-item[data-driver-key]`).forEach(item => {
+        const cb = item.querySelector<HTMLInputElement>('input[type="checkbox"]');
+        if (cb) cb.checked = _filterState.activeDriverKeys.has(item.dataset['driverKey']!);
+    });
+    afterFilterChange();
 }
 
 function activateParticipantSearch(th: HTMLElement): void {
