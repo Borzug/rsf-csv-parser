@@ -52,30 +52,37 @@
     for (const ch of line) if (ch in counts) counts[ch]++;
     return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
   }
+  function readQuotedField(row, start, delimiter) {
+    let value = "";
+    for (let i = start + 1; i < row.length; i++) {
+      if (row[i] !== '"') {
+        value += row[i];
+        continue;
+      }
+      if (row[i + 1] === '"') {
+        value += '"';
+        i++;
+        continue;
+      }
+      const end = i + 1;
+      return end === row.length || row[end] === delimiter ? { value, end } : null;
+    }
+    return null;
+  }
+  function readPlainField(row, start, delimiter) {
+    const next = row.indexOf(delimiter, start);
+    const end = next === -1 ? row.length : next;
+    return { value: row.slice(start, end), end };
+  }
   function splitRow(row, delimiter) {
     const result = [];
-    let current2 = "";
-    let inQuote = false;
-    let quoteChar = "";
-    for (let i = 0; i < row.length; i++) {
-      const ch = row[i];
-      if (!inQuote && (ch === '"' || ch === "'")) {
-        inQuote = true;
-        quoteChar = ch;
-      } else if (inQuote && ch === quoteChar) {
-        if (row[i + 1] === quoteChar) {
-          current2 += ch;
-          i++;
-        } else inQuote = false;
-      } else if (!inQuote && ch === delimiter) {
-        result.push(current2.trim());
-        current2 = "";
-      } else {
-        current2 += ch;
-      }
+    let pos = 0;
+    while (true) {
+      const field = (row[pos] === '"' ? readQuotedField(row, pos, delimiter) : null) ?? readPlainField(row, pos, delimiter);
+      result.push(field.value.trim());
+      if (field.end >= row.length) return result;
+      pos = field.end + 1;
     }
-    result.push(current2.trim());
-    return result;
   }
   function parseSecondsOrNull(raw) {
     if (!raw || raw.trim() === "" || raw.trim() === "-") return null;

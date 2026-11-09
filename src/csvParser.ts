@@ -47,27 +47,46 @@ function detectDelimiter(line: string): string {
     return Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
 }
 
+/**
+ * Поле в кавычках, начинающееся с позиции start: значение и позиция за закрывающей кавычкой.
+ * null — это не поле в кавычках: закрывающей нет или за ней не конец поля («"Tim" Smith»).
+ */
+function readQuotedField(
+    row:       string,
+    start:     number,
+    delimiter: string,
+): { value: string; end: number } | null {
+    let value = '';
+    for (let i = start + 1; i < row.length; i++) {
+        if (row[i] !== '"') { value += row[i]; continue; }
+        if (row[i + 1] === '"') { value += '"'; i++; continue; }
+        const end = i + 1;
+        return end === row.length || row[end] === delimiter ? { value, end } : null;
+    }
+    return null;
+}
+
+function readPlainField(row: string, start: number, delimiter: string): { value: string; end: number } {
+    const next = row.indexOf(delimiter, start);
+    const end  = next === -1 ? row.length : next;
+    return { value: row.slice(start, end), end };
+}
+
+/**
+ * Кавычкой считается только " в начале поля, и только если за закрывающей идёт разделитель
+ * или конец строки; иначе поле читается как обычный текст (кавычки сохраняются).
+ * Апострофы («Cote D'Arbroz») и кавычки внутри текста («Vinícius "Tim" Santos») — обычные символы.
+ */
 function splitRow(row: string, delimiter: string): string[] {
     const result: string[] = [];
-    let current  = '';
-    let inQuote  = false;
-    let quoteChar = '';
-
-    for (let i = 0; i < row.length; i++) {
-        const ch = row[i];
-        if (!inQuote && (ch === '"' || ch === "'")) {
-            inQuote = true; quoteChar = ch;
-        } else if (inQuote && ch === quoteChar) {
-            if (row[i + 1] === quoteChar) { current += ch; i++; }
-            else inQuote = false;
-        } else if (!inQuote && ch === delimiter) {
-            result.push(current.trim()); current = '';
-        } else {
-            current += ch;
-        }
+    let pos = 0;
+    while (true) {
+        const field = (row[pos] === '"' ? readQuotedField(row, pos, delimiter) : null)
+            ?? readPlainField(row, pos, delimiter);
+        result.push(field.value.trim());
+        if (field.end >= row.length) return result;
+        pos = field.end + 1;
     }
-    result.push(current.trim());
-    return result;
 }
 
 function parseSecondsOrNull(raw: string | undefined): number | null {
