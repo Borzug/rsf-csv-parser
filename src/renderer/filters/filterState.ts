@@ -1,4 +1,4 @@
-import type { IParsedRallyData } from '../../shared/types';
+import type { IDriverInfo, IParsedRallyData, TRecordMap } from '../../shared/types';
 import { qsa } from "../dom";
 
 export interface IChartFilterState {
@@ -12,27 +12,67 @@ export interface IChartFilterState {
 
 export interface IChartFilterCallbacks {
     onStagesChanged:  () => void;
+    /** Сменился выбор участников, класса, машины или страны — список СУ тот же. */
     onDriversChanged: () => void;
-    onGroupsChanged:  () => void;
-    onCarsChanged:    () => void;
-    onCountriesChanged: () => void;
     onDriverHover:    (key: string | null) => void;
 }
 
 /**
  * Проходит ли участник фильтры класса, автомобиля и страны. Одна проверка для графика,
  * результатов и списка участников в боковой панели. «Ничего» везде значит «никого»;
- * участник без машины автомобильным фильтром не отсекается.
+ * участник без класса или машины этими фильтрами не отсекается (выбрать «пустое» значение нельзя).
  */
 export function passesAttrFilters(
     data:  IParsedRallyData,
     state: Pick<IChartFilterState, 'activeGroups' | 'activeCars' | 'activeCountries'>,
     drv:   { group: string; car: string; country: string },
 ): boolean {
-    const grpOk = !data.groups.length || state.activeGroups.has(drv.group);
+    const grpOk = !data.groups.length || !drv.group || state.activeGroups.has(drv.group);
     const carOk = !drv.car || state.activeCars.has(drv.car);
     const ctyOk = !data.countries.length || state.activeCountries.has(drv.country);
     return grpOk && carOk && ctyOk;
+}
+
+/**
+ * Есть ли у участника строка хотя бы на одном выбранном СУ. Строка значит «стартовал» —
+ * сошедший на этом СУ остаётся (как DNF), а сошедший раньше в выбор не попадает.
+ */
+export function ranSelectedStages(
+    data:      IParsedRallyData,
+    state:     Pick<IChartFilterState, 'activeStageNums'>,
+    recordMap: TRecordMap,
+    username:  string,
+): boolean {
+    if (state.activeStageNums.size === data.stages.length) return true;
+    const recs = recordMap.get(username);
+    if (!recs) return false;
+    for (const sn of state.activeStageNums) if (recs.has(sn)) return true;
+    return false;
+}
+
+type TFilterDriver = Pick<IDriverInfo, 'username' | 'group' | 'car' | 'country'>;
+
+/**
+ * Проходит ли участник фильтры СУ, класса, машины и страны (без ручного выбора в списке).
+ * Единственное правило для списка участников в панели, графика, легенды и таблицы.
+ */
+export function passesFilters(
+    data:      IParsedRallyData,
+    state:     IChartFilterState,
+    recordMap: TRecordMap,
+    drv:       TFilterDriver,
+): boolean {
+    return passesAttrFilters(data, state, drv) && ranSelectedStages(data, state, recordMap, drv.username);
+}
+
+/** Показан ли участник: отмечен в списке и проходит фильтры. */
+export function isDriverShown(
+    data:      IParsedRallyData,
+    state:     IChartFilterState,
+    recordMap: TRecordMap,
+    drv:       TFilterDriver,
+): boolean {
+    return state.activeDriverKeys.has(drv.username) && passesFilters(data, state, recordMap, drv);
 }
 
 /** id элемента панели фильтров: prefix '' — график, 'res-' — результаты. */

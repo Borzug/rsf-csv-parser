@@ -108,7 +108,7 @@ function buildCompareHtml(
             : i === 0 ? '' : formatTimeSigned(abs - (best as number));
         html += '<tr>'
             + `<td><span class="tt-dot" style="background:${ds.borderColor}"></span>${name}</td>`
-            + `<td class="tt-num">${abs === null ? '<span class="tt-red">DNF</span>' : formatTime(abs)}</td>`
+            + `<td class="tt-num">${abs === null ? `<span class="tt-red">${i18n.t().dnf}</span>` : formatTime(abs)}</td>`
             + `<td class="tt-num tt-delta">${delta}</td>`
             + '</tr>';
     });
@@ -153,9 +153,9 @@ function buildTooltipHtml(
         const abs = (ds._abs as (number | null)[])[xIdx] ?? null;
         // Время точки схода настоящее (последний сплит) — показываем его и помечаем сход
         html += abs === null
-            ? `<span class="tt-red">DNF</span>`
+            ? `<span class="tt-red">${t.dnf}</span>`
             : `<span class="tt-row">⏱ ${formatTime(abs)}</span>`;
-        if (isDnf && abs !== null) html += `<span class="tt-red">DNF</span>`;
+        if (isDnf && abs !== null) html += `<span class="tt-red">${t.dnf}</span>`;
         if (y !== null && yMode === 'position') {
             html += `<span class="tt-row">${t.tooltipPosition}: ${y}</span>`;
             if (abs !== null && leaderAbs !== null && abs > leaderAbs)

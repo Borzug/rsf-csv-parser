@@ -9,8 +9,11 @@ function resolveActiveIdxs(
     getHoveredIdx:  () => number | null,
 ): Set<number> | null {
     const key = getHoveredKey();
-    if (key !== null)
-        return new Set([ch.data.datasets.findIndex((d: any) => d.driverKey === key) as number]);
+    if (key !== null) {
+        // Участник скрыт фильтром или снят в списке: его линии нет — остальные не гасим
+        const idx = ch.data.datasets.findIndex((d: any) => d.driverKey === key);
+        if (idx >= 0 && !ch.data.datasets[idx].hidden) return new Set([idx]);
+    }
     const pinned = getPinnedIdxs();
     if (pinned.length) return new Set(pinned);
     const hovered = getHoveredIdx();

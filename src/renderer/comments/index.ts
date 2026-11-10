@@ -203,7 +203,7 @@ function buildDriverRow(driver: IDriverComments): HTMLElement {
 function buildPositionBlock(position: number | null): HTMLElement {
     const el = document.createElement('div');
     el.className   = position === null ? 'cmt-pos pos-dnf' : resolvePositionClass(position);
-    el.textContent = position === null ? 'DNF' : String(position);
+    el.textContent = position === null ? i18n.t().dnf : String(position);
     return el;
 }
 
@@ -327,7 +327,7 @@ function buildCardBadges(entry: ICommentEntry): HTMLElement {
     if (entry.superRally) {
         const sr = document.createElement('span');
         sr.className   = 'cmt-badge-sr';
-        sr.textContent = 'Super Rally';
+        sr.textContent = i18n.t().tooltipSuperRally;
         badges.appendChild(sr);
     }
 

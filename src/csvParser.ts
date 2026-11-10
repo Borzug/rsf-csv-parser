@@ -2,7 +2,7 @@ import type { ILapRecord, IStageInfo, IDriverInfo, IParsedRallyData } from './sh
 import { driverDisplayName } from './shared/driverName';
 
 /** Почему файл не разобран; текст сообщения выбирает интерфейс по коду (i18n). */
-export type TCsvErrorCode = 'tooFewLines' | 'noData';
+export type TCsvErrorCode = 'tooFewLines' | 'noData' | 'missingColumns';
 
 export class CsvParseError extends Error {
     constructor(readonly code: TCsvErrorCode) {
@@ -27,18 +27,17 @@ const COLUMN_ALIASES: Record<string, string[]> = {
     comment:        ['comment', 'comments', 'note', 'notes'],
 };
 
+const REQUIRED_COLUMNS = ['stageNum', 'username', 'time3'] as const;
+
+const MAX_CODE_POINT = 0x10FFFF;
+
+/** Числовые сущности (&#233; и обрезанные &#233 без «;»); недопустимый код оставляем как есть. */
 function decodeHtmlEntities(str: string): string {
     if (!str || !str.includes('&#')) return str;
-    let result = str.replace(/&#(\d+);/g, (_, code) =>
-        String.fromCodePoint(parseInt(code, 10)),
-    );
-    result = result.replace(/&#(\d+)(?=[&#]|$)/g, (_, code) =>
-        String.fromCodePoint(parseInt(code, 10)),
-    );
-    result = result.replace(/&#(\d+)/g, (_, code) =>
-        String.fromCodePoint(parseInt(code, 10)),
-    );
-    return result;
+    return str.replace(/&#(\d+);?/g, (m, code) => {
+        const n = parseInt(code, 10);
+        return n > 0 && n <= MAX_CODE_POINT ? String.fromCodePoint(n) : m;
+    });
 }
 
 function detectDelimiter(line: string): string {
@@ -126,6 +125,8 @@ export function parseCsvText(raw: string): IParsedRallyData {
 
     const delim  = detectDelimiter(lines[0]);
     const colMap = buildColumnMap(splitRow(lines[0], delim));
+    // Без этих колонок нельзя ни связать строки с участником, ни посчитать время
+    if (REQUIRED_COLUMNS.some(f => !(f in colMap))) throw new CsvParseError('missingColumns');
 
     const get = (row: string[], field: string): string | undefined => {
         const idx = colMap[field];
@@ -137,12 +138,13 @@ export function parseCsvText(raw: string): IParsedRallyData {
         const row      = splitRow(lines[i], delim);
         if (row.every(c => c === '')) continue;
         const stageNum = parseInt(get(row, 'stageNum') ?? '', 10);
-        if (isNaN(stageNum)) continue;
+        const username = decodeHtmlEntities(get(row, 'username') ?? '');
+        if (isNaN(stageNum) || !username) continue;
 
         records.push({
             stageNum,
-            stageName:      decodeHtmlEntities(get(row, 'stageName') ?? `SS${stageNum}`),
-            username:       decodeHtmlEntities(get(row, 'username')  ?? `driver_${i}`),
+            stageName:      decodeHtmlEntities(get(row, 'stageName') || `SS${stageNum}`),
+            username,
             realName:       decodeHtmlEntities(get(row, 'realName')  ?? ''),
             country:        (get(row, 'country') ?? '').toUpperCase(),
             car:            decodeHtmlEntities(get(row, 'car')       ?? ''),
@@ -190,8 +192,9 @@ function buildRallyData(records: ILapRecord[]): IParsedRallyData {
     );
 
     const groups = [...new Set(records.map(r => r.group).filter(Boolean))].sort();
+    const cars   = [...new Set(drivers.map(d => d.car).filter(Boolean))].sort();
     const countrySet = new Set(drivers.map(d => d.country));
     // Без колонки Nationality у всех '' — фильтр по стране не нужен
     const countries = [...countrySet].some(Boolean) ? [...countrySet].sort() : [];
-    return { records, stages, drivers, groups, countries };
+    return { records, stages, drivers, groups, cars, countries };
 }

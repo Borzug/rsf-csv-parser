@@ -1,4 +1,4 @@
-import type { IParsedRallyData } from '../shared/types';
+import type { IDriverInfo, IParsedRallyData } from '../shared/types';
 import { CsvParseError, parseCsvText } from "../csvParser";
 import { i18n } from "../i18n/index";
 import { initLangSwitcher } from "../lang-switcher";
@@ -42,24 +42,23 @@ import {
     buildChartFilterPanel,
     IChartFilterCallbacks,
     IChartFilterState,
+    refilterDriverList,
     syncStageCheckboxes,
-    updateDriverItemsByStageAndFilter,
     updateFilterCounters,
     updateToggleButtonStates
 } from "./filters/chartFilters";
+import { isDriverShown } from "./filters/filterState";
 import { applyDomTranslations } from "./i18n-dom";
 import {
     buildResultsFilters,
     computeAllDriverStats,
     ensureResultsRendered,
+    getResultsFilterState,
     initResultsModule,
-    invalidateResults
+    invalidateResults,
+    setOnResultsFiltersChanged
 } from "./results/index";
-import { nullableCompare } from "./utils";
-
-declare const window: Window & {
-    __onStageBandClick?: (stageNum: number) => void;
-};
+import { nullableCompare, rankSorted } from "./utils";
 
 type TTab = 'chart' | 'results' | 'comments';
 
@@ -78,7 +77,10 @@ let rallyName:     string | null = null;
 /** Итоговое место участника по всем СУ; null — сошёл. */
 let rankMap        = new Map<string, number | null>();
 
-let lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [], countries: [] });
+/** Текст под кнопкой выбора файла — функция, чтобы перевести его при смене языка. */
+let fileInfoText: (() => string) | null = null;
+
+let lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [], cars: [], countries: [] });
 
 const chartState: IChartFilterState = {
     activeStageNums:   new Set(),
@@ -100,11 +102,14 @@ window.addEventListener('DOMContentLoaded', () => {
         applyDomTranslations();
         updateHeaderTitle();
         updateResumeButton();
+        if (fileInfoText) qs<HTMLElement>('#file-info').textContent = fileInfoText();
         if (data) {
-            buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
-            updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
+            const sidebar   = document.querySelector<HTMLElement>('#sidebar .sidebar-body');
+            const scrollTop = sidebar?.scrollTop ?? 0;
+            buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap, lookups.recordMap);
             afterFilterChange();
             buildResultsFilters(rankMap);
+            if (sidebar) sidebar.scrollTop = scrollTop;
             updateHeaderStats();
             // Скрытые вкладки перестроятся при открытии
             invalidateResults();
@@ -149,7 +154,9 @@ window.addEventListener('DOMContentLoaded', () => {
         onStageCommentsHover: (idx, anchor) => hoverStageComments(idx, anchor),
         onStageCommentsClick: (idx, anchor) => toggleStageComments(idx, anchor),
         onOtherClick:         closeStageComments,
+        onStageBandClick:     handleStageBandClick,
     });
+    setOnResultsFiltersChanged(writeUrlState);
     initLegendSearch({
         onPreview: key => chartCtrl.setHoveredKey(key),
         onToggle:  key => chartCtrl.togglePin(key, true),
@@ -160,20 +167,26 @@ window.addEventListener('DOMContentLoaded', () => {
     qs<HTMLElement>('#sidebar-backdrop').addEventListener('click', () => setSidebarOpen(false));
 
     document.addEventListener('keydown', (e: KeyboardEvent) => {
-        // «/» — к поиску по легенде, если не набираем текст в другом поле
-        if (e.key === '/' && currentTab === 'chart' && data && !isTextInput(e.target)) {
+        // Горячие клавиши графика — только когда он на экране и мы не набираем текст
+        const onChart = isChartShown() && !isTextInput(e.target);
+        // «/» — к поиску по легенде
+        if (e.key === '/' && onChart) {
             e.preventDefault();
             focusLegendSearch();
             return;
         }
         if (e.key !== 'Escape') return;
         if (isSidebarOpen()) setSidebarOpen(false);
-        else if (chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
+        else if (onChart && chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
     });
     document.addEventListener('mousemove', onCellTooltipMove);
-
-    (window as any).__onStageBandClick = handleStageBandClick;
 });
+
+/** Вкладка «График» открыта на экране анализа (не на стартовом экране). */
+function isChartShown(): boolean {
+    return !!data && currentTab === 'chart'
+        && document.getElementById('screen-chart')!.style.display !== 'none';
+}
 
 // ── File loading ──────────────────────────────────────────────────────────────
 
@@ -216,7 +229,8 @@ async function loadFile(file: File): Promise<void> {
     const btn  = qs<HTMLButtonElement>('#btn-choose-file');
     const info = qs<HTMLElement>('#file-info');
     btn.disabled     = true;
-    info.textContent = i18n.t().fileReading;
+    fileInfoText     = () => i18n.t().fileReading;
+    info.textContent = fileInfoText();
     info.className   = 'file-info loading';
 
     try {
@@ -230,10 +244,10 @@ async function loadFile(file: File): Promise<void> {
 
         const allStats = computeAllDriverStats(data, lookups.recordMap);
         initResultsModule(data, lookups.recordMap, allStats);
-        rankMap = new Map();
-        [...allStats]
-            .sort((a, b) => nullableCompare(a.totalTime, b.totalTime))
-            .forEach((s, i) => rankMap.set(s.username, s.totalTime !== null ? i + 1 : null));
+        // Равное время — равное место (1, 2, 2, 4), как в таблице и в режиме «Позиция»
+        const byTime = [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
+        const places = rankSorted(byTime, s => s.totalTime);
+        rankMap = new Map(byTime.map((s, i) => [s.username, places[i]]));
         initCommentsModule(rankMap, allStats);
         // Цвет линии берётся по индексу участника. Упорядочив участников по итоговому месту,
         // получаем у соседей по таблице (а значит, и по графику) заведомо разные цвета палитры
@@ -241,16 +255,19 @@ async function loadFile(file: File): Promise<void> {
         data.drivers.sort((a, b) => order(a.username) - order(b.username));
 
         eventName        = qs<HTMLInputElement>('#inp-event-name').value.trim();
-        info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
+        const loaded     = data;
+        fileInfoText     = () => i18n.t().fileLoaded(loaded.stages.length, loaded.drivers.length);
+        info.textContent = fileInfoText();
         info.className   = 'file-info ok';
         const rallyId    = currentRallyId();
         rallyName        = rallyId ? getCachedRallyName(rallyId) : null;
         showChart();
         if (rallyId) void refreshRallyName(rallyId);
     } catch (err: unknown) {
-        const msg = err instanceof CsvParseError ? i18n.t().csvErrors[err.code]
+        const msg = () => err instanceof CsvParseError ? i18n.t().csvErrors[err.code]
             : err instanceof Error ? err.message : String(err);
-        info.textContent = `${i18n.t().fileError}: ${msg}`;
+        fileInfoText     = () => `${i18n.t().fileError}: ${msg()}`;
+        info.textContent = fileInfoText();
         info.className   = 'file-info error';
         // Ошибку видно только на стартовом экране — переходим туда, если файл бросили на график
         showWelcome();
@@ -309,50 +326,81 @@ function showChart(): void {
     chartState.activeStageNums   = new Set(data.stages.map(s => s.num));
     chartState.activeDriverKeys  = new Set(data.drivers.map(d => d.username));
     chartState.activeGroups      = new Set(data.groups);
-    chartState.activeCars        = new Set(data.drivers.map(d => d.car).filter(Boolean));
+    chartState.activeCars        = new Set(data.cars);
     chartState.activeCountries   = new Set(data.countries);
     chartState.visibleDriverKeys = new Set(data.drivers.map(d => d.username));
     prevStageFilter  = null;
     legendExpanded   = false;
 
     const urlState = readUrlState();
+    // Исключение посреди восстановления не должно навсегда отключить запись ссылки
     restoringUrlState = true;
-    if (urlState) applyUrlFilters(urlState);
+    try {
+        if (urlState) {
+            applyUrlFilters(chartState, urlState.chart);
+            applyUrlFilters(getResultsFilterState(), urlState.results);
+        }
 
-    document.getElementById('screen-welcome')!.style.display  = 'none';
-    document.getElementById('screen-chart')!.style.display    = 'flex';
-    updateHeaderTitle();
+        document.getElementById('screen-welcome')!.style.display  = 'none';
+        document.getElementById('screen-chart')!.style.display    = 'flex';
+        updateHeaderTitle();
 
-    applyDomTranslations();
-    buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap);
-    updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
-    buildResultsFilters(rankMap);
-    switchTab('chart');
-    if (urlState) applyUrlView(urlState);
-    // Режим оси переживает смену файла, но «от выбранного» без закреплённых теряет смысл
-    if (chartCtrl.getYMode() === 'pinned' && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode('leader');
-    syncYModeSwitch();
-    refreshLegend();
-    updateHeaderStats();
-    restoringUrlState = false;
+        applyDomTranslations();
+        buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap, lookups.recordMap);
+        buildResultsFilters(rankMap);
+        switchTab('chart');
+        if (urlState) applyUrlView(urlState);
+        // Режим оси переживает смену файла, но «от выбранного» без закреплённых теряет смысл
+        if (chartCtrl.getYMode() === 'pinned' && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode('leader');
+        syncYModeSwitch();
+        refreshLegend();
+        updateHeaderStats();
+    } finally {
+        restoringUrlState = false;
+    }
     writeUrlState();
 }
 
-// ── View state in URL (#r=…&tab=…&y=…&ss=…&cls=…&pin=…) ───────────────────────
+// ── View state in URL (#r=…&tab=…&y=…&ss=…&cls=…&cty=…&pin=…&res-ss=…) ───────
 //
 // Сами данные в ссылку не попадают — это локальный файл. Ссылка восстанавливает вид
 // после загрузки того же CSV (номер ралли сверяется, чтобы не применить чужие настройки).
+// Фильтры результатов — те же ключи с префиксом «res-».
+
+interface IUrlFilters {
+    stages:    number[] | null;
+    groups:    string[] | null;
+    countries: string[] | null;
+}
 
 interface IUrlState {
-    tab:    TTab | null;
-    yMode:  TYMode | null;
-    stages: number[] | null;
-    groups: string[] | null;
-    countries: string[] | null;
-    pins:   string[];
+    tab:     TTab | null;
+    yMode:   TYMode | null;
+    chart:   IUrlFilters;
+    results: IUrlFilters;
+    pins:    string[];
 }
 
 const LIST_SEP = '|';
+const RESULTS_URL_PREFIX = 'res-';
+/** Пустой код страны в ссылке: пустой элемент в списке не уложить. */
+const NO_COUNTRY = '-';
+
+/**
+ * «|» внутри ника или класса экранируем, чтобы он не разорвал список (и «%», чтобы
+ * экранирование читалось однозначно). Остальное кодирует URLSearchParams — пробел станет «+».
+ */
+function joinList(items: string[]): string {
+    return items.map(s => s.replace(/%/g, '%25').replace(/\|/g, '%7C')).join(LIST_SEP);
+}
+
+function splitList(value: string | null): string[] | null {
+    if (value === null) return null;
+    return value.split(LIST_SEP).filter(Boolean).map(item => {
+        try { return decodeURIComponent(item); } catch { return item; }   // старая ссылка с «%»
+    });
+}
+
 let restoringUrlState = false;
 
 function currentRallyId(): string | null {
@@ -365,29 +413,46 @@ function readUrlState(): IUrlState | null {
     const rally = p.get('r');
     if (rally && rally !== currentRallyId()) return null;
 
-    const list = (key: string) => p.get(key)?.split(LIST_SEP).filter(Boolean) ?? null;
+    const filters = (prefix: string): IUrlFilters => ({
+        stages:    splitList(p.get(prefix + 'ss'))?.map(Number).filter(n => !isNaN(n)) ?? null,
+        groups:    splitList(p.get(prefix + 'cls')),
+        countries: splitList(p.get(prefix + 'cty'))?.map(c => c === NO_COUNTRY ? '' : c) ?? null,
+    });
     const tab  = p.get('tab');
     const y    = p.get('y');
     return {
-        tab:    tab === 'chart' || tab === 'results' || tab === 'comments' ? tab : null,
-        yMode:  y === 'abs' || y === 'leader' || y === 'position' || y === 'pinned' ? y : null,
-        stages: list('ss')?.map(Number).filter(n => !isNaN(n)) ?? null,
-        groups: list('cls'),
-        // «-» — страна не указана (пустой код в список не уложить)
-        countries: list('cty')?.map(c => c === '-' ? '' : c) ?? null,
-        pins:   list('pin') ?? [],
+        tab:     tab === 'chart' || tab === 'results' || tab === 'comments' ? tab : null,
+        yMode:   y === 'abs' || y === 'leader' || y === 'position' || y === 'pinned' ? y : null,
+        chart:   filters(''),
+        results: filters(RESULTS_URL_PREFIX),
+        pins:    splitList(p.get('pin')) ?? [],
     };
 }
 
 /** Фильтры применяются до построения панели и графика — чекбоксы строятся из состояния. */
-function applyUrlFilters(s: IUrlState): void {
+function applyUrlFilters(state: IChartFilterState, s: IUrlFilters): void {
     if (!data) return;
     const stages = s.stages?.filter(n => data!.stages.some(st => st.num === n));
-    if (stages?.length) chartState.activeStageNums = new Set(stages);
+    if (stages?.length) state.activeStageNums = new Set(stages);
     const groups = s.groups?.filter(g => data!.groups.includes(g));
-    if (groups?.length) chartState.activeGroups = new Set(groups);
+    if (groups?.length) state.activeGroups = new Set(groups);
     const countries = s.countries?.filter(c => data!.countries.includes(c));
-    if (countries?.length) chartState.activeCountries = new Set(countries);
+    if (countries?.length) state.activeCountries = new Set(countries);
+}
+
+/**
+ * Фильтры в ссылку — только суженные. Пустой выбор не пишем: при чтении он означал бы
+ * «все», и ссылка открывала бы не то, что видно сейчас.
+ */
+function writeUrlFilters(p: URLSearchParams, state: IChartFilterState, prefix: string): void {
+    if (!data) return;
+    const narrowed = (size: number, total: number) => size > 0 && size !== total;
+    if (narrowed(state.activeStageNums.size, data.stages.length))
+        p.set(prefix + 'ss', [...state.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
+    if (narrowed(state.activeGroups.size, data.groups.length))
+        p.set(prefix + 'cls', joinList([...state.activeGroups].sort()));
+    if (narrowed(state.activeCountries.size, data.countries.length))
+        p.set(prefix + 'cty', joinList([...state.activeCountries].map(c => c || NO_COUNTRY).sort()));
 }
 
 /** Режим, закреплённые и вкладка — когда график уже построен. */
@@ -413,14 +478,10 @@ function writeUrlState(): void {
     if (currentTab !== 'chart') p.set('tab', currentTab);
     const yMode = chartCtrl.getYMode();
     if (yMode !== 'leader') p.set('y', yMode);   // режим по умолчанию в ссылку не пишем
-    if (chartState.activeStageNums.size !== data.stages.length)
-        p.set('ss', [...chartState.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
-    if (data.groups.length && chartState.activeGroups.size !== data.groups.length)
-        p.set('cls', [...chartState.activeGroups].join(LIST_SEP));
-    if (data.countries.length && chartState.activeCountries.size !== data.countries.length)
-        p.set('cty', [...chartState.activeCountries].map(c => c || '-').sort().join(LIST_SEP));
+    writeUrlFilters(p, chartState, '');
     const pins = chartCtrl.getPinnedKeys();
-    if (pins.length) p.set('pin', pins.join(LIST_SEP));
+    if (pins.length) p.set('pin', joinList(pins));
+    writeUrlFilters(p, getResultsFilterState(), RESULTS_URL_PREFIX);
 
     const hash = p.toString();
     history.replaceState(null, '', hash ? `#${hash}` : location.pathname + location.search);
@@ -449,10 +510,9 @@ function updateHeaderTitle(): void {
 
 function updateHeaderStats(): void {
     if (!data) return;
-    const lastStage = data.stages.reduce((m, s) => s.num > m ? s.num : m, 0);
-    const finished  = data.drivers.filter(
-        d => lookups.recordMap.get(d.username)?.get(lastStage)?.time3 != null,
-    ).length;
+    // Финишировал — есть время на всех СУ (как в таблице и списке участников)
+    let finished = 0;
+    for (const place of rankMap.values()) if (place !== null) finished++;
     document.getElementById('header-stats')!.textContent =
         i18n.t().headerStats(finished, data.drivers.length, data.stages.length);
 }
@@ -518,22 +578,9 @@ function setHeavyViewShown(id: string, shown: boolean): void {
 function makeFilterCallbacks(): IChartFilterCallbacks {
     return {
         onStagesChanged: () => {
-            updateDriverItemsByStageAndFilter(data!, chartState, lookups.recordMap);
             rebuildChart();   // вызывает afterFilterChange
         },
         onDriversChanged: () => {
-            syncDatasetVisibility();
-            afterFilterChange();
-        },
-        onGroupsChanged: () => {
-            syncDatasetVisibility();
-            afterFilterChange();
-        },
-        onCarsChanged: () => {
-            syncDatasetVisibility();
-            afterFilterChange();
-        },
-        onCountriesChanged: () => {
             syncDatasetVisibility();
             afterFilterChange();
         },
@@ -543,14 +590,13 @@ function makeFilterCallbacks(): IChartFilterCallbacks {
     };
 }
 
+/** Показан ли участник на графике и в легенде — то же правило, что у списка в панели. */
+function isShownOnChart(drv: IDriverInfo): boolean {
+    return !!data && isDriverShown(data, chartState, lookups.recordMap, drv);
+}
+
 function syncDatasetVisibility(): void {
-    chartCtrl.updateDatasetVisibility(
-        data!,
-        chartState.activeDriverKeys,
-        chartState.activeGroups,
-        chartState.activeCars,
-        chartState.activeCountries,
-    );
+    chartCtrl.updateDatasetVisibility(data!, isShownOnChart);
     refreshComments();
 }
 
@@ -620,7 +666,7 @@ function handleStageBandClick(stageNum: number): void {
     }
 
     syncStageCheckboxes(chartState.activeStageNums);
-    updateDriverItemsByStageAndFilter(data!, chartState, lookups.recordMap);
+    refilterDriverList(data!, chartState, lookups.recordMap, '');
     rebuildChart();   // вызывает afterFilterChange
 }
 
@@ -635,8 +681,7 @@ function rebuildChart(): void {
     chartCtrl.build(
         data, stages,
         lookups.recordMap, lookups.cumPenMap, lookups.cumSPMap, lookups.cumSRMap,
-        chartState.activeDriverKeys, chartState.activeGroups, chartState.activeCars,
-        chartState.activeCountries,
+        isShownOnChart,
     );
 
     updatePinnedBar(data, chartCtrl.getPinnedKeys(), key => chartCtrl.togglePin(key, true));
@@ -689,9 +734,14 @@ function scrollLegendTo(driverKey: string | null): void {
     }
 }
 
+/** Поля, где печатают текст: чекбоксы и кнопки фильтров горячим клавишам не мешают. */
+const NON_TEXT_INPUTS = new Set(['checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'range', 'color', 'image']);
+
 function isTextInput(target: EventTarget | null): boolean {
     const el = target as HTMLElement | null;
-    return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+    if (!el) return false;
+    if (el instanceof HTMLInputElement) return !NON_TEXT_INPUTS.has(el.type);
+    return el.tagName === 'TEXTAREA' || el.isContentEditable;
 }
 
 // ── Cell tooltip ──────────────────────────────────────────────────────────────

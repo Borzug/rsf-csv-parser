@@ -24,7 +24,7 @@ export interface ITranslations {
     fileReading:            string;
     fileLoaded:             (stages: number, drivers: number) => string;
     fileError:              string;
-    csvErrors:              Record<'tooFewLines' | 'noData', string>;
+    csvErrors:              Record<'tooFewLines' | 'noData' | 'missingColumns', string>;
     fileReadError:          string;
 
     // Навбар / шапка
@@ -137,6 +137,10 @@ export interface ITranslations {
 
     // Кнопка применить фильтр
     applyFilterButton:      string;
+    /** Таблица пуста: под фильтры никто не попал (например, не выбран ни один СУ) */
+    resultsEmpty:           string;
+    /** Сход — в таблице, легенде, фильтре и подсказке графика */
+    dnf:                    string;
 
     // Тултип на графике
     tooltipPenalty:         string;

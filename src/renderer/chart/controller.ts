@@ -1,11 +1,11 @@
 import { i18n } from "../../i18n/index";
-import type { IParsedRallyData, IStageInfo, TRecordMap } from '../../shared/types';
+import type { IDriverInfo, IParsedRallyData, IStageInfo, TRecordMap } from '../../shared/types';
 import {
     computeYAxisStep,
-    formatYAxisTick
+    formatYAxisTick,
+    timeKey
 } from "../utils";
-import { buildDatasets } from "./datasets";
-import { passesAttrFilters } from "../filters/filterState";
+import { BORDER_WIDTH, buildDatasets } from "./datasets";
 import { buildHoverDimPlugin } from "./pluginHoverDim";
 import {
     collectComments,
@@ -36,7 +36,6 @@ const BOT_PAD_90     = 110 + COMMENT_ROW_H;
 const NARROW_CHART_PX = 520;
 const DIM_ALPHA      = 0.06;
 const DIM_ALPHA_SOFT = 0.35;
-const BORDER_WIDTH        = 1.8;
 const BORDER_WIDTH_PINNED = 2.8;
 /** Шаг делений оси в режиме «Позиция» — первый, при котором делений не больше 12. */
 const POSITION_STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
@@ -55,19 +54,11 @@ export interface IChartController {
         cumPenMap:        Map<string, Map<number, number>>,
         cumSPMap:         Map<string, Map<number, number>>,
         cumSRMap:         Map<string, Map<number, number>>,
-        activeDriverKeys: Set<string>,
-        activeGroups:     Set<string>,
-        activeCars:       Set<string>,
-        activeCountries:  Set<string>,
+        /** Показан ли участник — общее правило фильтров (isDriverShown) */
+        isShown:          (drv: IDriverInfo) => boolean,
     ): void;
     destroy(): void;
-    updateDatasetVisibility(
-        data:             IParsedRallyData,
-        activeDriverKeys: Set<string>,
-        activeGroups:     Set<string>,
-        activeCars:       Set<string>,
-        activeCountries:  Set<string>,
-    ): void;
+    updateDatasetVisibility(data: IParsedRallyData, isShown: (drv: IDriverInfo) => boolean): void;
     /** additive = true — добавить/убрать из сравнения, иначе выделить только этого участника. */
     togglePin(key: string, additive: boolean): void;
     clearPins(): void;
@@ -100,6 +91,8 @@ export interface IChartCommentCallbacks {
     onStageCommentsClick:  (stageIdx: number, anchor: IAnchor) => void;
     /** Клик по графику мимо счётчиков — закрыть открытый список. */
     onOtherClick:          () => void;
+    /** Клик по подписи СУ под осью. */
+    onStageBandClick:      (stageNum: number) => void;
 }
 
 export function createChartController(): IChartController {
@@ -122,6 +115,20 @@ export function createChartController(): IChartController {
     let mousemoveHandler:   ((e: MouseEvent) => void) | null = null;
     let mouseleaveHandler:  (() => void)              | null = null;
     let onPinChange:        ((keys: string[]) => void) | null = null;
+    let renderQueued        = false;
+    /** Счётчики 💬 по СУ; сбрасываются, когда меняются данные, видимость или закреплённые. */
+    let commentCounts:      number[] | null = null;
+
+    /** Наведение по списку участников даёт событие на каждую строку — рисуем раз за кадр. */
+    function scheduleRender(): void {
+        if (renderQueued) return;
+        renderQueued = true;
+        requestAnimationFrame(() => { renderQueued = false; chart?.render(); });
+    }
+
+    function stageCommentCounts(ch: any): number[] {
+        return commentCounts ??= countCommentsByStage(ch, activeStages.length, commentSourceIdxs(ch, pinnedIdxs));
+    }
 
     function removeCanvasListeners(): void {
         if (!canvas) return;
@@ -131,12 +138,24 @@ export function createChartController(): IChartController {
         clickHandler = mousemoveHandler = mouseleaveHandler = null;
     }
 
-    /** Закреплённые, которые есть на текущем графике, в порядке закрепления. */
+    /**
+     * Закреплённые, которые есть на текущем графике, в порядке закрепления. Скрытый фильтром
+     * остаётся закреплённым (вернётся вместе с фильтром), но в отсчёт, подсветку и комментарии
+     * не попадает — иначе база оси и выделение указывали бы на невидимую линию.
+     */
     function syncPinnedIdxs(): void {
         if (!chart) { pinnedIdxs = []; return; }
         const dss = chart.data.datasets;
         pinnedKeys = pinnedKeys.filter(k => dss.some((d: any) => d.driverKey === k));
-        pinnedIdxs = pinnedKeys.map(k => dss.findIndex((d: any) => d.driverKey === k));
+        pinnedIdxs = pinnedKeys
+            .map(k => dss.findIndex((d: any) => d.driverKey === k))
+            .filter(i => !dss[i].hidden);
+    }
+
+    /** Наведён ли участник, чья линия сейчас видна. */
+    function hoveringVisible(): boolean {
+        if (hoveredDsKey === null || !chart) return false;
+        return chart.data.datasets.some((d: any) => d.driverKey === hoveredDsKey && !d.hidden);
     }
 
     function effectiveYMode(): TYMode {
@@ -148,7 +167,7 @@ export function createChartController(): IChartController {
      * участники и есть предмет анализа — их лишь слегка приглушаем.
      */
     function dimAlpha(): number {
-        return hoveredDsKey === null && effectiveYMode() === 'pinned' ? DIM_ALPHA_SOFT : DIM_ALPHA;
+        return !hoveringVisible() && effectiveYMode() === 'pinned' ? DIM_ALPHA_SOFT : DIM_ALPHA;
     }
 
     /** Пересчитывает ds.data из абсолютных значений (ds._abs) и границы оси Y. */
@@ -225,7 +244,7 @@ export function createChartController(): IChartController {
             // Равное время — равное место (1, 2, 2, 4)
             at.forEach((ds, k) => {
                 const prev = at[k - 1];
-                const r = prev && prev._abs[i] === ds._abs[i] ? ranks.get(prev)![i]! : k + 1;
+                const r = prev && timeKey(prev._abs[i]) === timeKey(ds._abs[i]) ? ranks.get(prev)![i]! : k + 1;
                 ranks.get(ds)![i] = r;
             });
             maxRank = Math.max(maxRank, at.length);
@@ -251,6 +270,7 @@ export function createChartController(): IChartController {
 
     function notifyPinChange(): void {
         syncPinnedIdxs();
+        commentCounts = null;
         applyYMode();
         chart?.update('none');
         onPinChange?.([...pinnedKeys]);
@@ -307,7 +327,7 @@ export function createChartController(): IChartController {
             hoveredDsKey = key;
             // Наведение меняет только прозрачность в плагинах — хватает перерисовки,
             // полный update() на сотнях линий в десятки раз дороже
-            chart?.render();
+            scheduleRender();
         },
 
         setOnPinChange(cb: (keys: string[]) => void): void {
@@ -317,10 +337,14 @@ export function createChartController(): IChartController {
         destroy(): void {
             removeCanvasListeners();
             if (chart) { chart.destroy(); chart = null; }
-            hoveredDsIdx   = null;
-            pinnedKeys     = [];
-            pinnedIdxs     = [];
-            hoveredBandIdx = null;
+            hoveredDsIdx      = null;
+            hoveredDsKey      = null;
+            pinnedKeys        = [];
+            pinnedIdxs        = [];
+            hoveredBandIdx    = null;
+            hoveredCounterIdx = null;
+            activeComment     = null;
+            commentCounts     = null;
         },
 
         togglePin,
@@ -337,21 +361,22 @@ export function createChartController(): IChartController {
             chart?.update('none');
         },
 
-        updateDatasetVisibility(data, activeDriverKeys, activeGroups, activeCars, activeCountries): void {
+        updateDatasetVisibility(data, isShown): void {
             if (!chart || !data) return;
+            const byKey = new Map(data.drivers.map(d => [d.username, d]));
             chart.data.datasets.forEach((ds: any) => {
-                const drv   = data.drivers.find(d => d.username === ds.driverKey);
-                const attrOk = !drv
-                    || passesAttrFilters(data, { activeGroups, activeCars, activeCountries }, drv);
-                ds.hidden   = !activeDriverKeys.has(ds.driverKey) || !attrOk;
+                const drv = byKey.get(ds.driverKey);
+                ds.hidden = !drv || !isShown(drv);
             });
+            commentCounts = null;
+            syncPinnedIdxs();
             applyYMode();
             chart.update('none');
         },
 
-        build(data, stages, recordMap, cumPenMap, cumSPMap, cumSRMap,
-              activeDriverKeys, activeGroups, activeCars, activeCountries): void {
-            activeStages = stages;
+        build(data, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, isShown): void {
+            activeStages  = stages;
+            commentCounts = null;
             const useRot45 = stages.length > ROTATE_45_AT && stages.length <= ROTATE_90_AT;
             const useRot90 = stages.length > ROTATE_90_AT;
             currentBotPad  = useRot90 ? BOT_PAD_90 : useRot45 ? BOT_PAD_45 : BOT_PAD_NORMAL;
@@ -359,10 +384,7 @@ export function createChartController(): IChartController {
             const nPts   = pointCount(stages.length);
             const labels = new Array<string>(nPts).fill('');
 
-            const datasets = buildDatasets(
-                data, stages, recordMap, cumPenMap, cumSPMap, cumSRMap,
-                activeDriverKeys, activeGroups, activeCars, activeCountries,
-            );
+            const datasets = buildDatasets(data, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, isShown);
             datasets.forEach((ds: any) => { ds._abs = ds.data.slice(); });
 
             // Смена набора СУ: график переиспользуется — создание нового Chart (и первая
@@ -440,7 +462,7 @@ export function createChartController(): IChartController {
                         () => activeStages,
                         () => hoveredBandIdx,
                         // ch, а не chart: первая отрисовка идёт ещё внутри конструктора Chart
-                        (ch: any) => countCommentsByStage(ch, activeStages.length, commentSourceIdxs(ch, pinnedIdxs)),
+                        stageCommentCounts,
                         () => hoveredCounterIdx,
                     ),
                     buildPinnedCommentsPlugin(
@@ -466,8 +488,7 @@ export function createChartController(): IChartController {
                 if (my <= bot + 2 || my > bot + 2 + COMMENT_ROW_H) return null;
                 const idx = stageIdxAtX(chart, e.clientX - rect.left, activeStages.length);
                 if (idx === null) return null;
-                const counts = countCommentsByStage(chart, activeStages.length, commentSourceIdxs(chart, pinnedIdxs));
-                if (!counts[idx]) return null;
+                if (!stageCommentCounts(chart)[idx]) return null;
                 const xs = chart.scales.x;
                 const xMid = (xs.getPixelForTick(stageStartTick(idx)) + xs.getPixelForTick(stageEndTick(idx))) / 2;
                 return { idx, anchor: { x: rect.left + xMid, y: rect.top + bot + 2 } };
@@ -478,7 +499,8 @@ export function createChartController(): IChartController {
                 if (counter) { commentCb?.onStageCommentsClick(counter.idx, counter.anchor); return; }
                 commentCb?.onOtherClick();
                 const additive = e.ctrlKey || e.metaKey || e.shiftKey;
-                const hit = handleCanvasClick(e, chart, canvas!, activeStages, currentBotPad);
+                const hit = handleCanvasClick(e, chart, canvas!, activeStages, currentBotPad,
+                    stageNum => commentCb?.onStageBandClick(stageNum));
                 if (hit === 'ignore') return;
                 if (hit === null) {
                     if (!additive && pinnedKeys.length) { pinnedKeys = []; notifyPinChange(); }
@@ -552,14 +574,7 @@ function resolveHoveredBandIdx(
     const ca   = chart.chartArea;
 
     if (my <= ca.bottom + 1 || my >= ca.bottom + 1 + botPad) return null;
-
-    const xs = chart.scales.x;
-    for (let i = 0; i < stages.length; i++) {
-        const xL = xs.getPixelForTick(stageStartTick(i));
-        const xR = xs.getPixelForTick(stageEndTick(i));
-        if (mx >= xL && mx <= xR) return i;
-    }
-    return null;
+    return stageIdxAtX(chart, mx, stages.length);
 }
 
 function buildScales(getMode: () => TYMode): object {
@@ -641,6 +656,7 @@ function handleCanvasClick(
     canvas: HTMLCanvasElement,
     stages: IStageInfo[],
     botPad: number,
+    onBandClick: (stageNum: number) => void,
 ): number | 'ignore' | null {
     if (!chart) return null;
     const rect = canvas.getBoundingClientRect();
@@ -649,15 +665,8 @@ function handleCanvasClick(
     const ca   = chart.chartArea;
 
     if (my > ca.bottom + 1 && my < ca.bottom + 1 + botPad) {
-        const xs = chart.scales.x;
-        for (let i = 0; i < stages.length; i++) {
-            const xL = xs.getPixelForTick(stageStartTick(i));
-            const xR = xs.getPixelForTick(stageEndTick(i));
-            if (mx >= xL && mx <= xR) {
-                (window as any).__onStageBandClick?.(stages[i].num);
-                return 'ignore';
-            }
-        }
+        const idx = stageIdxAtX(chart, mx, stages.length);
+        if (idx !== null) onBandClick(stages[idx].num);
         return 'ignore';
     }
 

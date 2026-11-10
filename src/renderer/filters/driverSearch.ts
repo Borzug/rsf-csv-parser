@@ -28,6 +28,7 @@ export function reapplyDriverSearch(body: HTMLElement): void {
 export function buildSearchBox(
     body:     HTMLElement,
     onSearch: (q: string) => void,
+    initial  = '',
 ): void {
     const sw = document.createElement('div');
     sw.className = 'filter-search-wrap';
@@ -36,9 +37,10 @@ export function buildSearchBox(
     si.className   = 'filter-search';
     si.type        = 'text';
     si.placeholder = i18n.t().filterSearch;
+    si.value       = initial;
 
     const sc = document.createElement('button');
-    sc.className   = 'filter-search-clear hidden';
+    sc.className   = initial ? 'filter-search-clear' : 'filter-search-clear hidden';
     sc.textContent = '×';
 
     sw.appendChild(si);
@@ -52,6 +54,7 @@ export function buildSearchBox(
     });
 
     sc.addEventListener('click', () => {
+        search.cancel();
         si.value = '';
         sc.classList.add('hidden');
         onSearch('');

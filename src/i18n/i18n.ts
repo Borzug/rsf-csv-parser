@@ -12,17 +12,21 @@ const STORAGE_KEY = 'rsf-language';
 
 const TRANSLATIONS: Record<Language, ITranslations> = { ru, en, hu };
 
-type LanguageChangeCallback = (lang: Language) => void;
-
 class I18nService {
     private currentLanguage: Language;
-    private callbacks: LanguageChangeCallback[] = [];
 
     constructor() {
-        const stored = localStorage.getItem(STORAGE_KEY) as Language | null;
-        this.currentLanguage = stored && stored in TRANSLATIONS
-            ? stored
-            : this.detectLanguage();
+        this.currentLanguage = this.readStored() ?? this.detectLanguage();
+    }
+
+    /** Хранилище может быть недоступно (Safari с блокировкой, отключённые cookie) — тогда язык браузера. */
+    private readStored(): Language | null {
+        try {
+            const s = localStorage.getItem(STORAGE_KEY);
+            return s && Object.prototype.hasOwnProperty.call(TRANSLATIONS, s) ? s as Language : null;
+        } catch {
+            return null;
+        }
     }
 
     private detectLanguage(): Language {
@@ -42,12 +46,7 @@ class I18nService {
     setLanguage(lang: Language): void {
         if (lang === this.currentLanguage) return;
         this.currentLanguage = lang;
-        localStorage.setItem(STORAGE_KEY, lang);
-        this.callbacks.forEach(cb => cb(lang));
-    }
-
-    onLanguageChange(cb: LanguageChangeCallback): void {
-        this.callbacks.push(cb);
+        try { localStorage.setItem(STORAGE_KEY, lang); } catch { /* язык просто не запомнится */ }
     }
 }
 

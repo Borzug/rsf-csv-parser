@@ -14,14 +14,14 @@ import {
     IChartFilterCallbacks,
     IChartFilterState,
     filterId,
-    passesAttrFilters,
+    passesFilters,
     refreshVisibleDriverKeys,
     setAllCheckboxes,
     syncVisibleCheckboxes
 } from "./filterState.js";
-import { prependFlag } from "../flags";
-import { buildCountryItems } from "./countryFilter";
+import { countryName, prependFlag } from "../flags";
 import { driverDisplayName } from "../../shared/driverName";
+import { isCoarsePointer } from "../utils";
 
 export function buildStageFilterUI(
     stages:    IStageInfo[],
@@ -64,8 +64,10 @@ export function buildStageFilterUI(
     cont.appendChild(group);
 }
 
+/** Для каких данных построен список участников: текст поиска переживает перестройку (язык), но не смену файла. */
+const driverListData = new WeakMap<HTMLElement, IParsedRallyData>();
+
 export function buildDriverFilterUI(
-    drivers:   IDriverInfo[],
     data:      IParsedRallyData,
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
@@ -73,10 +75,15 @@ export function buildDriverFilterUI(
     prefix:    string,
 ): void {
     const wrap = document.getElementById(filterId(prefix, 'filter-drivers-wrap'))!;
+    const prevQuery = driverListData.get(wrap) === data
+        ? wrap.querySelector<HTMLInputElement>('.filter-search')?.value ?? ''
+        : '';
+    driverListData.set(wrap, data);
     wrap.innerHTML = '';
     const { group, body, btnAll, btnNone } =
         buildCollapsibleFilterGroup(i18n.t().filterParticipants, filterId(prefix, 'counter-drivers'));
     const t = i18n.t();
+    const drivers = data.drivers;
 
     // Сначала финишировавшие по месту, затем сошедшие по алфавиту
     const rankOf = (d: IDriverInfo) => rankMap.get(d.username) ?? null;
@@ -102,7 +109,7 @@ export function buildDriverFilterUI(
     });
 
     // Поиск только прячет строки — выбор участников и график не меняются
-    buildSearchBox(body, (q) => applyDriverSearch(q, body));
+    buildSearchBox(body, (q) => applyDriverSearch(q, body), prevQuery);
 
     /** Оставляет выбранными только видимых (с учётом класса/поиска), прошедших отбор pick. */
     const applyPreset = (pick: (rank: number) => boolean) => {
@@ -146,204 +153,158 @@ export function buildDriverFilterUI(
 
         const rank     = rankOf(drv);
         const place    = createElement('span', rank !== null ? 'filter-driver-rank' : 'filter-driver-rank dnf',
-            rank !== null ? String(rank) : 'DNF');
+            rank !== null ? String(rank) : t.dnf);
         const content  = createElement('div', 'filter-driver-content');
-        const nameSpan = createElement('span', 'filter-driver-name',
-            driverDisplayName(drv),
-        );
+        const nameSpan = createElement('span', 'filter-driver-name', driverDisplayName(drv));
         prependFlag(nameSpan, drv.country);
         content.appendChild(nameSpan);
         if (drv.car) content.appendChild(createElement('span', 'filter-driver-car', drv.car));
-
-        lbl.addEventListener('mouseenter', () => {
-            lbl.classList.add('hover-highlighted');
-            callbacks.onDriverHover(drv.username);
-        });
-        lbl.addEventListener('mouseleave', () => {
-            lbl.classList.remove('hover-highlighted');
-            callbacks.onDriverHover(null);
-        });
 
         lbl.appendChild(cb);
         lbl.appendChild(place);
         lbl.appendChild(content);
         body.appendChild(lbl);
     }
+    bindDriverHover(body, callbacks);
     wrap.appendChild(group);
 }
 
-export function buildGroupFilterUI(
-    groups:    string[],
-    data:      IParsedRallyData,
-    state:     IChartFilterState,
-    callbacks: IChartFilterCallbacks,
-    onRefilterDrivers: () => void,
-    prefix:    string,
-): void {
-    const cont = document.getElementById(filterId(prefix, 'filter-groups'))!;
+/**
+ * Подсветка линии при наведении на участника — один обработчик на весь список.
+ * На сенсорных экранах наведения нет: касание эмулирует mouseover, и подсветка залипала бы.
+ */
+function bindDriverHover(body: HTMLElement, callbacks: IChartFilterCallbacks): void {
+    if (isCoarsePointer()) return;
+    const itemOf = (e: Event) =>
+        (e.target as HTMLElement | null)?.closest<HTMLElement>('.filter-item[data-driver-key]') ?? null;
+    body.addEventListener('mouseover', e => {
+        const item = itemOf(e);
+        if (!item || item.contains(e.relatedTarget as Node | null)) return;
+        item.classList.add('hover-highlighted');
+        callbacks.onDriverHover(item.dataset['driverKey']!);
+    });
+    body.addEventListener('mouseout', e => {
+        const item = itemOf(e);
+        if (!item || item.contains(e.relatedTarget as Node | null)) return;
+        item.classList.remove('hover-highlighted');
+        callbacks.onDriverHover(null);
+    });
+}
+
+/** Фильтр по значению атрибута участника (класс, машина, страна) — общий вид и поведение. */
+interface IAttrFilterSpec {
+    /** Имя контейнера и счётчика без префикса */
+    container:  string;
+    counter:    string;
+    title:      string;
+    /** Значения в порядке показа */
+    values:     string[];
+    selected:   Set<string>;
+    counts:     Map<string, number>;
+    labelClass: string;
+    labelText:  (value: string) => string;
+    decorate?:  (label: HTMLElement, value: string) => void;
+}
+
+function buildAttrFilterUI(spec: IAttrFilterSpec, onChange: () => void, prefix: string): void {
+    const cont = document.getElementById(filterId(prefix, spec.container))!;
     cont.innerHTML = '';
-    if (!groups.length) { cont.style.display = 'none'; return; }
+    // В обе стороны: следующий файл может принести колонку, которой не было в предыдущем
+    cont.style.display = spec.values.length ? '' : 'none';
+    if (!spec.values.length) return;
 
     const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup(i18n.t().filterGroupClass, filterId(prefix, 'counter-groups'));
+        buildCollapsibleFilterGroup(spec.title, filterId(prefix, spec.counter));
 
     btnAll.addEventListener('click', () => {
-        groups.forEach(g => state.activeGroups.add(g));
+        spec.values.forEach(v => spec.selected.add(v));
         setAllCheckboxes(body, true);
-        onRefilterDrivers();
-        callbacks.onGroupsChanged();
+        onChange();
     });
     btnNone.addEventListener('click', () => {
-        state.activeGroups.clear();
+        spec.selected.clear();
         setAllCheckboxes(body, false);
-        onRefilterDrivers();
-        callbacks.onGroupsChanged();
+        onChange();
     });
 
-    const counts = countBy(data.drivers, d => d.group);
-    for (const grp of groups) {
+    for (const value of spec.values) {
         const lbl = createElement('label', 'filter-item');
         const cb  = createElement('input') as HTMLInputElement;
-        cb.type = 'checkbox'; cb.checked = state.activeGroups.has(grp);
+        cb.type = 'checkbox'; cb.checked = spec.selected.has(value);
         cb.addEventListener('change', () => {
-            cb.checked ? state.activeGroups.add(grp) : state.activeGroups.delete(grp);
-            onRefilterDrivers();
-            callbacks.onGroupsChanged();
+            cb.checked ? spec.selected.add(value) : spec.selected.delete(value);
+            onChange();
         });
+        const label = createElement('span', spec.labelClass, spec.labelText(value));
+        spec.decorate?.(label, value);
         lbl.appendChild(cb);
-        lbl.appendChild(createElement('span', 'filter-group-label', grp));
-        lbl.appendChild(createFilterCount(counts.get(grp) ?? 0));
+        lbl.appendChild(label);
+        lbl.appendChild(createFilterCount(spec.counts.get(value) ?? 0));
         body.appendChild(lbl);
     }
     cont.appendChild(group);
 }
 
-export function buildCarFilterUI(
-    drivers:   IDriverInfo[],
-    state:     IChartFilterState,
-    callbacks: IChartFilterCallbacks,
-    onRefilterDrivers: () => void,
-    prefix:    string,
+/** Фильтры класса, машины и страны. onChange — после того, как список участников пересчитан. */
+export function buildAttrFilters(
+    data:     IParsedRallyData,
+    state:    IChartFilterState,
+    onChange: () => void,
+    prefix:   string,
 ): void {
-    const cont = document.getElementById(filterId(prefix, 'filter-cars'))!;
-    cont.innerHTML = '';
-    const cars = [...new Set(drivers.map(d => d.car).filter(Boolean))].sort();
-    if (!cars.length) { cont.style.display = 'none'; return; }
+    const t = i18n.t();
+    // Страны — по названию на языке интерфейса, «не указана» в конце
+    const countries = data.countries
+        .map(code => ({ code, name: countryName(code) }))
+        .sort((a, b) => (a.code ? 0 : 1) - (b.code ? 0 : 1) || a.name.localeCompare(b.name));
+    const countryNames = new Map(countries.map(c => [c.code, c.name]));
 
-    const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup(i18n.t().filterCar, filterId(prefix, 'counter-cars'));
-
-    btnAll.addEventListener('click', () => {
-        cars.forEach(c => state.activeCars.add(c));
-        setAllCheckboxes(body, true);
-        onRefilterDrivers();
-        callbacks.onCarsChanged();
-    });
-    btnNone.addEventListener('click', () => {
-        state.activeCars.clear();
-        setAllCheckboxes(body, false);
-        onRefilterDrivers();
-        callbacks.onCarsChanged();
-    });
-
-    const counts = countBy(drivers, d => d.car);
-    for (const car of cars) {
-        const lbl = createElement('label', 'filter-item');
-        const cb  = createElement('input') as HTMLInputElement;
-        cb.type = 'checkbox'; cb.checked = state.activeCars.has(car);
-        cb.addEventListener('change', () => {
-            cb.checked ? state.activeCars.add(car) : state.activeCars.delete(car);
-            onRefilterDrivers();
-            callbacks.onCarsChanged();
-        });
-        lbl.appendChild(cb);
-        lbl.appendChild(createElement('span', 'filter-car-label', car));
-        lbl.appendChild(createFilterCount(counts.get(car) ?? 0));
-        body.appendChild(lbl);
-    }
-    cont.appendChild(group);
+    buildAttrFilterUI({
+        container: 'filter-groups', counter: 'counter-groups', title: t.filterGroupClass,
+        values: data.groups, selected: state.activeGroups,
+        counts: countBy(data.drivers, d => d.group),
+        labelClass: 'filter-group-label', labelText: v => v,
+    }, onChange, prefix);
+    buildAttrFilterUI({
+        container: 'filter-cars', counter: 'counter-cars', title: t.filterCar,
+        values: data.cars, selected: state.activeCars,
+        counts: countBy(data.drivers, d => d.car),
+        labelClass: 'filter-car-label', labelText: v => v,
+    }, onChange, prefix);
+    buildAttrFilterUI({
+        container: 'filter-countries', counter: 'counter-countries', title: t.filterCountry,
+        values: countries.map(c => c.code), selected: state.activeCountries,
+        counts: countBy(data.drivers, d => d.country),
+        labelClass: 'filter-country-label', labelText: v => countryNames.get(v) ?? v,
+        decorate: prependFlag,
+    }, onChange, prefix);
 }
 
-export function applyGroupOrCarFilterToDriverList(
-    data:   IParsedRallyData,
-    state:  IChartFilterState,
-    prefix: string,
-): void {
-    const body = driverListBody(prefix);
-    if (!body) return;
-    qsa<HTMLElement>('.filter-item[data-driver-key]', body).forEach(item => {
-        item.style.display = itemPassesAttrFilters(item, data, state) ? '' : 'none';
-    });
-    reapplyDriverSearch(body);
-    refreshVisibleDriverKeys(body, state);
-}
-
-export function updateDriverItemsByStageAndFilter(
+/**
+ * Прячет в списке участников тех, кто не проходит фильтры СУ, класса, машины и страны,
+ * и обновляет state.visibleDriverKeys (по нему работают «Все/Ничего» и пресеты).
+ */
+export function refilterDriverList(
     data:      IParsedRallyData,
     state:     IChartFilterState,
     recordMap: TRecordMap,
-    prefix    = '',
+    prefix:    string,
 ): void {
     const body = driverListBody(prefix);
     if (!body) return;
-    const allSelected = state.activeStageNums.size === data.stages.length;
-
     qsa<HTMLElement>('.filter-item[data-driver-key]', body).forEach(item => {
-        const key   = item.dataset['driverKey']!;
-        const stageOk = allSelected
-            || [...state.activeStageNums].some(sn => recordMap.get(key)?.has(sn));
-        item.style.display = (itemPassesAttrFilters(item, data, state) && stageOk) ? '' : 'none';
+        const ok = passesFilters(data, state, recordMap, {
+            username: item.dataset['driverKey']!,
+            group:    item.dataset['group']   ?? '',
+            car:      item.dataset['car']     ?? '',
+            country:  item.dataset['country'] ?? '',
+        });
+        item.style.display = ok ? '' : 'none';
     });
-
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
-}
-
-/** Класс, автомобиль и страна участника из data-атрибутов пункта списка. */
-function itemPassesAttrFilters(item: HTMLElement, data: IParsedRallyData, state: IChartFilterState): boolean {
-    return passesAttrFilters(data, state, {
-        group:   item.dataset['group']   ?? '',
-        car:     item.dataset['car']     ?? '',
-        country: item.dataset['country'] ?? '',
-    });
 }
 
 function driverListBody(prefix: string): HTMLElement | null {
     return document.querySelector<HTMLElement>(`#${filterId(prefix, 'filter-drivers-wrap')} .filter-body`);
-}
-
-export function buildCountryFilterUI(
-    data:      IParsedRallyData,
-    state:     IChartFilterState,
-    callbacks: IChartFilterCallbacks,
-    onRefilterDrivers: () => void,
-    prefix:    string,
-): void {
-    const cont = document.getElementById(filterId(prefix, 'filter-countries'))!;
-    cont.innerHTML = '';
-    if (!data.countries.length) { cont.style.display = 'none'; return; }
-    cont.style.display = '';
-
-    const { group, body, btnAll, btnNone } =
-        buildCollapsibleFilterGroup(i18n.t().filterCountry, filterId(prefix, 'counter-countries'));
-
-    btnAll.addEventListener('click', () => {
-        data.countries.forEach(c => state.activeCountries.add(c));
-        setAllCheckboxes(body, true);
-        onRefilterDrivers();
-        callbacks.onCountriesChanged();
-    });
-    btnNone.addEventListener('click', () => {
-        state.activeCountries.clear();
-        setAllCheckboxes(body, false);
-        onRefilterDrivers();
-        callbacks.onCountriesChanged();
-    });
-
-    buildCountryItems(data, body, c => state.activeCountries.has(c), (c, checked) => {
-        checked ? state.activeCountries.add(c) : state.activeCountries.delete(c);
-        onRefilterDrivers();
-        callbacks.onCountriesChanged();
-    });
-    cont.appendChild(group);
 }

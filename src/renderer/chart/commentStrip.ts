@@ -13,6 +13,8 @@ export interface ICommentStripCallbacks {
 }
 
 const COLLAPSED_KEY = 'rsf-comment-strip-collapsed';
+/** Узкий экран — та же граница, что у мобильной вёрстки в style.css. */
+const NARROW_SCREEN_QUERY = '(max-width: 768px)';
 
 let callbacks: ICommentStripCallbacks | null = null;
 let collapsed = readCollapsed();
@@ -112,6 +114,13 @@ function applyCollapsed(): void {
     document.getElementById('comment-strip-toggle')!.setAttribute('aria-expanded', String(!collapsed));
 }
 
+/**
+ * Свёрнута ли лента. Выбор пользователя запоминается ('1' — свёрнута, '' — раскрыта);
+ * пока его нет, на телефоне лента свёрнута: иначе она отнимает у графика почти половину высоты.
+ */
 function readCollapsed(): boolean {
-    try { return localStorage.getItem(COLLAPSED_KEY) === '1'; } catch { return false; }
+    let stored: string | null = null;
+    try { stored = localStorage.getItem(COLLAPSED_KEY); } catch { /* приватный режим */ }
+    if (stored !== null) return stored === '1';
+    return window.matchMedia?.(NARROW_SCREEN_QUERY).matches ?? false;
 }

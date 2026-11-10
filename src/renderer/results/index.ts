@@ -7,17 +7,17 @@ import {
 } from "./compute";
 import {
     buildChartFilterPanel,
-    updateDriverItemsByStageAndFilter,
     updateFilterCounters,
     updateToggleButtonStates,
     type IChartFilterCallbacks,
     type IChartFilterState,
 } from "../filters/chartFilters";
-import { passesAttrFilters } from "../filters/filterState";
+import { isDriverShown } from "../filters/filterState";
 import { qsa } from "../dom";
-import { debounce, SEARCH_DEBOUNCE_MS } from "../utils";
+import { debounce, rankSorted, SEARCH_DEBOUNCE_MS } from "../utils";
 import {
     buildResultsTableHeader,
+    COLUMN_COUNT,
     renderResultsRows
 } from "./tableRenderer";
 import { stageLengthKm } from "../data/stageLengths";
@@ -39,17 +39,30 @@ const PREFIX = 'res-';
 
 /** Фильтры результатов устроены так же, как у графика, но независимы от них. */
 let _filterState: IChartFilterState = fullFilterState(null);
+/** Сообщает о смене фильтров результатов (их пишет в ссылку index.ts). */
+let _onFiltersChanged: () => void = () => {};
+let _renderQueued = false;
 
+/** Состояние «выбрано всё» для данных (или пустое без данных). */
 function fullFilterState(data: IParsedRallyData | null): IChartFilterState {
     const drivers = data?.drivers ?? [];
     return {
         activeStageNums:   new Set(data?.stages.map(s => s.num) ?? []),
         activeDriverKeys:  new Set(drivers.map(d => d.username)),
         activeGroups:      new Set(data?.groups ?? []),
-        activeCars:        new Set(drivers.map(d => d.car).filter(Boolean)),
+        activeCars:        new Set(data?.cars ?? []),
         activeCountries:   new Set(data?.countries ?? []),
         visibleDriverKeys: new Set(drivers.map(d => d.username)),
     };
+}
+
+/** Фильтры результатов — общий объект: index.ts восстанавливает их из ссылки до построения панели. */
+export function getResultsFilterState(): IChartFilterState {
+    return _filterState;
+}
+
+export function setOnResultsFiltersChanged(cb: () => void): void {
+    _onFiltersChanged = cb;
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -63,6 +76,7 @@ export function initResultsModule(
     _recordMap  = recordMap;
     _allStats   = allStats;
     _selectedRows = new Set();
+    _searchActive = false;
     _dirty        = true;
     _resetScroll  = true;
     _filterState  = fullFilterState(data);
@@ -73,18 +87,11 @@ export function initResultsModule(
 export function buildResultsFilters(rankMap: Map<string, number | null>): void {
     if (!_data) return;
     const callbacks: IChartFilterCallbacks = {
-        onStagesChanged: () => {
-            updateDriverItemsByStageAndFilter(_data!, _filterState, _recordMap, PREFIX);
-            afterFilterChange();
-        },
-        onDriversChanged:   afterFilterChange,
-        onGroupsChanged:    afterFilterChange,
-        onCarsChanged:      afterFilterChange,
-        onCountriesChanged: afterFilterChange,
-        onDriverHover:      () => {},
+        onStagesChanged:  afterFilterChange,
+        onDriversChanged: afterFilterChange,
+        onDriverHover:    () => {},
     };
-    buildChartFilterPanel(_data, _filterState, callbacks, rankMap, PREFIX);
-    updateDriverItemsByStageAndFilter(_data, _filterState, _recordMap, PREFIX);
+    buildChartFilterPanel(_data, _filterState, callbacks, rankMap, _recordMap, PREFIX);
     updateFilterControls();
     wireApplyButton();
 }
@@ -101,21 +108,24 @@ export function invalidateResults(): void {
 export function renderResultsTable(): void {
     if (!_data) return;
     _dirty = false;
+    // Шапка строится заново — поле поиска в ней (если было открыто) исчезает без blur
+    _searchActive = false;
     const stats   = getFilteredStats();
     const stages  = _data.stages
         .filter(s => _filterState.activeStageNums.has(s.num))
         .sort((a, b) => a.num - b.num);
     // Темп на км — только если известны длины всех выбранных СУ, иначе смесь бессмысленна
     const lengths = stages.map(s => stageLengthKm(s.name));
-    const stageKm = lengths.every((l): l is number => l !== null) ? lengths : null;
+    const stageKm = lengths.length && lengths.every((l): l is number => l !== null) ? lengths : null;
     const results = computeDriverResults(stats, stageKm);
+    pruneSelection(results);
 
     const thead = document.getElementById('results-thead')!;
     buildResultsTableHeader(thead, stages, lengths, stageKm !== null, activateParticipantSearch);
 
     const tbody = document.getElementById('results-tbody')!;
     renderResultsRows(tbody, results, computeStageRanks(results, stages.length), stageKm !== null,
-        _selectedRows, toggleRowSelection);
+        _selectedRows, toggleRowSelection, COLUMN_COUNT + stages.length);
 
     if (_resetScroll) {
         _resetScroll = false;
@@ -130,26 +140,44 @@ function computeStageRanks(results: IDriverResult[], nStages: number): Map<strin
     const ranks = new Map<string, (number | null)[]>();
     results.forEach(r => ranks.set(r.stats.username, new Array(nStages).fill(null)));
     for (let s = 0; s < nStages; s++) {
-        results
+        const timed = results
             .filter(r => r.stats.snaps[s]?.time3 != null)
-            .sort((a, b) => a.stats.snaps[s].time3! - b.stats.snaps[s].time3!)
-            .forEach((r, i) => { ranks.get(r.stats.username)![s] = i + 1; });
+            .sort((a, b) => a.stats.snaps[s].time3! - b.stats.snaps[s].time3!);
+        const place = rankSorted(timed, r => r.stats.snaps[s].time3);
+        timed.forEach((r, i) => { ranks.get(r.stats.username)![s] = place[i]; });
     }
     return ranks;
 }
 
+/** Участники, прошедшие фильтры, с итогами по выбранным СУ. Не выбран ни один СУ — пусто. */
 function getFilteredStats(): IDriverStats[] {
     if (!_data) return [];
     const data = _data;
-    const allStageNums = data.stages.map(s => s.num);
+    const stageNums = data.stages.map(s => s.num).filter(n => _filterState.activeStageNums.has(n));
+    if (!stageNums.length) return [];
     return _allStats
-        .filter(s => _filterState.activeDriverKeys.has(s.username) && passesAttrFilters(data, _filterState, s))
-        .map(s => recalculateStatsForStages(s, _filterState.activeStageNums, allStageNums, _recordMap));
+        .filter(s => isDriverShown(data, _filterState, _recordMap, s))
+        .map(s => recalculateStatsForStages(s, stageNums, data.stages.length, _recordMap));
 }
 
+/** Отмеченные строки, которые фильтр убрал из таблицы, из выбора тоже уходят. */
+function pruneSelection(results: IDriverResult[]): void {
+    if (!_selectedRows.size) return;
+    const shown = new Set(results.map(r => r.stats.username));
+    for (const u of _selectedRows) if (!shown.has(u)) _selectedRows.delete(u);
+    updateApplyBar();
+}
+
+/**
+ * Несколько изменений подряд (кнопка «Применить», «Все» с пересчётом списка) — одна
+ * перестройка таблицы: на 850 участников она тяжёлая.
+ */
 function afterFilterChange(): void {
-    renderResultsTable();
     updateFilterControls();
+    _onFiltersChanged();
+    if (_renderQueued) return;
+    _renderQueued = true;
+    queueMicrotask(() => { _renderQueued = false; renderResultsTable(); });
 }
 
 function updateFilterControls(): void {
@@ -221,6 +249,7 @@ function activateParticipantSearch(th: HTMLElement): void {
     const search = debounce(scrollToMatchingParticipant, SEARCH_DEBOUNCE_MS);
     inp.addEventListener('input', () => search(inp.value));
     inp.addEventListener('blur', () => {
+        search.cancel();
         _searchActive = false;
         th.textContent = origLabel;
         th.className   = 'th-participant sticky-col sticky-col-2';

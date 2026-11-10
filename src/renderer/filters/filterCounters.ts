@@ -24,9 +24,8 @@ export function updateFilterCounters(
     if (data.groups.length)
         setCounterText(id('counter-groups'), activeGroups.size, data.groups.length);
 
-    const allCars = [...new Set(data.drivers.map(d => d.car).filter(Boolean))];
-    if (allCars.length)
-        setCounterText(id('counter-cars'), activeCars.size, allCars.length);
+    if (data.cars.length)
+        setCounterText(id('counter-cars'), activeCars.size, data.cars.length);
 
     if (data.countries.length)
         setCounterText(id('counter-countries'), state.activeCountries.size, data.countries.length);
@@ -44,17 +43,17 @@ export function updateToggleButtonStates(
     setToggleActive(sel('filter-stages', 1), allSS);
     setToggleActive(sel('filter-stages', 2), activeStageNums.size === 0);
 
-    const vis    = [...visibleDriverKeys];
-    const selVis = vis.filter(k => activeDriverKeys.has(k)).length;
-    setToggleActive(sel('filter-drivers-wrap', 1), selVis === vis.length && vis.length > 0);
+    let selVis = 0;
+    for (const k of visibleDriverKeys) if (activeDriverKeys.has(k)) selVis++;
+    setToggleActive(sel('filter-drivers-wrap', 1), selVis === visibleDriverKeys.size && visibleDriverKeys.size > 0);
     setToggleActive(sel('filter-drivers-wrap', 2), selVis === 0);
 
     const allGrp = activeGroups.size === data.groups.length && data.groups.length > 0;
     setToggleActive(sel('filter-groups', 1), allGrp);
     setToggleActive(sel('filter-groups', 2), activeGroups.size === 0);
 
-    const allCars = [...new Set(data.drivers.map(d => d.car).filter(Boolean))];
-    setToggleActive(sel('filter-cars', 1), activeCars.size === allCars.length && allCars.length > 0);
+    const nCars = data.cars.length;
+    setToggleActive(sel('filter-cars', 1), activeCars.size === nCars && nCars > 0);
     setToggleActive(sel('filter-cars', 2), activeCars.size === 0);
 
     const nCty = data.countries.length;

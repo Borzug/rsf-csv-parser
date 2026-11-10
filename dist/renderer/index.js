@@ -31,21 +31,14 @@
     superRally: ["super rally", "super_rally", "superrally", "sr"],
     comment: ["comment", "comments", "note", "notes"]
   };
+  var REQUIRED_COLUMNS = ["stageNum", "username", "time3"];
+  var MAX_CODE_POINT = 1114111;
   function decodeHtmlEntities(str) {
     if (!str || !str.includes("&#")) return str;
-    let result = str.replace(
-      /&#(\d+);/g,
-      (_, code) => String.fromCodePoint(parseInt(code, 10))
-    );
-    result = result.replace(
-      /&#(\d+)(?=[&#]|$)/g,
-      (_, code) => String.fromCodePoint(parseInt(code, 10))
-    );
-    result = result.replace(
-      /&#(\d+)/g,
-      (_, code) => String.fromCodePoint(parseInt(code, 10))
-    );
-    return result;
+    return str.replace(/&#(\d+);?/g, (m, code) => {
+      const n = parseInt(code, 10);
+      return n > 0 && n <= MAX_CODE_POINT ? String.fromCodePoint(n) : m;
+    });
   }
   function detectDelimiter(line) {
     const counts = { ",": 0, ";": 0, "	": 0, "|": 0 };
@@ -118,6 +111,7 @@
     if (lines.length < 2) throw new CsvParseError("tooFewLines");
     const delim = detectDelimiter(lines[0]);
     const colMap = buildColumnMap(splitRow(lines[0], delim));
+    if (REQUIRED_COLUMNS.some((f) => !(f in colMap))) throw new CsvParseError("missingColumns");
     const get = (row, field) => {
       const idx = colMap[field];
       return idx !== void 0 && idx < row.length ? row[idx] : void 0;
@@ -127,11 +121,12 @@
       const row = splitRow(lines[i], delim);
       if (row.every((c) => c === "")) continue;
       const stageNum = parseInt(get(row, "stageNum") ?? "", 10);
-      if (isNaN(stageNum)) continue;
+      const username = decodeHtmlEntities(get(row, "username") ?? "");
+      if (isNaN(stageNum) || !username) continue;
       records.push({
         stageNum,
-        stageName: decodeHtmlEntities(get(row, "stageName") ?? `SS${stageNum}`),
-        username: decodeHtmlEntities(get(row, "username") ?? `driver_${i}`),
+        stageName: decodeHtmlEntities(get(row, "stageName") || `SS${stageNum}`),
+        username,
         realName: decodeHtmlEntities(get(row, "realName") ?? ""),
         country: (get(row, "country") ?? "").toUpperCase(),
         car: decodeHtmlEntities(get(row, "car") ?? ""),
@@ -172,9 +167,10 @@
       (a, b) => a.label.localeCompare(b.label, void 0, { sensitivity: "base" })
     );
     const groups = [...new Set(records.map((r) => r.group).filter(Boolean))].sort();
+    const cars = [...new Set(drivers.map((d) => d.car).filter(Boolean))].sort();
     const countrySet = new Set(drivers.map((d) => d.country));
     const countries = [...countrySet].some(Boolean) ? [...countrySet].sort() : [];
-    return { records, stages, drivers, groups, countries };
+    return { records, stages, drivers, groups, cars, countries };
   }
 
   // src/i18n/translations.ts
@@ -189,7 +185,8 @@
     fileError: "\u2717 \u041E\u0448\u0438\u0431\u043A\u0430",
     csvErrors: {
       tooFewLines: "\u0424\u0430\u0439\u043B \u0441\u043E\u0434\u0435\u0440\u0436\u0438\u0442 \u0441\u043B\u0438\u0448\u043A\u043E\u043C \u043C\u0430\u043B\u043E \u0441\u0442\u0440\u043E\u043A",
-      noData: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0442\u044C \u0434\u0430\u043D\u043D\u044B\u0435 \u0432 \u0444\u0430\u0439\u043B\u0435"
+      noData: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0440\u0430\u0441\u043F\u043E\u0437\u043D\u0430\u0442\u044C \u0434\u0430\u043D\u043D\u044B\u0435 \u0432 \u0444\u0430\u0439\u043B\u0435",
+      missingColumns: "\u041D\u0435\u0442 \u043E\u0431\u044F\u0437\u0430\u0442\u0435\u043B\u044C\u043D\u044B\u0445 \u043A\u043E\u043B\u043E\u043D\u043E\u043A (SS, User name, time3)"
     },
     fileReadError: "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u0442\u044C \u0444\u0430\u0439\u043B",
     defaultTitle: "Rally Race Chart",
@@ -279,6 +276,8 @@
 \u0420\u0430\u0441\u0441\u0447\u0438\u0442\u0430\u043D\u043E \u043D\u0430 \u043E\u0441\u043D\u043E\u0432\u0430\u043D\u0438\u0438 \u043F\u0440\u043E\u0445\u043E\u0436\u0434\u0435\u043D\u0438\u044F ${used}/${total} \u044D\u0442\u0430\u043F\u043E\u0432
 \u0423\u0447\u0438\u0442\u044B\u0432\u0430\u044E\u0442\u0441\u044F \u0442\u043E\u043B\u044C\u043A\u043E \u0443\u0447\u0430\u0441\u0442\u043A\u0438 \u0431\u0435\u0437 SR \u0434\u043B\u044F \u043E\u0431\u043E\u0438\u0445 \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u043E\u0432`,
     applyFilterButton: "\u041F\u0440\u0438\u043C\u0435\u043D\u0438\u0442\u044C \u0444\u0438\u043B\u044C\u0442\u0440 \u043F\u043E \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430\u043C",
+    resultsEmpty: "\u041F\u043E\u0434 \u0432\u044B\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0444\u0438\u043B\u044C\u0442\u0440\u044B \u043D\u0435 \u043F\u043E\u043F\u0430\u043B \u043D\u0438 \u043E\u0434\u0438\u043D \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A",
+    dnf: "DNF",
     tooltipPenalty: "\u0428\u0442\u0440\u0430\u0444",
     tooltipServicePenalty: "Service Penalty",
     tooltipSuperRally: "Super Rally",
@@ -306,7 +305,8 @@
     fileError: "\u2717 Error",
     csvErrors: {
       tooFewLines: "The file has too few lines",
-      noData: "Could not recognise any data in the file"
+      noData: "Could not recognise any data in the file",
+      missingColumns: "Required columns are missing (SS, User name, time3)"
     },
     fileReadError: "Failed to read file",
     defaultTitle: "Rally Race Chart",
@@ -396,6 +396,8 @@
 Calculated from ${used}/${total} stages
 Only stages without SR for both drivers`,
     applyFilterButton: "Apply Participant Filter",
+    resultsEmpty: "No participants match the selected filters",
+    dnf: "DNF",
     tooltipPenalty: "Penalty",
     tooltipServicePenalty: "Service Penalty",
     tooltipSuperRally: "Super Rally",
@@ -419,7 +421,8 @@ Only stages without SR for both drivers`,
     fileError: "\u2717 Hiba",
     csvErrors: {
       tooFewLines: "A f\xE1jl t\xFAl kev\xE9s sort tartalmaz",
-      noData: "Nem siker\xFClt adatot felismerni a f\xE1jlban"
+      noData: "Nem siker\xFClt adatot felismerni a f\xE1jlban",
+      missingColumns: "Hi\xE1nyoznak a k\xF6telez\u0151 oszlopok (SS, User name, time3)"
     },
     fileReadError: "A f\xE1jl olvas\xE1sa sikertelen",
     defaultTitle: "Rally Race Chart",
@@ -508,6 +511,8 @@ Only stages without SR for both drivers`,
     cleanGapCellTooltip: (used, total) => `Sz\xE1m\xEDtva: ${used}/${total} szakasz alapj\xE1n
 Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     applyFilterButton: "R\xE9sztvev\u0151 sz\u0171r\u0151 alkalmaz\xE1sa",
+    resultsEmpty: "Egy r\xE9sztvev\u0151 sem felel meg a sz\u0171r\u0151knek",
+    dnf: "DNF",
     tooltipPenalty: "B\xFCntet\xE9s",
     tooltipServicePenalty: "Szerviz b\xFCntet\xE9s",
     tooltipSuperRally: "Super Rally",
@@ -526,9 +531,16 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var TRANSLATIONS = { ru, en, hu };
   var I18nService = class {
     constructor() {
-      this.callbacks = [];
-      const stored = localStorage.getItem(STORAGE_KEY);
-      this.currentLanguage = stored && stored in TRANSLATIONS ? stored : this.detectLanguage();
+      this.currentLanguage = this.readStored() ?? this.detectLanguage();
+    }
+    /** Хранилище может быть недоступно (Safari с блокировкой, отключённые cookie) — тогда язык браузера. */
+    readStored() {
+      try {
+        const s = localStorage.getItem(STORAGE_KEY);
+        return s && Object.prototype.hasOwnProperty.call(TRANSLATIONS, s) ? s : null;
+      } catch {
+        return null;
+      }
     }
     detectLanguage() {
       const locale = navigator.language?.toLowerCase() ?? "";
@@ -545,11 +557,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     setLanguage(lang) {
       if (lang === this.currentLanguage) return;
       this.currentLanguage = lang;
-      localStorage.setItem(STORAGE_KEY, lang);
-      this.callbacks.forEach((cb) => cb(lang));
-    }
-    onLanguageChange(cb) {
-      this.callbacks.push(cb);
+      try {
+        localStorage.setItem(STORAGE_KEY, lang);
+      } catch {
+      }
     }
   };
   var i18n = new I18nService();
@@ -563,7 +574,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       const btn = e.target.closest(".lang-btn");
       if (!btn) return;
       const lang = btn.dataset["lang"];
-      if (!lang) return;
+      if (!lang || lang === i18n.getLanguage()) return;
       i18n.setLanguage(lang);
       updateActiveLangButton(switcher, lang);
       onChanged();
@@ -578,7 +589,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
 
   // src/renderer/utils.ts
   function formatTime(sec) {
-    if (sec === null || isNaN(sec)) return "DNF";
+    if (sec === null || isNaN(sec)) return i18n.t().dnf;
     const tenths = Math.round(Math.abs(sec) * 10);
     const h = Math.floor(tenths / 36e3);
     const m = Math.floor(tenths % 36e3 / 600);
@@ -614,21 +625,35 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     return window.matchMedia?.("(pointer: coarse)").matches ?? false;
   }
   function escapeHtml(s) {
-    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   var SEARCH_DEBOUNCE_MS = 200;
   function debounce(fn, ms) {
     let timer;
-    return (...args) => {
+    const wrapped = (...args) => {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => fn(...args), ms);
     };
+    wrapped.cancel = () => window.clearTimeout(timer);
+    return wrapped;
   }
   function nullableCompare(a, b) {
     if (a === null && b === null) return 0;
     if (a === null) return 1;
     if (b === null) return -1;
     return a - b;
+  }
+  function timeKey(sec) {
+    return Math.round(sec * 1e3);
+  }
+  function rankSorted(sorted, time) {
+    const ranks = [];
+    sorted.forEach((item, i) => {
+      const t = time(item);
+      const prev = i > 0 ? time(sorted[i - 1]) : null;
+      ranks.push(t === null ? null : prev !== null && timeKey(prev) === timeKey(t) ? ranks[i - 1] : i + 1);
+    });
+    return ranks;
   }
 
   // src/renderer/chart/points.ts
@@ -692,61 +717,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     return `hsl(${Math.round(hue)}, ${sat}%, 52%)`;
   }
 
-  // src/renderer/dom.ts
-  function qs(sel, ctx = document) {
-    return ctx.querySelector(sel);
-  }
-  function qsa(sel, ctx = document) {
-    return Array.from(ctx.querySelectorAll(sel));
-  }
-  function createElement(tag, className, text) {
-    const el = document.createElement(tag);
-    if (className) el.className = className;
-    if (text !== void 0) el.textContent = text;
-    return el;
-  }
-  function createTd(className, text) {
-    return createElement("td", className, text);
-  }
-
-  // src/renderer/filters/filterState.ts
-  function passesAttrFilters(data2, state, drv) {
-    const grpOk = !data2.groups.length || state.activeGroups.has(drv.group);
-    const carOk = !drv.car || state.activeCars.has(drv.car);
-    const ctyOk = !data2.countries.length || state.activeCountries.has(drv.country);
-    return grpOk && carOk && ctyOk;
-  }
-  function filterId(prefix, name) {
-    return `${prefix}${name}`;
-  }
-  function setAllCheckboxes(body, value) {
-    qsa('input[type="checkbox"]', body).forEach((cb) => {
-      cb.checked = value;
-    });
-  }
-  function syncVisibleCheckboxes(body, value) {
-    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      if (item.style.display !== "none") {
-        const cb = item.querySelector('input[type="checkbox"]');
-        if (cb) cb.checked = value;
-      }
-    });
-  }
-  function setCounterText(id, current2, total) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = `(${current2}/${total})`;
-  }
-  function setToggleActive(selector, active) {
-    document.querySelector(selector)?.classList.toggle("btn-fa-active", active);
-  }
-  function refreshVisibleDriverKeys(body, state) {
-    state.visibleDriverKeys = /* @__PURE__ */ new Set();
-    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      if (item.style.display !== "none")
-        state.visibleDriverKeys.add(item.dataset["driverKey"]);
-    });
-  }
-
   // src/renderer/chart/datasets.ts
   var POINT_RADIUS_NORMAL = 2;
   var POINT_RADIUS_FINAL = 3;
@@ -756,12 +726,11 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var DASH_ON = 6;
   var DASH_OFF = 4;
   var COMMENT_POINT_FILL = "#fff";
-  function buildDatasets(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, activeDriverKeys, activeGroups, activeCars, activeCountries) {
+  function buildDatasets(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, isShown) {
     return data2.drivers.map((drv, gi) => {
       const color = driverColor(gi);
       const pts = buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color);
       const dnfCommentPtIdx = pts.dnfCommentPtIdx;
-      const attrOk = passesAttrFilters(data2, { activeGroups, activeCars, activeCountries }, drv);
       const dn = driverDisplayName(drv);
       return {
         label: drv.label,
@@ -770,7 +739,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         _car: drv.car,
         data: pts.y,
         borderColor: color,
-        backgroundColor: color + "22",
         borderWidth: BORDER_WIDTH,
         pointRadius: 0,
         pointBackgroundColor: color,
@@ -781,7 +749,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         _ptColor: pts.pointColors,
         tension: 0,
         spanGaps: false,
-        hidden: !activeDriverKeys.has(drv.username) || !attrOk,
+        hidden: !isShown(drv),
         // Функция стиля отрезков вызывается на каждый отрезок при каждом update(),
         // поэтому подключаем её только линиям, где пунктир действительно есть
         segment: pts.hasSR.some(Boolean) || dnfCommentPtIdx !== null ? {
@@ -812,9 +780,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     let lastValidPtIdx = 0;
     let dnfCommentPtIdx = null;
     let dnfCmtStageIdx = null;
+    const recs = recordMap.get(drv.username);
     for (let si = 0; si < stages.length; si++) {
       const st = stages[si];
-      const rec = recordMap.get(drv.username)?.get(st.num) ?? null;
+      const rec = recs?.get(st.num) ?? null;
       const pen = cumPenMap.get(drv.username)?.get(st.num) ?? 0;
       const sp = cumSPMap.get(drv.username)?.get(st.num) ?? 0;
       const sr = (cumSRMap.get(drv.username)?.get(st.num) ?? 0) + (rec?.superRally ? 1 : 0);
@@ -872,8 +841,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   // src/renderer/chart/pluginHoverDim.ts
   function resolveActiveIdxs(ch, getHoveredKey, getPinnedIdxs, getHoveredIdx) {
     const key = getHoveredKey();
-    if (key !== null)
-      return /* @__PURE__ */ new Set([ch.data.datasets.findIndex((d) => d.driverKey === key)]);
+    if (key !== null) {
+      const idx = ch.data.datasets.findIndex((d) => d.driverKey === key);
+      if (idx >= 0 && !ch.data.datasets[idx].hidden) return /* @__PURE__ */ new Set([idx]);
+    }
     const pinned = getPinnedIdxs();
     if (pinned.length) return new Set(pinned);
     const hovered = getHoveredIdx();
@@ -1289,7 +1260,7 @@ ${hit.ptIdx}` : null;
     rows.forEach(({ ds, abs }, i) => {
       const name = escapeHtml(ds._displayName || ds.driverKey);
       const delta = abs === null ? "" : i === 0 ? "" : formatTimeSigned(abs - best);
-      html += `<tr><td><span class="tt-dot" style="background:${ds.borderColor}"></span>${name}</td><td class="tt-num">${abs === null ? '<span class="tt-red">DNF</span>' : formatTime(abs)}</td><td class="tt-num tt-delta">${delta}</td></tr>`;
+      html += `<tr><td><span class="tt-dot" style="background:${ds.borderColor}"></span>${name}</td><td class="tt-num">${abs === null ? `<span class="tt-red">${i18n.t().dnf}</span>` : formatTime(abs)}</td><td class="tt-num tt-delta">${delta}</td></tr>`;
     });
     html += "</table></div>";
     return html;
@@ -1319,8 +1290,8 @@ ${hit.ptIdx}` : null;
       if (car) html += `<span class="tt-car">\u{1F697} ${car}</span>`;
       html += `<span class="tt-sep"></span>`;
       const abs = ds._abs[xIdx] ?? null;
-      html += abs === null ? `<span class="tt-red">DNF</span>` : `<span class="tt-row">\u23F1 ${formatTime(abs)}</span>`;
-      if (isDnf && abs !== null) html += `<span class="tt-red">DNF</span>`;
+      html += abs === null ? `<span class="tt-red">${t.dnf}</span>` : `<span class="tt-row">\u23F1 ${formatTime(abs)}</span>`;
+      if (isDnf && abs !== null) html += `<span class="tt-red">${t.dnf}</span>`;
       if (y !== null && yMode === "position") {
         html += `<span class="tt-row">${t.tooltipPosition}: ${y}</span>`;
         if (abs !== null && leaderAbs !== null && abs > leaderAbs)
@@ -1368,7 +1339,6 @@ ${hit.ptIdx}` : null;
   var NARROW_CHART_PX = 520;
   var DIM_ALPHA = 0.06;
   var DIM_ALPHA_SOFT = 0.35;
-  var BORDER_WIDTH2 = 1.8;
   var BORDER_WIDTH_PINNED = 2.8;
   var POSITION_STEPS = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1e3];
   function createChartController() {
@@ -1389,6 +1359,19 @@ ${hit.ptIdx}` : null;
     let mousemoveHandler = null;
     let mouseleaveHandler = null;
     let onPinChange = null;
+    let renderQueued = false;
+    let commentCounts = null;
+    function scheduleRender() {
+      if (renderQueued) return;
+      renderQueued = true;
+      requestAnimationFrame(() => {
+        renderQueued = false;
+        chart?.render();
+      });
+    }
+    function stageCommentCounts(ch) {
+      return commentCounts ?? (commentCounts = countCommentsByStage(ch, activeStages.length, commentSourceIdxs(ch, pinnedIdxs)));
+    }
     function removeCanvasListeners() {
       if (!canvas) return;
       if (clickHandler) canvas.removeEventListener("click", clickHandler);
@@ -1403,13 +1386,17 @@ ${hit.ptIdx}` : null;
       }
       const dss = chart.data.datasets;
       pinnedKeys = pinnedKeys.filter((k) => dss.some((d) => d.driverKey === k));
-      pinnedIdxs = pinnedKeys.map((k) => dss.findIndex((d) => d.driverKey === k));
+      pinnedIdxs = pinnedKeys.map((k) => dss.findIndex((d) => d.driverKey === k)).filter((i) => !dss[i].hidden);
+    }
+    function hoveringVisible() {
+      if (hoveredDsKey === null || !chart) return false;
+      return chart.data.datasets.some((d) => d.driverKey === hoveredDsKey && !d.hidden);
     }
     function effectiveYMode() {
       return yMode === "pinned" && !pinnedIdxs.length ? "leader" : yMode;
     }
     function dimAlpha() {
-      return hoveredDsKey === null && effectiveYMode() === "pinned" ? DIM_ALPHA_SOFT : DIM_ALPHA;
+      return !hoveringVisible() && effectiveYMode() === "pinned" ? DIM_ALPHA_SOFT : DIM_ALPHA;
     }
     function applyYMode() {
       if (!chart) return;
@@ -1440,7 +1427,7 @@ ${hit.ptIdx}` : null;
       dss.forEach((ds, di) => {
         const abs = ds._abs;
         ds.data = ref ? abs.map((v, i) => v === null || ref[i] === null ? null : v - ref[i]) : abs.slice();
-        ds.borderWidth = pinnedIdxs.includes(di) ? BORDER_WIDTH_PINNED : BORDER_WIDTH2;
+        ds.borderWidth = pinnedIdxs.includes(di) ? BORDER_WIDTH_PINNED : BORDER_WIDTH;
         ds.order = pinnedIdxs.includes(di) ? -1 : 0;
         if (ds.hidden && ref) return;
         if (fitToPinned && !pinnedIdxs.includes(di)) return;
@@ -1468,7 +1455,7 @@ ${hit.ptIdx}` : null;
         const at = shown.filter((ds) => ds._abs[i] !== null).sort((a, b) => a._abs[i] - b._abs[i]);
         at.forEach((ds, k) => {
           const prev = at[k - 1];
-          const r = prev && prev._abs[i] === ds._abs[i] ? ranks.get(prev)[i] : k + 1;
+          const r = prev && timeKey(prev._abs[i]) === timeKey(ds._abs[i]) ? ranks.get(prev)[i] : k + 1;
           ranks.get(ds)[i] = r;
         });
         maxRank = Math.max(maxRank, at.length);
@@ -1477,7 +1464,7 @@ ${hit.ptIdx}` : null;
         const r = ranks.get(ds);
         r[0] = r[1];
         ds.data = r;
-        ds.borderWidth = pinnedIdxs.includes(di) ? BORDER_WIDTH_PINNED : BORDER_WIDTH2;
+        ds.borderWidth = pinnedIdxs.includes(di) ? BORDER_WIDTH_PINNED : BORDER_WIDTH;
         ds.order = pinnedIdxs.includes(di) ? -1 : 0;
       });
       const step = POSITION_STEPS.find((s) => maxRank / s <= 12) ?? POSITION_STEPS[POSITION_STEPS.length - 1];
@@ -1491,6 +1478,7 @@ ${hit.ptIdx}` : null;
     }
     function notifyPinChange() {
       syncPinnedIdxs();
+      commentCounts = null;
       applyYMode();
       chart?.update("none");
       onPinChange?.([...pinnedKeys]);
@@ -1537,7 +1525,7 @@ ${hit.ptIdx}` : null;
       setHoveredKey(key) {
         if (key === hoveredDsKey) return;
         hoveredDsKey = key;
-        chart?.render();
+        scheduleRender();
       },
       setOnPinChange(cb) {
         onPinChange = cb;
@@ -1549,9 +1537,13 @@ ${hit.ptIdx}` : null;
           chart = null;
         }
         hoveredDsIdx = null;
+        hoveredDsKey = null;
         pinnedKeys = [];
         pinnedIdxs = [];
         hoveredBandIdx = null;
+        hoveredCounterIdx = null;
+        activeComment = null;
+        commentCounts = null;
       },
       togglePin,
       clearPins() {
@@ -1564,35 +1556,27 @@ ${hit.ptIdx}` : null;
         applyYMode();
         chart?.update("none");
       },
-      updateDatasetVisibility(data2, activeDriverKeys, activeGroups, activeCars, activeCountries) {
+      updateDatasetVisibility(data2, isShown) {
         if (!chart || !data2) return;
+        const byKey = new Map(data2.drivers.map((d) => [d.username, d]));
         chart.data.datasets.forEach((ds) => {
-          const drv = data2.drivers.find((d) => d.username === ds.driverKey);
-          const attrOk = !drv || passesAttrFilters(data2, { activeGroups, activeCars, activeCountries }, drv);
-          ds.hidden = !activeDriverKeys.has(ds.driverKey) || !attrOk;
+          const drv = byKey.get(ds.driverKey);
+          ds.hidden = !drv || !isShown(drv);
         });
+        commentCounts = null;
+        syncPinnedIdxs();
         applyYMode();
         chart.update("none");
       },
-      build(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, activeDriverKeys, activeGroups, activeCars, activeCountries) {
+      build(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, isShown) {
         activeStages = stages;
+        commentCounts = null;
         const useRot45 = stages.length > ROTATE_45_AT && stages.length <= ROTATE_90_AT;
         const useRot90 = stages.length > ROTATE_90_AT;
         currentBotPad = useRot90 ? BOT_PAD_90 : useRot45 ? BOT_PAD_45 : BOT_PAD_NORMAL;
         const nPts = pointCount(stages.length);
         const labels = new Array(nPts).fill("");
-        const datasets = buildDatasets(
-          data2,
-          stages,
-          recordMap,
-          cumPenMap,
-          cumSPMap,
-          cumSRMap,
-          activeDriverKeys,
-          activeGroups,
-          activeCars,
-          activeCountries
-        );
+        const datasets = buildDatasets(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, isShown);
         datasets.forEach((ds) => {
           ds._abs = ds.data.slice();
         });
@@ -1672,7 +1656,7 @@ ${hit.ptIdx}` : null;
               () => activeStages,
               () => hoveredBandIdx,
               // ch, а не chart: первая отрисовка идёт ещё внутри конструктора Chart
-              (ch) => countCommentsByStage(ch, activeStages.length, commentSourceIdxs(ch, pinnedIdxs)),
+              stageCommentCounts,
               () => hoveredCounterIdx
             ),
             buildPinnedCommentsPlugin(
@@ -1694,8 +1678,7 @@ ${hit.ptIdx}` : null;
           if (my <= bot + 2 || my > bot + 2 + COMMENT_ROW_H) return null;
           const idx = stageIdxAtX(chart, e.clientX - rect.left, activeStages.length);
           if (idx === null) return null;
-          const counts = countCommentsByStage(chart, activeStages.length, commentSourceIdxs(chart, pinnedIdxs));
-          if (!counts[idx]) return null;
+          if (!stageCommentCounts(chart)[idx]) return null;
           const xs = chart.scales.x;
           const xMid = (xs.getPixelForTick(stageStartTick(idx)) + xs.getPixelForTick(stageEndTick(idx))) / 2;
           return { idx, anchor: { x: rect.left + xMid, y: rect.top + bot + 2 } };
@@ -1708,7 +1691,14 @@ ${hit.ptIdx}` : null;
           }
           commentCb?.onOtherClick();
           const additive = e.ctrlKey || e.metaKey || e.shiftKey;
-          const hit = handleCanvasClick(e, chart, canvas, activeStages, currentBotPad);
+          const hit = handleCanvasClick(
+            e,
+            chart,
+            canvas,
+            activeStages,
+            currentBotPad,
+            (stageNum) => commentCb?.onStageBandClick(stageNum)
+          );
           if (hit === "ignore") return;
           if (hit === null) {
             if (!additive && pinnedKeys.length) {
@@ -1772,13 +1762,7 @@ ${hit.ptIdx}` : null;
     const my = e.clientY - rect.top;
     const ca = chart.chartArea;
     if (my <= ca.bottom + 1 || my >= ca.bottom + 1 + botPad) return null;
-    const xs = chart.scales.x;
-    for (let i = 0; i < stages.length; i++) {
-      const xL = xs.getPixelForTick(stageStartTick(i));
-      const xR = xs.getPixelForTick(stageEndTick(i));
-      if (mx >= xL && mx <= xR) return i;
-    }
-    return null;
+    return stageIdxAtX(chart, mx, stages.length);
   }
   function buildScales(getMode) {
     const isGapMode = () => getMode() === "leader" || getMode() === "pinned";
@@ -1846,22 +1830,15 @@ ${hit.ptIdx}` : null;
       }
     };
   }
-  function handleCanvasClick(e, chart, canvas, stages, botPad) {
+  function handleCanvasClick(e, chart, canvas, stages, botPad, onBandClick) {
     if (!chart) return null;
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
     const ca = chart.chartArea;
     if (my > ca.bottom + 1 && my < ca.bottom + 1 + botPad) {
-      const xs = chart.scales.x;
-      for (let i = 0; i < stages.length; i++) {
-        const xL = xs.getPixelForTick(stageStartTick(i));
-        const xR = xs.getPixelForTick(stageEndTick(i));
-        if (mx >= xL && mx <= xR) {
-          window.__onStageBandClick?.(stages[i].num);
-          return "ignore";
-        }
-      }
+      const idx = stageIdxAtX(chart, mx, stages.length);
+      if (idx !== null) onBandClick(stages[idx].num);
       return "ignore";
     }
     if (my < ca.top || my > ca.bottom) return "ignore";
@@ -1872,6 +1849,23 @@ ${hit.ptIdx}` : null;
     const pt = meta.data[el.index];
     if (!pt || Math.hypot(pt.x - mx, pt.y - my) > HOVER_DIST_PX) return null;
     return el.datasetIndex;
+  }
+
+  // src/renderer/dom.ts
+  function qs(sel, ctx = document) {
+    return ctx.querySelector(sel);
+  }
+  function qsa(sel, ctx = document) {
+    return Array.from(ctx.querySelectorAll(sel));
+  }
+  function createElement(tag, className, text) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (text !== void 0) el.textContent = text;
+    return el;
+  }
+  function createTd(className, text) {
+    return createElement("td", className, text);
   }
 
   // src/renderer/flags.ts
@@ -1894,11 +1888,18 @@ ${hit.ptIdx}` : null;
   function countryName(country) {
     if (!country) return i18n.t().countryUnknown;
     try {
-      const name = new Intl.DisplayNames([i18n.getLanguage()], { type: "region" }).of(country);
+      const name = regionNames().of(country);
       if (name && name !== country) return name;
     } catch {
     }
     return country;
+  }
+  var cachedNames = null;
+  function regionNames() {
+    const lang = i18n.getLanguage();
+    if (cachedNames?.lang !== lang)
+      cachedNames = { lang, names: new Intl.DisplayNames([lang], { type: "region" }) };
+    return cachedNames.names;
   }
   function prependFlag(el, country) {
     const flag = createFlag(country);
@@ -2149,6 +2150,7 @@ ${hit.ptIdx}` : null;
 
   // src/renderer/chart/commentStrip.ts
   var COLLAPSED_KEY = "rsf-comment-strip-collapsed";
+  var NARROW_SCREEN_QUERY = "(max-width: 768px)";
   var callbacks2 = null;
   var collapsed = readCollapsed();
   var stripEl = () => document.getElementById("comment-strip");
@@ -2235,11 +2237,13 @@ ${hit.ptIdx}` : null;
     document.getElementById("comment-strip-toggle").setAttribute("aria-expanded", String(!collapsed));
   }
   function readCollapsed() {
+    let stored = null;
     try {
-      return localStorage.getItem(COLLAPSED_KEY) === "1";
+      stored = localStorage.getItem(COLLAPSED_KEY);
     } catch {
-      return false;
     }
+    if (stored !== null) return stored === "1";
+    return window.matchMedia?.(NARROW_SCREEN_QUERY).matches ?? false;
   }
 
   // src/renderer/chart/pinnedBar.ts
@@ -2536,7 +2540,7 @@ ${hit.ptIdx}` : null;
   function buildPositionBlock(position2) {
     const el = document.createElement("div");
     el.className = position2 === null ? "cmt-pos pos-dnf" : resolvePositionClass(position2);
-    el.textContent = position2 === null ? "DNF" : String(position2);
+    el.textContent = position2 === null ? i18n.t().dnf : String(position2);
     return el;
   }
   function resolvePositionClass(position2) {
@@ -2635,7 +2639,7 @@ ${hit.ptIdx}` : null;
     if (entry.superRally) {
       const sr = document.createElement("span");
       sr.className = "cmt-badge-sr";
-      sr.textContent = "Super Rally";
+      sr.textContent = i18n.t().tooltipSuperRally;
       badges.appendChild(sr);
     }
     if (entry.penalty > 0) {
@@ -2687,6 +2691,57 @@ ${hit.ptIdx}` : null;
     }
   }
 
+  // src/renderer/filters/filterState.ts
+  function passesAttrFilters(data2, state, drv) {
+    const grpOk = !data2.groups.length || !drv.group || state.activeGroups.has(drv.group);
+    const carOk = !drv.car || state.activeCars.has(drv.car);
+    const ctyOk = !data2.countries.length || state.activeCountries.has(drv.country);
+    return grpOk && carOk && ctyOk;
+  }
+  function ranSelectedStages(data2, state, recordMap, username) {
+    if (state.activeStageNums.size === data2.stages.length) return true;
+    const recs = recordMap.get(username);
+    if (!recs) return false;
+    for (const sn of state.activeStageNums) if (recs.has(sn)) return true;
+    return false;
+  }
+  function passesFilters(data2, state, recordMap, drv) {
+    return passesAttrFilters(data2, state, drv) && ranSelectedStages(data2, state, recordMap, drv.username);
+  }
+  function isDriverShown(data2, state, recordMap, drv) {
+    return state.activeDriverKeys.has(drv.username) && passesFilters(data2, state, recordMap, drv);
+  }
+  function filterId(prefix, name) {
+    return `${prefix}${name}`;
+  }
+  function setAllCheckboxes(body, value) {
+    qsa('input[type="checkbox"]', body).forEach((cb) => {
+      cb.checked = value;
+    });
+  }
+  function syncVisibleCheckboxes(body, value) {
+    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
+      if (item.style.display !== "none") {
+        const cb = item.querySelector('input[type="checkbox"]');
+        if (cb) cb.checked = value;
+      }
+    });
+  }
+  function setCounterText(id, current2, total) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `(${current2}/${total})`;
+  }
+  function setToggleActive(selector, active) {
+    document.querySelector(selector)?.classList.toggle("btn-fa-active", active);
+  }
+  function refreshVisibleDriverKeys(body, state) {
+    state.visibleDriverKeys = /* @__PURE__ */ new Set();
+    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
+      if (item.style.display !== "none")
+        state.visibleDriverKeys.add(item.dataset["driverKey"]);
+    });
+  }
+
   // src/renderer/filters/filterCounters.ts
   function updateFilterCounters(data2, state, prefix = "") {
     const { activeStageNums, activeDriverKeys, activeGroups, activeCars, visibleDriverKeys } = state;
@@ -2698,9 +2753,8 @@ ${hit.ptIdx}` : null;
     setCounterText(id("counter-drivers"), activeVisible, visibleDriverKeys.size);
     if (data2.groups.length)
       setCounterText(id("counter-groups"), activeGroups.size, data2.groups.length);
-    const allCars = [...new Set(data2.drivers.map((d) => d.car).filter(Boolean))];
-    if (allCars.length)
-      setCounterText(id("counter-cars"), activeCars.size, allCars.length);
+    if (data2.cars.length)
+      setCounterText(id("counter-cars"), activeCars.size, data2.cars.length);
     if (data2.countries.length)
       setCounterText(id("counter-countries"), state.activeCountries.size, data2.countries.length);
   }
@@ -2710,15 +2764,15 @@ ${hit.ptIdx}` : null;
     const allSS = activeStageNums.size === data2.stages.length && data2.stages.length > 0;
     setToggleActive(sel("filter-stages", 1), allSS);
     setToggleActive(sel("filter-stages", 2), activeStageNums.size === 0);
-    const vis = [...visibleDriverKeys];
-    const selVis = vis.filter((k) => activeDriverKeys.has(k)).length;
-    setToggleActive(sel("filter-drivers-wrap", 1), selVis === vis.length && vis.length > 0);
+    let selVis = 0;
+    for (const k of visibleDriverKeys) if (activeDriverKeys.has(k)) selVis++;
+    setToggleActive(sel("filter-drivers-wrap", 1), selVis === visibleDriverKeys.size && visibleDriverKeys.size > 0);
     setToggleActive(sel("filter-drivers-wrap", 2), selVis === 0);
     const allGrp = activeGroups.size === data2.groups.length && data2.groups.length > 0;
     setToggleActive(sel("filter-groups", 1), allGrp);
     setToggleActive(sel("filter-groups", 2), activeGroups.size === 0);
-    const allCars = [...new Set(data2.drivers.map((d) => d.car).filter(Boolean))];
-    setToggleActive(sel("filter-cars", 1), activeCars.size === allCars.length && allCars.length > 0);
+    const nCars = data2.cars.length;
+    setToggleActive(sel("filter-cars", 1), activeCars.size === nCars && nCars > 0);
     setToggleActive(sel("filter-cars", 2), activeCars.size === 0);
     const nCty = data2.countries.length;
     setToggleActive(sel("filter-countries", 1), state.activeCountries.size === nCty && nCty > 0);
@@ -2747,15 +2801,16 @@ ${hit.ptIdx}` : null;
     const sv = body.querySelector(".filter-search")?.value ?? "";
     applyDriverSearch(sv, body);
   }
-  function buildSearchBox(body, onSearch) {
+  function buildSearchBox(body, onSearch, initial = "") {
     const sw = document.createElement("div");
     sw.className = "filter-search-wrap";
     const si = document.createElement("input");
     si.className = "filter-search";
     si.type = "text";
     si.placeholder = i18n.t().filterSearch;
+    si.value = initial;
     const sc = document.createElement("button");
-    sc.className = "filter-search-clear hidden";
+    sc.className = initial ? "filter-search-clear" : "filter-search-clear hidden";
     sc.textContent = "\xD7";
     sw.appendChild(si);
     sw.appendChild(sc);
@@ -2766,6 +2821,7 @@ ${hit.ptIdx}` : null;
       search(si.value);
     });
     sc.addEventListener("click", () => {
+      search.cancel();
       si.value = "";
       sc.classList.add("hidden");
       onSearch("");
@@ -2781,14 +2837,22 @@ ${hit.ptIdx}` : null;
   function createFilterCount(n) {
     return createElement("span", "filter-count", String(n));
   }
+  var expandedGroups = /* @__PURE__ */ new Set();
   function buildCollapsibleFilterGroup(title, counterId) {
     const t = i18n.t();
-    const group = createElement("div", "filter-group collapsed");
+    const expanded = expandedGroups.has(counterId);
+    const group = createElement("div", expanded ? "filter-group" : "filter-group collapsed");
     const hdr = createElement("div", "filter-header");
     const left = createElement("button", "filter-header-left");
     left.type = "button";
-    left.setAttribute("aria-expanded", "false");
-    left.innerHTML = `<span class="collapse-icon" aria-hidden="true">\u25B6</span><span class="filter-title">${title}</span><span class="filter-counter" id="${counterId}"></span>`;
+    left.setAttribute("aria-expanded", String(expanded));
+    const icon = createElement("span", "collapse-icon", "\u25B6");
+    icon.setAttribute("aria-hidden", "true");
+    const counter = createElement("span", "filter-counter");
+    counter.id = counterId;
+    left.appendChild(icon);
+    left.appendChild(createElement("span", "filter-title", title));
+    left.appendChild(counter);
     const right = createElement("div", "filter-header-right");
     const btnAll = createElement("button", "btn-fa", t.filterAll);
     const btnNone = createElement("button", "btn-fa", t.filterNone);
@@ -2800,31 +2864,13 @@ ${hit.ptIdx}` : null;
     left.addEventListener("click", () => {
       const collapsed2 = group.classList.toggle("collapsed");
       left.setAttribute("aria-expanded", String(!collapsed2));
+      collapsed2 ? expandedGroups.delete(counterId) : expandedGroups.add(counterId);
     });
     btnAll.addEventListener("click", (e) => e.stopPropagation());
     btnNone.addEventListener("click", (e) => e.stopPropagation());
     group.appendChild(hdr);
     group.appendChild(body);
     return { group, body, btnAll, btnNone };
-  }
-
-  // src/renderer/filters/countryFilter.ts
-  function buildCountryItems(data2, body, isChecked, onToggle) {
-    const counts = countBy(data2.drivers, (d) => d.country);
-    const items2 = data2.countries.map((code) => ({ code, name: countryName(code) })).sort((a, b) => (a.code ? 0 : 1) - (b.code ? 0 : 1) || a.name.localeCompare(b.name));
-    for (const { code, name } of items2) {
-      const lbl = createElement("label", "filter-item");
-      const cb = createElement("input");
-      cb.type = "checkbox";
-      cb.checked = isChecked(code);
-      cb.addEventListener("change", () => onToggle(code, cb.checked));
-      const label = createElement("span", "filter-country-label", name);
-      prependFlag(label, code);
-      lbl.appendChild(cb);
-      lbl.appendChild(label);
-      lbl.appendChild(createFilterCount(counts.get(code) ?? 0));
-      body.appendChild(lbl);
-    }
   }
 
   // src/renderer/filters/filterBuilders.ts
@@ -2859,11 +2905,15 @@ ${hit.ptIdx}` : null;
     }
     cont.appendChild(group);
   }
-  function buildDriverFilterUI(drivers, data2, state, callbacks3, rankMap3, prefix) {
+  var driverListData = /* @__PURE__ */ new WeakMap();
+  function buildDriverFilterUI(data2, state, callbacks3, rankMap3, prefix) {
     const wrap = document.getElementById(filterId(prefix, "filter-drivers-wrap"));
+    const prevQuery = driverListData.get(wrap) === data2 ? wrap.querySelector(".filter-search")?.value ?? "" : "";
+    driverListData.set(wrap, data2);
     wrap.innerHTML = "";
     const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterParticipants, filterId(prefix, "counter-drivers"));
     const t = i18n.t();
+    const drivers = data2.drivers;
     const rankOf = (d) => rankMap3.get(d.username) ?? null;
     const sorted = [...drivers].sort((a, b) => {
       const ra = rankOf(a), rb = rankOf(b);
@@ -2882,7 +2932,7 @@ ${hit.ptIdx}` : null;
       syncVisibleCheckboxes(body, false);
       callbacks3.onDriversChanged();
     });
-    buildSearchBox(body, (q) => applyDriverSearch(q, body));
+    buildSearchBox(body, (q) => applyDriverSearch(q, body), prevQuery);
     const applyPreset = (pick) => {
       const visible = sorted.filter((d) => state.visibleDriverKeys.has(d.username));
       const finishers = visible.filter((d) => rankOf(d) !== null);
@@ -2924,177 +2974,142 @@ ${hit.ptIdx}` : null;
       const place = createElement(
         "span",
         rank !== null ? "filter-driver-rank" : "filter-driver-rank dnf",
-        rank !== null ? String(rank) : "DNF"
+        rank !== null ? String(rank) : t.dnf
       );
       const content = createElement("div", "filter-driver-content");
-      const nameSpan = createElement(
-        "span",
-        "filter-driver-name",
-        driverDisplayName(drv)
-      );
+      const nameSpan = createElement("span", "filter-driver-name", driverDisplayName(drv));
       prependFlag(nameSpan, drv.country);
       content.appendChild(nameSpan);
       if (drv.car) content.appendChild(createElement("span", "filter-driver-car", drv.car));
-      lbl.addEventListener("mouseenter", () => {
-        lbl.classList.add("hover-highlighted");
-        callbacks3.onDriverHover(drv.username);
-      });
-      lbl.addEventListener("mouseleave", () => {
-        lbl.classList.remove("hover-highlighted");
-        callbacks3.onDriverHover(null);
-      });
       lbl.appendChild(cb);
       lbl.appendChild(place);
       lbl.appendChild(content);
       body.appendChild(lbl);
     }
+    bindDriverHover(body, callbacks3);
     wrap.appendChild(group);
   }
-  function buildGroupFilterUI(groups, data2, state, callbacks3, onRefilterDrivers, prefix) {
-    const cont = document.getElementById(filterId(prefix, "filter-groups"));
+  function bindDriverHover(body, callbacks3) {
+    if (isCoarsePointer()) return;
+    const itemOf = (e) => e.target?.closest(".filter-item[data-driver-key]") ?? null;
+    body.addEventListener("mouseover", (e) => {
+      const item = itemOf(e);
+      if (!item || item.contains(e.relatedTarget)) return;
+      item.classList.add("hover-highlighted");
+      callbacks3.onDriverHover(item.dataset["driverKey"]);
+    });
+    body.addEventListener("mouseout", (e) => {
+      const item = itemOf(e);
+      if (!item || item.contains(e.relatedTarget)) return;
+      item.classList.remove("hover-highlighted");
+      callbacks3.onDriverHover(null);
+    });
+  }
+  function buildAttrFilterUI(spec, onChange, prefix) {
+    const cont = document.getElementById(filterId(prefix, spec.container));
     cont.innerHTML = "";
-    if (!groups.length) {
-      cont.style.display = "none";
-      return;
-    }
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterGroupClass, filterId(prefix, "counter-groups"));
+    cont.style.display = spec.values.length ? "" : "none";
+    if (!spec.values.length) return;
+    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(spec.title, filterId(prefix, spec.counter));
     btnAll.addEventListener("click", () => {
-      groups.forEach((g) => state.activeGroups.add(g));
+      spec.values.forEach((v) => spec.selected.add(v));
       setAllCheckboxes(body, true);
-      onRefilterDrivers();
-      callbacks3.onGroupsChanged();
+      onChange();
     });
     btnNone.addEventListener("click", () => {
-      state.activeGroups.clear();
+      spec.selected.clear();
       setAllCheckboxes(body, false);
-      onRefilterDrivers();
-      callbacks3.onGroupsChanged();
+      onChange();
     });
-    const counts = countBy(data2.drivers, (d) => d.group);
-    for (const grp of groups) {
+    for (const value of spec.values) {
       const lbl = createElement("label", "filter-item");
       const cb = createElement("input");
       cb.type = "checkbox";
-      cb.checked = state.activeGroups.has(grp);
+      cb.checked = spec.selected.has(value);
       cb.addEventListener("change", () => {
-        cb.checked ? state.activeGroups.add(grp) : state.activeGroups.delete(grp);
-        onRefilterDrivers();
-        callbacks3.onGroupsChanged();
+        cb.checked ? spec.selected.add(value) : spec.selected.delete(value);
+        onChange();
       });
+      const label = createElement("span", spec.labelClass, spec.labelText(value));
+      spec.decorate?.(label, value);
       lbl.appendChild(cb);
-      lbl.appendChild(createElement("span", "filter-group-label", grp));
-      lbl.appendChild(createFilterCount(counts.get(grp) ?? 0));
+      lbl.appendChild(label);
+      lbl.appendChild(createFilterCount(spec.counts.get(value) ?? 0));
       body.appendChild(lbl);
     }
     cont.appendChild(group);
   }
-  function buildCarFilterUI(drivers, state, callbacks3, onRefilterDrivers, prefix) {
-    const cont = document.getElementById(filterId(prefix, "filter-cars"));
-    cont.innerHTML = "";
-    const cars = [...new Set(drivers.map((d) => d.car).filter(Boolean))].sort();
-    if (!cars.length) {
-      cont.style.display = "none";
-      return;
-    }
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterCar, filterId(prefix, "counter-cars"));
-    btnAll.addEventListener("click", () => {
-      cars.forEach((c) => state.activeCars.add(c));
-      setAllCheckboxes(body, true);
-      onRefilterDrivers();
-      callbacks3.onCarsChanged();
-    });
-    btnNone.addEventListener("click", () => {
-      state.activeCars.clear();
-      setAllCheckboxes(body, false);
-      onRefilterDrivers();
-      callbacks3.onCarsChanged();
-    });
-    const counts = countBy(drivers, (d) => d.car);
-    for (const car of cars) {
-      const lbl = createElement("label", "filter-item");
-      const cb = createElement("input");
-      cb.type = "checkbox";
-      cb.checked = state.activeCars.has(car);
-      cb.addEventListener("change", () => {
-        cb.checked ? state.activeCars.add(car) : state.activeCars.delete(car);
-        onRefilterDrivers();
-        callbacks3.onCarsChanged();
+  function buildAttrFilters(data2, state, onChange, prefix) {
+    const t = i18n.t();
+    const countries = data2.countries.map((code) => ({ code, name: countryName(code) })).sort((a, b) => (a.code ? 0 : 1) - (b.code ? 0 : 1) || a.name.localeCompare(b.name));
+    const countryNames = new Map(countries.map((c) => [c.code, c.name]));
+    buildAttrFilterUI({
+      container: "filter-groups",
+      counter: "counter-groups",
+      title: t.filterGroupClass,
+      values: data2.groups,
+      selected: state.activeGroups,
+      counts: countBy(data2.drivers, (d) => d.group),
+      labelClass: "filter-group-label",
+      labelText: (v) => v
+    }, onChange, prefix);
+    buildAttrFilterUI({
+      container: "filter-cars",
+      counter: "counter-cars",
+      title: t.filterCar,
+      values: data2.cars,
+      selected: state.activeCars,
+      counts: countBy(data2.drivers, (d) => d.car),
+      labelClass: "filter-car-label",
+      labelText: (v) => v
+    }, onChange, prefix);
+    buildAttrFilterUI({
+      container: "filter-countries",
+      counter: "counter-countries",
+      title: t.filterCountry,
+      values: countries.map((c) => c.code),
+      selected: state.activeCountries,
+      counts: countBy(data2.drivers, (d) => d.country),
+      labelClass: "filter-country-label",
+      labelText: (v) => countryNames.get(v) ?? v,
+      decorate: prependFlag
+    }, onChange, prefix);
+  }
+  function refilterDriverList(data2, state, recordMap, prefix) {
+    const body = driverListBody(prefix);
+    if (!body) return;
+    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
+      const ok = passesFilters(data2, state, recordMap, {
+        username: item.dataset["driverKey"],
+        group: item.dataset["group"] ?? "",
+        car: item.dataset["car"] ?? "",
+        country: item.dataset["country"] ?? ""
       });
-      lbl.appendChild(cb);
-      lbl.appendChild(createElement("span", "filter-car-label", car));
-      lbl.appendChild(createFilterCount(counts.get(car) ?? 0));
-      body.appendChild(lbl);
-    }
-    cont.appendChild(group);
-  }
-  function applyGroupOrCarFilterToDriverList(data2, state, prefix) {
-    const body = driverListBody(prefix);
-    if (!body) return;
-    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      item.style.display = itemPassesAttrFilters(item, data2, state) ? "" : "none";
+      item.style.display = ok ? "" : "none";
     });
     reapplyDriverSearch(body);
     refreshVisibleDriverKeys(body, state);
-  }
-  function updateDriverItemsByStageAndFilter(data2, state, recordMap, prefix = "") {
-    const body = driverListBody(prefix);
-    if (!body) return;
-    const allSelected = state.activeStageNums.size === data2.stages.length;
-    qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      const key = item.dataset["driverKey"];
-      const stageOk = allSelected || [...state.activeStageNums].some((sn) => recordMap.get(key)?.has(sn));
-      item.style.display = itemPassesAttrFilters(item, data2, state) && stageOk ? "" : "none";
-    });
-    reapplyDriverSearch(body);
-    refreshVisibleDriverKeys(body, state);
-  }
-  function itemPassesAttrFilters(item, data2, state) {
-    return passesAttrFilters(data2, state, {
-      group: item.dataset["group"] ?? "",
-      car: item.dataset["car"] ?? "",
-      country: item.dataset["country"] ?? ""
-    });
   }
   function driverListBody(prefix) {
     return document.querySelector(`#${filterId(prefix, "filter-drivers-wrap")} .filter-body`);
   }
-  function buildCountryFilterUI(data2, state, callbacks3, onRefilterDrivers, prefix) {
-    const cont = document.getElementById(filterId(prefix, "filter-countries"));
-    cont.innerHTML = "";
-    if (!data2.countries.length) {
-      cont.style.display = "none";
-      return;
-    }
-    cont.style.display = "";
-    const { group, body, btnAll, btnNone } = buildCollapsibleFilterGroup(i18n.t().filterCountry, filterId(prefix, "counter-countries"));
-    btnAll.addEventListener("click", () => {
-      data2.countries.forEach((c) => state.activeCountries.add(c));
-      setAllCheckboxes(body, true);
-      onRefilterDrivers();
-      callbacks3.onCountriesChanged();
-    });
-    btnNone.addEventListener("click", () => {
-      state.activeCountries.clear();
-      setAllCheckboxes(body, false);
-      onRefilterDrivers();
-      callbacks3.onCountriesChanged();
-    });
-    buildCountryItems(data2, body, (c) => state.activeCountries.has(c), (c, checked) => {
-      checked ? state.activeCountries.add(c) : state.activeCountries.delete(c);
-      onRefilterDrivers();
-      callbacks3.onCountriesChanged();
-    });
-    cont.appendChild(group);
-  }
 
   // src/renderer/filters/chartFilters.ts
-  function buildChartFilterPanel(data2, state, callbacks3, rankMap3, prefix = "") {
-    const refilter = () => applyGroupOrCarFilterToDriverList(data2, state, prefix);
-    buildStageFilterUI(data2.stages, state, callbacks3, prefix);
-    buildDriverFilterUI(data2.drivers, data2, state, callbacks3, rankMap3, prefix);
-    buildGroupFilterUI(data2.groups, data2, state, callbacks3, refilter, prefix);
-    buildCarFilterUI(data2.drivers, state, callbacks3, refilter, prefix);
-    buildCountryFilterUI(data2, state, callbacks3, refilter, prefix);
+  function buildChartFilterPanel(data2, state, callbacks3, rankMap3, recordMap, prefix = "") {
+    const refilter = () => refilterDriverList(data2, state, recordMap, prefix);
+    buildStageFilterUI(data2.stages, state, {
+      ...callbacks3,
+      onStagesChanged: () => {
+        refilter();
+        callbacks3.onStagesChanged();
+      }
+    }, prefix);
+    buildDriverFilterUI(data2, state, callbacks3, rankMap3, prefix);
+    buildAttrFilters(data2, state, () => {
+      refilter();
+      callbacks3.onDriversChanged();
+    }, prefix);
+    refilter();
   }
 
   // src/renderer/i18n-dom.ts
@@ -3159,8 +3174,9 @@ ${hit.ptIdx}` : null;
     let total = 0;
     let sr = 0;
     let totalPen = 0;
+    const recs = recordMap.get(username);
     for (const sn of stageNums) {
-      const r = recordMap.get(username)?.get(sn);
+      const r = recs?.get(sn);
       const t3 = r?.time3 ?? null;
       const hasSR = r?.superRally ?? false;
       const penalty = r?.penalty ?? 0;
@@ -3184,15 +3200,15 @@ ${hit.ptIdx}` : null;
       ...summarizeStages(drv.username, stageNums, recordMap)
     }));
   }
-  function recalculateStatsForStages(stats, stageNums, allStageNums, recordMap) {
-    if (stageNums.size === allStageNums.length) return stats;
-    const filtered = allStageNums.filter((n) => stageNums.has(n)).sort((a, b) => a - b);
-    return { ...stats, ...summarizeStages(stats.username, filtered, recordMap) };
+  function recalculateStatsForStages(stats, stageNums, totalStages, recordMap) {
+    if (stageNums.length === totalStages) return stats;
+    return { ...stats, ...summarizeStages(stats.username, stageNums, recordMap) };
   }
   function computeDriverResults(stats, stageKm = null) {
     const n = stats[0]?.snaps.length ?? 0;
     const weight = (s) => stageKm ? stageKm[s] : 1;
     const sorted = [...stats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
+    const ranks = rankSorted(sorted, (s) => s.totalTime);
     return sorted.map((cur, i) => {
       const leader = sorted[0];
       const prev = i > 0 ? sorted[i - 1] : null;
@@ -3219,7 +3235,7 @@ ${hit.ptIdx}` : null;
       }
       return {
         stats: cur,
-        position: i + 1,
+        position: ranks[i] ?? i + 1,
         totalGap,
         avgGapFromLeader: gl.value(),
         avgGapFromPrev: pp.value(),
@@ -3262,6 +3278,7 @@ ${hit.ptIdx}` : null;
     { key: "totalGap", label: () => i18n.t().colTotalGap, title: () => "" },
     { key: "sr", label: () => i18n.t().colSuperRally, title: () => "" }
   ];
+  var COLUMN_COUNT = COLUMNS.length;
   function paceText(km) {
     const t = i18n.t();
     return km ? t.paceKm : t;
@@ -3280,7 +3297,7 @@ ${hit.ptIdx}` : null;
       if (col.key === "pos") th.className = "sticky-col sticky-col-1";
       if (col.special === "search") {
         th.className = "th-participant sticky-col sticky-col-2";
-        th.innerHTML = col.label(km);
+        th.textContent = col.label(km);
         th.addEventListener("click", () => onSearchClick(th));
       } else {
         th.textContent = col.label(km);
@@ -3295,19 +3312,35 @@ ${hit.ptIdx}` : null;
     });
     thead.appendChild(tr);
   }
-  function renderResultsRows(tbody, results, stageRanks, km, selectedRows, onRowClick) {
+  function renderResultsRows(tbody, results, stageRanks, km, selectedRows, onRowClick, colSpan) {
     tbody.innerHTML = "";
+    const rowOf = (e) => e.target.closest("tr[data-username]");
+    tbody.onclick = (e) => {
+      const row = rowOf(e);
+      if (row) onRowClick(row.dataset["username"], row);
+    };
+    tbody.onkeydown = (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const row = rowOf(e);
+      if (!row) return;
+      e.preventDefault();
+      onRowClick(row.dataset["username"], row);
+    };
+    if (!results.length) {
+      const td = createTd("td-empty", i18n.t().resultsEmpty);
+      td.colSpan = colSpan;
+      const tr = document.createElement("tr");
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+    const frag = document.createDocumentFragment();
     for (const r of results) {
       const row = buildResultRow(r, stageRanks.get(r.stats.username) ?? [], km, selectedRows);
       row.tabIndex = 0;
-      row.addEventListener("click", () => onRowClick(r.stats.username, row));
-      row.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        onRowClick(r.stats.username, row);
-      });
-      tbody.appendChild(row);
+      frag.appendChild(row);
     }
+    tbody.appendChild(frag);
   }
   function buildResultRow(r, stageRanks, km, selectedRows) {
     const row = document.createElement("tr");
@@ -3322,7 +3355,7 @@ ${hit.ptIdx}` : null;
     row.appendChild(createTd("td-time", r.stats.car));
     row.appendChild(createTd(
       "td-time",
-      r.stats.totalTime !== null ? formatTime(r.stats.totalTime) : "DNF"
+      r.stats.totalTime !== null ? formatTime(r.stats.totalTime) : i18n.t().dnf
     ));
     row.appendChild(buildPenaltyCell(r.stats.totalPenalty));
     row.appendChild(buildGapWithTooltip(
@@ -3366,12 +3399,12 @@ ${hit.ptIdx}` : null;
     const rk = createElement("span", "td-stage-rank", `${rank ?? ""}`);
     if (rank === 1) rk.classList.add("pos-gold");
     tail.appendChild(rk);
-    if (snap.hasSR) tail.appendChild(createElement("span", "td-stage-sr", "SR"));
+    if (snap.hasSR) tail.appendChild(createElement("span", "td-stage-sr", i18n.t().colSuperRally));
     td.appendChild(tail);
     return td;
   }
   function buildPositionCell(pos) {
-    const td = createTd("td-pos sticky-col sticky-col-1", pos !== null ? String(pos) : "DNF");
+    const td = createTd("td-pos sticky-col sticky-col-1", pos !== null ? String(pos) : i18n.t().dnf);
     if (pos === null) td.classList.add("pos-dnf");
     if (pos === 1) td.classList.add("pos-gold");
     else if (pos === 2) td.classList.add("pos-silver");
@@ -3993,22 +4026,32 @@ ${hit.ptIdx}` : null;
   var _resetScroll = true;
   var PREFIX = "res-";
   var _filterState = fullFilterState(null);
+  var _onFiltersChanged = () => {
+  };
+  var _renderQueued = false;
   function fullFilterState(data2) {
     const drivers = data2?.drivers ?? [];
     return {
       activeStageNums: new Set(data2?.stages.map((s) => s.num) ?? []),
       activeDriverKeys: new Set(drivers.map((d) => d.username)),
       activeGroups: new Set(data2?.groups ?? []),
-      activeCars: new Set(drivers.map((d) => d.car).filter(Boolean)),
+      activeCars: new Set(data2?.cars ?? []),
       activeCountries: new Set(data2?.countries ?? []),
       visibleDriverKeys: new Set(drivers.map((d) => d.username))
     };
+  }
+  function getResultsFilterState() {
+    return _filterState;
+  }
+  function setOnResultsFiltersChanged(cb) {
+    _onFiltersChanged = cb;
   }
   function initResultsModule(data2, recordMap, allStats) {
     _data = data2;
     _recordMap = recordMap;
     _allStats = allStats;
     _selectedRows = /* @__PURE__ */ new Set();
+    _searchActive = false;
     _dirty = true;
     _resetScroll = true;
     _filterState = fullFilterState(data2);
@@ -4017,19 +4060,12 @@ ${hit.ptIdx}` : null;
   function buildResultsFilters(rankMap3) {
     if (!_data) return;
     const callbacks3 = {
-      onStagesChanged: () => {
-        updateDriverItemsByStageAndFilter(_data, _filterState, _recordMap, PREFIX);
-        afterFilterChange();
-      },
+      onStagesChanged: afterFilterChange,
       onDriversChanged: afterFilterChange,
-      onGroupsChanged: afterFilterChange,
-      onCarsChanged: afterFilterChange,
-      onCountriesChanged: afterFilterChange,
       onDriverHover: () => {
       }
     };
-    buildChartFilterPanel(_data, _filterState, callbacks3, rankMap3, PREFIX);
-    updateDriverItemsByStageAndFilter(_data, _filterState, _recordMap, PREFIX);
+    buildChartFilterPanel(_data, _filterState, callbacks3, rankMap3, _recordMap, PREFIX);
     updateFilterControls();
     wireApplyButton();
   }
@@ -4042,11 +4078,13 @@ ${hit.ptIdx}` : null;
   function renderResultsTable() {
     if (!_data) return;
     _dirty = false;
+    _searchActive = false;
     const stats = getFilteredStats();
     const stages = _data.stages.filter((s) => _filterState.activeStageNums.has(s.num)).sort((a, b) => a.num - b.num);
     const lengths = stages.map((s) => stageLengthKm(s.name));
-    const stageKm = lengths.every((l) => l !== null) ? lengths : null;
+    const stageKm = lengths.length && lengths.every((l) => l !== null) ? lengths : null;
     const results = computeDriverResults(stats, stageKm);
+    pruneSelection(results);
     const thead = document.getElementById("results-thead");
     buildResultsTableHeader(thead, stages, lengths, stageKm !== null, activateParticipantSearch);
     const tbody = document.getElementById("results-tbody");
@@ -4056,7 +4094,8 @@ ${hit.ptIdx}` : null;
       computeStageRanks(results, stages.length),
       stageKm !== null,
       _selectedRows,
-      toggleRowSelection
+      toggleRowSelection,
+      COLUMN_COUNT + stages.length
     );
     if (_resetScroll) {
       _resetScroll = false;
@@ -4067,8 +4106,10 @@ ${hit.ptIdx}` : null;
     const ranks = /* @__PURE__ */ new Map();
     results.forEach((r) => ranks.set(r.stats.username, new Array(nStages).fill(null)));
     for (let s = 0; s < nStages; s++) {
-      results.filter((r) => r.stats.snaps[s]?.time3 != null).sort((a, b) => a.stats.snaps[s].time3 - b.stats.snaps[s].time3).forEach((r, i) => {
-        ranks.get(r.stats.username)[s] = i + 1;
+      const timed = results.filter((r) => r.stats.snaps[s]?.time3 != null).sort((a, b) => a.stats.snaps[s].time3 - b.stats.snaps[s].time3);
+      const place = rankSorted(timed, (r) => r.stats.snaps[s].time3);
+      timed.forEach((r, i) => {
+        ranks.get(r.stats.username)[s] = place[i];
       });
     }
     return ranks;
@@ -4076,12 +4117,25 @@ ${hit.ptIdx}` : null;
   function getFilteredStats() {
     if (!_data) return [];
     const data2 = _data;
-    const allStageNums = data2.stages.map((s) => s.num);
-    return _allStats.filter((s) => _filterState.activeDriverKeys.has(s.username) && passesAttrFilters(data2, _filterState, s)).map((s) => recalculateStatsForStages(s, _filterState.activeStageNums, allStageNums, _recordMap));
+    const stageNums = data2.stages.map((s) => s.num).filter((n) => _filterState.activeStageNums.has(n));
+    if (!stageNums.length) return [];
+    return _allStats.filter((s) => isDriverShown(data2, _filterState, _recordMap, s)).map((s) => recalculateStatsForStages(s, stageNums, data2.stages.length, _recordMap));
+  }
+  function pruneSelection(results) {
+    if (!_selectedRows.size) return;
+    const shown = new Set(results.map((r) => r.stats.username));
+    for (const u of _selectedRows) if (!shown.has(u)) _selectedRows.delete(u);
+    updateApplyBar();
   }
   function afterFilterChange() {
-    renderResultsTable();
     updateFilterControls();
+    _onFiltersChanged();
+    if (_renderQueued) return;
+    _renderQueued = true;
+    queueMicrotask(() => {
+      _renderQueued = false;
+      renderResultsTable();
+    });
   }
   function updateFilterControls() {
     if (!_data) return;
@@ -4142,6 +4196,7 @@ ${hit.ptIdx}` : null;
     const search = debounce(scrollToMatchingParticipant, SEARCH_DEBOUNCE_MS);
     inp.addEventListener("input", () => search(inp.value));
     inp.addEventListener("blur", () => {
+      search.cancel();
       _searchActive = false;
       th.textContent = origLabel;
       th.className = "th-participant sticky-col sticky-col-2";
@@ -4179,7 +4234,8 @@ ${hit.ptIdx}` : null;
   var prevStageFilter = null;
   var rallyName = null;
   var rankMap2 = /* @__PURE__ */ new Map();
-  var lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [], countries: [] });
+  var fileInfoText = null;
+  var lookups = buildRallyLookups({ records: [], stages: [], drivers: [], groups: [], cars: [], countries: [] });
   var chartState = {
     activeStageNums: /* @__PURE__ */ new Set(),
     activeDriverKeys: /* @__PURE__ */ new Set(),
@@ -4195,11 +4251,14 @@ ${hit.ptIdx}` : null;
       applyDomTranslations();
       updateHeaderTitle();
       updateResumeButton();
+      if (fileInfoText) qs("#file-info").textContent = fileInfoText();
       if (data) {
-        buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap2);
-        updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
+        const sidebar = document.querySelector("#sidebar .sidebar-body");
+        const scrollTop = sidebar?.scrollTop ?? 0;
+        buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap2, lookups.recordMap);
         afterFilterChange2();
         buildResultsFilters(rankMap2);
+        if (sidebar) sidebar.scrollTop = scrollTop;
         updateHeaderStats();
         invalidateResults();
         invalidateComments();
@@ -4238,8 +4297,10 @@ ${hit.ptIdx}` : null;
       onPointHover: (c) => highlightCommentEntry(c),
       onStageCommentsHover: (idx, anchor) => hoverStageComments(idx, anchor),
       onStageCommentsClick: (idx, anchor) => toggleStageComments(idx, anchor),
-      onOtherClick: closeStageComments
+      onOtherClick: closeStageComments,
+      onStageBandClick: handleStageBandClick
     });
+    setOnResultsFiltersChanged(writeUrlState);
     initLegendSearch({
       onPreview: (key) => chartCtrl.setHoveredKey(key),
       onToggle: (key) => chartCtrl.togglePin(key, true)
@@ -4248,18 +4309,21 @@ ${hit.ptIdx}` : null;
     qs("#btn-sidebar-close").addEventListener("click", () => setSidebarOpen(false));
     qs("#sidebar-backdrop").addEventListener("click", () => setSidebarOpen(false));
     document.addEventListener("keydown", (e) => {
-      if (e.key === "/" && currentTab === "chart" && data && !isTextInput(e.target)) {
+      const onChart = isChartShown() && !isTextInput(e.target);
+      if (e.key === "/" && onChart) {
         e.preventDefault();
         focusLegendSearch();
         return;
       }
       if (e.key !== "Escape") return;
       if (isSidebarOpen()) setSidebarOpen(false);
-      else if (chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
+      else if (onChart && chartCtrl.getPinnedKeys().length) chartCtrl.clearPins();
     });
     document.addEventListener("mousemove", onCellTooltipMove);
-    window.__onStageBandClick = handleStageBandClick;
   });
+  function isChartShown() {
+    return !!data && currentTab === "chart" && document.getElementById("screen-chart").style.display !== "none";
+  }
   async function onFileInputChange(e) {
     const input = e.target;
     const file = input.files?.[0];
@@ -4299,7 +4363,8 @@ ${hit.ptIdx}` : null;
     const btn = qs("#btn-choose-file");
     const info = qs("#file-info");
     btn.disabled = true;
-    info.textContent = i18n.t().fileReading;
+    fileInfoText = () => i18n.t().fileReading;
+    info.textContent = fileInfoText();
     info.className = "file-info loading";
     try {
       const text = await readFileAsText(file);
@@ -4310,21 +4375,25 @@ ${hit.ptIdx}` : null;
       lookups = buildRallyLookups(data);
       const allStats = computeAllDriverStats(data, lookups.recordMap);
       initResultsModule(data, lookups.recordMap, allStats);
-      rankMap2 = /* @__PURE__ */ new Map();
-      [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime)).forEach((s, i) => rankMap2.set(s.username, s.totalTime !== null ? i + 1 : null));
+      const byTime = [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
+      const places = rankSorted(byTime, (s) => s.totalTime);
+      rankMap2 = new Map(byTime.map((s, i) => [s.username, places[i]]));
       initCommentsModule(rankMap2, allStats);
       const order = (k) => rankMap2.get(k) ?? Number.MAX_SAFE_INTEGER;
       data.drivers.sort((a, b) => order(a.username) - order(b.username));
       eventName = qs("#inp-event-name").value.trim();
-      info.textContent = i18n.t().fileLoaded(data.stages.length, data.drivers.length);
+      const loaded = data;
+      fileInfoText = () => i18n.t().fileLoaded(loaded.stages.length, loaded.drivers.length);
+      info.textContent = fileInfoText();
       info.className = "file-info ok";
       const rallyId = currentRallyId();
       rallyName = rallyId ? getCachedRallyName(rallyId) : null;
       showChart();
       if (rallyId) void refreshRallyName(rallyId);
     } catch (err) {
-      const msg = err instanceof CsvParseError ? i18n.t().csvErrors[err.code] : err instanceof Error ? err.message : String(err);
-      info.textContent = `${i18n.t().fileError}: ${msg}`;
+      const msg = () => err instanceof CsvParseError ? i18n.t().csvErrors[err.code] : err instanceof Error ? err.message : String(err);
+      fileInfoText = () => `${i18n.t().fileError}: ${msg()}`;
+      info.textContent = fileInfoText();
       info.className = "file-info error";
       showWelcome();
     } finally {
@@ -4371,31 +4440,51 @@ ${hit.ptIdx}` : null;
     chartState.activeStageNums = new Set(data.stages.map((s) => s.num));
     chartState.activeDriverKeys = new Set(data.drivers.map((d) => d.username));
     chartState.activeGroups = new Set(data.groups);
-    chartState.activeCars = new Set(data.drivers.map((d) => d.car).filter(Boolean));
+    chartState.activeCars = new Set(data.cars);
     chartState.activeCountries = new Set(data.countries);
     chartState.visibleDriverKeys = new Set(data.drivers.map((d) => d.username));
     prevStageFilter = null;
     legendExpanded = false;
     const urlState = readUrlState();
     restoringUrlState = true;
-    if (urlState) applyUrlFilters(urlState);
-    document.getElementById("screen-welcome").style.display = "none";
-    document.getElementById("screen-chart").style.display = "flex";
-    updateHeaderTitle();
-    applyDomTranslations();
-    buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap2);
-    updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
-    buildResultsFilters(rankMap2);
-    switchTab("chart");
-    if (urlState) applyUrlView(urlState);
-    if (chartCtrl.getYMode() === "pinned" && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode("leader");
-    syncYModeSwitch();
-    refreshLegend();
-    updateHeaderStats();
-    restoringUrlState = false;
+    try {
+      if (urlState) {
+        applyUrlFilters(chartState, urlState.chart);
+        applyUrlFilters(getResultsFilterState(), urlState.results);
+      }
+      document.getElementById("screen-welcome").style.display = "none";
+      document.getElementById("screen-chart").style.display = "flex";
+      updateHeaderTitle();
+      applyDomTranslations();
+      buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap2, lookups.recordMap);
+      buildResultsFilters(rankMap2);
+      switchTab("chart");
+      if (urlState) applyUrlView(urlState);
+      if (chartCtrl.getYMode() === "pinned" && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode("leader");
+      syncYModeSwitch();
+      refreshLegend();
+      updateHeaderStats();
+    } finally {
+      restoringUrlState = false;
+    }
     writeUrlState();
   }
   var LIST_SEP = "|";
+  var RESULTS_URL_PREFIX = "res-";
+  var NO_COUNTRY = "-";
+  function joinList(items2) {
+    return items2.map((s) => s.replace(/%/g, "%25").replace(/\|/g, "%7C")).join(LIST_SEP);
+  }
+  function splitList(value) {
+    if (value === null) return null;
+    return value.split(LIST_SEP).filter(Boolean).map((item) => {
+      try {
+        return decodeURIComponent(item);
+      } catch {
+        return item;
+      }
+    });
+  }
   var restoringUrlState = false;
   function currentRallyId() {
     return data ? fileName.match(/(\d{4,})_table/)?.[1] ?? null : null;
@@ -4405,27 +4494,39 @@ ${hit.ptIdx}` : null;
     if (![...p.keys()].length) return null;
     const rally = p.get("r");
     if (rally && rally !== currentRallyId()) return null;
-    const list = (key) => p.get(key)?.split(LIST_SEP).filter(Boolean) ?? null;
+    const filters = (prefix) => ({
+      stages: splitList(p.get(prefix + "ss"))?.map(Number).filter((n) => !isNaN(n)) ?? null,
+      groups: splitList(p.get(prefix + "cls")),
+      countries: splitList(p.get(prefix + "cty"))?.map((c) => c === NO_COUNTRY ? "" : c) ?? null
+    });
     const tab = p.get("tab");
     const y = p.get("y");
     return {
       tab: tab === "chart" || tab === "results" || tab === "comments" ? tab : null,
       yMode: y === "abs" || y === "leader" || y === "position" || y === "pinned" ? y : null,
-      stages: list("ss")?.map(Number).filter((n) => !isNaN(n)) ?? null,
-      groups: list("cls"),
-      // «-» — страна не указана (пустой код в список не уложить)
-      countries: list("cty")?.map((c) => c === "-" ? "" : c) ?? null,
-      pins: list("pin") ?? []
+      chart: filters(""),
+      results: filters(RESULTS_URL_PREFIX),
+      pins: splitList(p.get("pin")) ?? []
     };
   }
-  function applyUrlFilters(s) {
+  function applyUrlFilters(state, s) {
     if (!data) return;
     const stages = s.stages?.filter((n) => data.stages.some((st) => st.num === n));
-    if (stages?.length) chartState.activeStageNums = new Set(stages);
+    if (stages?.length) state.activeStageNums = new Set(stages);
     const groups = s.groups?.filter((g) => data.groups.includes(g));
-    if (groups?.length) chartState.activeGroups = new Set(groups);
+    if (groups?.length) state.activeGroups = new Set(groups);
     const countries = s.countries?.filter((c) => data.countries.includes(c));
-    if (countries?.length) chartState.activeCountries = new Set(countries);
+    if (countries?.length) state.activeCountries = new Set(countries);
+  }
+  function writeUrlFilters(p, state, prefix) {
+    if (!data) return;
+    const narrowed = (size, total) => size > 0 && size !== total;
+    if (narrowed(state.activeStageNums.size, data.stages.length))
+      p.set(prefix + "ss", [...state.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
+    if (narrowed(state.activeGroups.size, data.groups.length))
+      p.set(prefix + "cls", joinList([...state.activeGroups].sort()));
+    if (narrowed(state.activeCountries.size, data.countries.length))
+      p.set(prefix + "cty", joinList([...state.activeCountries].map((c) => c || NO_COUNTRY).sort()));
   }
   function applyUrlView(s) {
     if (!data) return;
@@ -4447,14 +4548,10 @@ ${hit.ptIdx}` : null;
     if (currentTab !== "chart") p.set("tab", currentTab);
     const yMode = chartCtrl.getYMode();
     if (yMode !== "leader") p.set("y", yMode);
-    if (chartState.activeStageNums.size !== data.stages.length)
-      p.set("ss", [...chartState.activeStageNums].sort((a, b) => a - b).join(LIST_SEP));
-    if (data.groups.length && chartState.activeGroups.size !== data.groups.length)
-      p.set("cls", [...chartState.activeGroups].join(LIST_SEP));
-    if (data.countries.length && chartState.activeCountries.size !== data.countries.length)
-      p.set("cty", [...chartState.activeCountries].map((c) => c || "-").sort().join(LIST_SEP));
+    writeUrlFilters(p, chartState, "");
     const pins = chartCtrl.getPinnedKeys();
-    if (pins.length) p.set("pin", pins.join(LIST_SEP));
+    if (pins.length) p.set("pin", joinList(pins));
+    writeUrlFilters(p, getResultsFilterState(), RESULTS_URL_PREFIX);
     const hash = p.toString();
     history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
   }
@@ -4473,10 +4570,8 @@ ${hit.ptIdx}` : null;
   }
   function updateHeaderStats() {
     if (!data) return;
-    const lastStage = data.stages.reduce((m, s) => s.num > m ? s.num : m, 0);
-    const finished = data.drivers.filter(
-      (d) => lookups.recordMap.get(d.username)?.get(lastStage)?.time3 != null
-    ).length;
+    let finished = 0;
+    for (const place of rankMap2.values()) if (place !== null) finished++;
     document.getElementById("header-stats").textContent = i18n.t().headerStats(finished, data.drivers.length, data.stages.length);
   }
   function isSidebarOpen() {
@@ -4520,22 +4615,9 @@ ${hit.ptIdx}` : null;
   function makeFilterCallbacks() {
     return {
       onStagesChanged: () => {
-        updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
         rebuildChart();
       },
       onDriversChanged: () => {
-        syncDatasetVisibility();
-        afterFilterChange2();
-      },
-      onGroupsChanged: () => {
-        syncDatasetVisibility();
-        afterFilterChange2();
-      },
-      onCarsChanged: () => {
-        syncDatasetVisibility();
-        afterFilterChange2();
-      },
-      onCountriesChanged: () => {
         syncDatasetVisibility();
         afterFilterChange2();
       },
@@ -4544,14 +4626,11 @@ ${hit.ptIdx}` : null;
       }
     };
   }
+  function isShownOnChart(drv) {
+    return !!data && isDriverShown(data, chartState, lookups.recordMap, drv);
+  }
   function syncDatasetVisibility() {
-    chartCtrl.updateDatasetVisibility(
-      data,
-      chartState.activeDriverKeys,
-      chartState.activeGroups,
-      chartState.activeCars,
-      chartState.activeCountries
-    );
+    chartCtrl.updateDatasetVisibility(data, isShownOnChart);
     refreshComments();
   }
   function refreshComments() {
@@ -4604,7 +4683,7 @@ ${hit.ptIdx}` : null;
       chartState.activeStageNums = /* @__PURE__ */ new Set([stageNum]);
     }
     syncStageCheckboxes(chartState.activeStageNums);
-    updateDriverItemsByStageAndFilter(data, chartState, lookups.recordMap);
+    refilterDriverList(data, chartState, lookups.recordMap, "");
     rebuildChart();
   }
   function rebuildChart() {
@@ -4617,10 +4696,7 @@ ${hit.ptIdx}` : null;
       lookups.cumPenMap,
       lookups.cumSPMap,
       lookups.cumSRMap,
-      chartState.activeDriverKeys,
-      chartState.activeGroups,
-      chartState.activeCars,
-      chartState.activeCountries
+      isShownOnChart
     );
     updatePinnedBar(data, chartCtrl.getPinnedKeys(), (key) => chartCtrl.togglePin(key, true));
     syncYModeSwitch();
@@ -4664,9 +4740,12 @@ ${hit.ptIdx}` : null;
       }
     }
   }
+  var NON_TEXT_INPUTS = /* @__PURE__ */ new Set(["checkbox", "radio", "button", "submit", "reset", "file", "range", "color", "image"]);
   function isTextInput(target) {
     const el = target;
-    return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+    if (!el) return false;
+    if (el instanceof HTMLInputElement) return !NON_TEXT_INPUTS.has(el.type);
+    return el.tagName === "TEXTAREA" || el.isContentEditable;
   }
   var CELL_TIP_DX = 12;
   var CELL_TIP_DY = 30;

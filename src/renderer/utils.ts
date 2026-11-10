@@ -1,5 +1,7 @@
+import { i18n } from '../i18n/index';
+
 export function formatTime(sec: number | null): string {
-    if (sec === null || isNaN(sec)) return 'DNF';
+    if (sec === null || isNaN(sec)) return i18n.t().dnf;
     const tenths = Math.round(Math.abs(sec) * 10);
     const h = Math.floor(tenths / 36000);
     const m = Math.floor((tenths % 36000) / 600);
@@ -46,19 +48,29 @@ export function escapeHtml(s: string): string {
     return s
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 /** Пауза после ввода в поле поиска, прежде чем искать (меньше — дёргается на каждой букве). */
 export const SEARCH_DEBOUNCE_MS = 200;
 
+/** Отложенный вызов; cancel — отменить ожидающий (поле очистили или закрыли раньше срока). */
+export interface IDebounced<A extends unknown[]> {
+    (...args: A): void;
+    cancel(): void;
+}
+
 /** Вызывает fn через ms после последнего вызова обёртки. */
-export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms: number): (...args: A) => void {
+export function debounce<A extends unknown[]>(fn: (...args: A) => void, ms: number): IDebounced<A> {
     let timer: number | undefined;
-    return (...args: A) => {
+    const wrapped = (...args: A) => {
         window.clearTimeout(timer);
         timer = window.setTimeout(() => fn(...args), ms);
     };
+    wrapped.cancel = () => window.clearTimeout(timer);
+    return wrapped;
 }
 
 export function nullableCompare(a: number | null, b: number | null): number {
@@ -66,4 +78,24 @@ export function nullableCompare(a: number | null, b: number | null): number {
     if (a === null) return 1;
     if (b === null) return -1;
     return a - b;
+}
+
+/** Время в миллисекундах: суммы с плавающей точкой, равные на табло, могут отличаться на 1e-13. */
+export function timeKey(sec: number): number {
+    return Math.round(sec * 1000);
+}
+
+/**
+ * Места по списку, уже упорядоченному по времени: равное время — равное место (1, 2, 2, 4).
+ * null — нет времени (сошёл).
+ */
+export function rankSorted<T>(sorted: T[], time: (item: T) => number | null): (number | null)[] {
+    const ranks: (number | null)[] = [];
+    sorted.forEach((item, i) => {
+        const t    = time(item);
+        const prev = i > 0 ? time(sorted[i - 1]) : null;
+        ranks.push(t === null ? null
+            : prev !== null && timeKey(prev) === timeKey(t) ? ranks[i - 1] : i + 1);
+    });
+    return ranks;
 }

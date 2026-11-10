@@ -20,22 +20,33 @@ export function createFilterCount(n: number): HTMLElement {
     return createElement('span', 'filter-count', String(n));
 }
 
+/**
+ * Раскрытые группы (по id счётчика). Панели перестраиваются при смене языка и файла —
+ * раскрытое пользователем остаётся раскрытым.
+ */
+const expandedGroups = new Set<string>();
+
 export function buildCollapsibleFilterGroup(
     title:     string,
     counterId: string,
 ): IFilterGroupRefs {
     const t = i18n.t();
+    const expanded = expandedGroups.has(counterId);
 
-    const group = createElement('div', 'filter-group collapsed');
+    const group = createElement('div', expanded ? 'filter-group' : 'filter-group collapsed');
 
     const hdr  = createElement('div', 'filter-header');
     // Кнопка — чтобы группу можно было раскрыть с клавиатуры и скринридер знал её состояние
     const left = createElement('button', 'filter-header-left');
     left.type = 'button';
-    left.setAttribute('aria-expanded', 'false');
-    left.innerHTML = `<span class="collapse-icon" aria-hidden="true">▶</span>`
-        + `<span class="filter-title">${title}</span>`
-        + `<span class="filter-counter" id="${counterId}"></span>`;
+    left.setAttribute('aria-expanded', String(expanded));
+    const icon = createElement('span', 'collapse-icon', '▶');
+    icon.setAttribute('aria-hidden', 'true');
+    const counter = createElement('span', 'filter-counter');
+    counter.id = counterId;
+    left.appendChild(icon);
+    left.appendChild(createElement('span', 'filter-title', title));
+    left.appendChild(counter);
 
     const right   = createElement('div', 'filter-header-right');
     const btnAll  = createElement('button', 'btn-fa', t.filterAll);
@@ -51,6 +62,7 @@ export function buildCollapsibleFilterGroup(
     left.addEventListener('click', () => {
         const collapsed = group.classList.toggle('collapsed');
         left.setAttribute('aria-expanded', String(!collapsed));
+        collapsed ? expandedGroups.delete(counterId) : expandedGroups.add(counterId);
     });
     btnAll.addEventListener('click',  e => e.stopPropagation());
     btnNone.addEventListener('click', e => e.stopPropagation());

@@ -35,6 +35,9 @@ const COLUMNS: IColumnDef[] = [
     { key: 'sr',           label: () => i18n.t().colSuperRally,     title: () => '' },
 ];
 
+/** Колонок до колонок СУ — для строки «никого нет», растянутой на всю ширину. */
+export const COLUMN_COUNT = COLUMNS.length;
+
 /** Подписи колонок темпа: «за СУ» или «на км». */
 function paceText(km: boolean) {
     const t = i18n.t();
@@ -63,7 +66,7 @@ export function buildResultsTableHeader(
         if (col.key === 'pos') th.className = 'sticky-col sticky-col-1';
         if (col.special === 'search') {
             th.className = 'th-participant sticky-col sticky-col-2';
-            th.innerHTML = col.label(km);
+            th.textContent = col.label(km);
             th.addEventListener('click', () => onSearchClick(th));
         } else {
             th.textContent = col.label(km);
@@ -86,19 +89,38 @@ export function renderResultsRows(
     km:           boolean,
     selectedRows: Set<string>,
     onRowClick:   (username: string, row: HTMLElement) => void,
+    colSpan:      number,
 ): void {
     tbody.innerHTML = '';
+    // Один обработчик на таблицу вместо двух на каждую из сотен строк
+    const rowOf = (e: Event) => (e.target as HTMLElement).closest<HTMLElement>('tr[data-username]');
+    tbody.onclick = e => {
+        const row = rowOf(e);
+        if (row) onRowClick(row.dataset['username']!, row);
+    };
+    tbody.onkeydown = e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const row = rowOf(e);
+        if (!row) return;
+        e.preventDefault();
+        onRowClick(row.dataset['username']!, row);
+    };
+
+    if (!results.length) {
+        const td = createTd('td-empty', i18n.t().resultsEmpty);
+        td.colSpan = colSpan;
+        const tr = document.createElement('tr');
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+    }
+    const frag = document.createDocumentFragment();
     for (const r of results) {
         const row = buildResultRow(r, stageRanks.get(r.stats.username) ?? [], km, selectedRows);
         row.tabIndex = 0;
-        row.addEventListener('click', () => onRowClick(r.stats.username, row));
-        row.addEventListener('keydown', (e: KeyboardEvent) => {
-            if (e.key !== 'Enter' && e.key !== ' ') return;
-            e.preventDefault();
-            onRowClick(r.stats.username, row);
-        });
-        tbody.appendChild(row);
+        frag.appendChild(row);
     }
+    tbody.appendChild(frag);
 }
 
 function buildResultRow(
@@ -121,7 +143,7 @@ function buildResultRow(
     row.appendChild(buildGroupCell(r.stats.group));
     row.appendChild(createTd('td-time', r.stats.car));
     row.appendChild(createTd('td-time',
-        r.stats.totalTime !== null ? formatTime(r.stats.totalTime) : 'DNF'));
+        r.stats.totalTime !== null ? formatTime(r.stats.totalTime) : i18n.t().dnf));
     row.appendChild(buildPenaltyCell(r.stats.totalPenalty));
     row.appendChild(buildGapWithTooltip(
         noPace ? '—' : formatPace(r.avgGapFromLeader, km),
@@ -165,13 +187,13 @@ function buildStageCell(snap: IDriverStageSnap, rank: number | null): HTMLTableC
     const rk   = createElement('span', 'td-stage-rank', `${rank ?? ''}`);
     if (rank === 1) rk.classList.add('pos-gold');
     tail.appendChild(rk);
-    if (snap.hasSR) tail.appendChild(createElement('span', 'td-stage-sr', 'SR'));
+    if (snap.hasSR) tail.appendChild(createElement('span', 'td-stage-sr', i18n.t().colSuperRally));
     td.appendChild(tail);
     return td;
 }
 
 function buildPositionCell(pos: number | null): HTMLTableCellElement {
-    const td = createTd('td-pos sticky-col sticky-col-1', pos !== null ? String(pos) : 'DNF');
+    const td = createTd('td-pos sticky-col sticky-col-1', pos !== null ? String(pos) : i18n.t().dnf);
     if (pos === null) td.classList.add('pos-dnf');
     if (pos === 1) td.classList.add('pos-gold');
     else if (pos === 2) td.classList.add('pos-silver');

@@ -1,16 +1,14 @@
 export type { IChartFilterState, IChartFilterCallbacks } from './filterState';
 export { updateFilterCounters, updateToggleButtonStates, syncStageCheckboxes } from './filterCounters';
-export { applyGroupOrCarFilterToDriverList, updateDriverItemsByStageAndFilter } from './filterBuilders';
+export { refilterDriverList } from './filterBuilders';
 
-import type { IParsedRallyData } from '../../shared/types';
+import type { IParsedRallyData, TRecordMap } from '../../shared/types';
 import type { IChartFilterState, IChartFilterCallbacks } from './filterState';
-import { applyGroupOrCarFilterToDriverList } from './filterBuilders';
 import {
     buildStageFilterUI,
     buildDriverFilterUI,
-    buildGroupFilterUI,
-    buildCarFilterUI,
-    buildCountryFilterUI,
+    buildAttrFilters,
+    refilterDriverList,
 } from './filterBuilders';
 
 /**
@@ -22,12 +20,15 @@ export function buildChartFilterPanel(
     state:     IChartFilterState,
     callbacks: IChartFilterCallbacks,
     rankMap:   Map<string, number | null>,
+    recordMap: TRecordMap,
     prefix     = '',
 ): void {
-    const refilter = () => applyGroupOrCarFilterToDriverList(data, state, prefix);
-    buildStageFilterUI(data.stages, state, callbacks, prefix);
-    buildDriverFilterUI(data.drivers, data, state, callbacks, rankMap, prefix);
-    buildGroupFilterUI(data.groups, data, state, callbacks, refilter, prefix);
-    buildCarFilterUI(data.drivers, state, callbacks, refilter, prefix);
-    buildCountryFilterUI(data, state, callbacks, refilter, prefix);
+    const refilter = () => refilterDriverList(data, state, recordMap, prefix);
+    buildStageFilterUI(data.stages, state, {
+        ...callbacks,
+        onStagesChanged: () => { refilter(); callbacks.onStagesChanged(); },
+    }, prefix);
+    buildDriverFilterUI(data, state, callbacks, rankMap, prefix);
+    buildAttrFilters(data, state, () => { refilter(); callbacks.onDriversChanged(); }, prefix);
+    refilter();
 }

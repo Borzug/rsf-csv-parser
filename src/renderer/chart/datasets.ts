@@ -1,7 +1,6 @@
 import type { IDriverInfo, IParsedRallyData, IStageInfo, TRecordMap } from '../../shared/types';
 import { POINTS_PER_STAGE } from "./points";
 import { driverColor } from "../colors";
-import { passesAttrFilters } from "../filters/filterState";
 import { driverDisplayName } from "../../shared/driverName";
 
 export interface IChartDataset {
@@ -11,7 +10,6 @@ export interface IChartDataset {
     _car:                string;
     data:                (number | null)[];
     borderColor:         string;
-    backgroundColor:     string;
     borderWidth:         number;
     pointRadius:         number;
     pointBackgroundColor:string;
@@ -39,7 +37,7 @@ const POINT_RADIUS_NORMAL  = 2;
 const POINT_RADIUS_FINAL   = 3;
 const POINT_RADIUS_COMMENT = 6;
 const POINT_HOVER_RADIUS   = 7;
-const BORDER_WIDTH         = 1.8;
+export const BORDER_WIDTH  = 1.8;
 const DASH_ON  = 6;
 const DASH_OFF = 4;
 /** Заливка ромба-комментария — белая, чтобы ромб читался поверх любой линии */
@@ -52,16 +50,13 @@ export function buildDatasets(
     cumPenMap:        Map<string, Map<number, number>>,
     cumSPMap:         Map<string, Map<number, number>>,
     cumSRMap:         Map<string, Map<number, number>>,
-    activeDriverKeys: Set<string>,
-    activeGroups:     Set<string>,
-    activeCars:       Set<string>,
-    activeCountries:  Set<string>,
+    /** Показан ли участник (выбор в списке и фильтры) — см. isDriverShown */
+    isShown:          (drv: IDriverInfo) => boolean,
 ): IChartDataset[] {
     return data.drivers.map((drv, gi) => {
         const color = driverColor(gi);
         const pts          = buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color);
         const dnfCommentPtIdx = pts.dnfCommentPtIdx;
-        const attrOk = passesAttrFilters(data, { activeGroups, activeCars, activeCountries }, drv);
         const dn   = driverDisplayName(drv);
 
         return {
@@ -71,7 +66,6 @@ export function buildDatasets(
             _car:                drv.car,
             data:                pts.y,
             borderColor:         color,
-            backgroundColor:     color + '22',
             borderWidth:         BORDER_WIDTH,
             pointRadius:         0,
             pointBackgroundColor:color,
@@ -82,7 +76,7 @@ export function buildDatasets(
             _ptColor:            pts.pointColors,
             tension:             0,
             spanGaps:            false,
-            hidden:              !activeDriverKeys.has(drv.username) || !attrOk,
+            hidden:              !isShown(drv),
             // Функция стиля отрезков вызывается на каждый отрезок при каждом update(),
             // поэтому подключаем её только линиям, где пунктир действительно есть
             segment: pts.hasSR.some(Boolean) || dnfCommentPtIdx !== null
@@ -131,9 +125,10 @@ function buildDriverPoints(
     // а она может относиться к предыдущему СУ
     let dnfCmtStageIdx:  number | null = null;
 
+    const recs = recordMap.get(drv.username);
     for (let si = 0; si < stages.length; si++) {
         const st     = stages[si];
-        const rec    = recordMap.get(drv.username)?.get(st.num) ?? null;
+        const rec    = recs?.get(st.num) ?? null;
         const pen    = cumPenMap.get(drv.username)?.get(st.num) ?? 0;
         const sp     = cumSPMap.get(drv.username)?.get(st.num)  ?? 0;
         const sr     = (cumSRMap.get(drv.username)?.get(st.num) ?? 0) + (rec?.superRally ? 1 : 0);

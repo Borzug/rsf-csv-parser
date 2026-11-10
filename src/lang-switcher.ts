@@ -13,7 +13,8 @@ export function initLangSwitcher(onChanged: () => void): void {
         const btn = (e.target as HTMLElement).closest<HTMLElement>('.lang-btn');
         if (!btn) return;
         const lang = btn.dataset['lang'] as Language | undefined;
-        if (!lang) return;
+        // Тот же язык — перестраивать нечего (иначе сбрасывается состояние панелей)
+        if (!lang || lang === i18n.getLanguage()) return;
         i18n.setLanguage(lang);
         updateActiveLangButton(switcher, lang);
         onChanged();

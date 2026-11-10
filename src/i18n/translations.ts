@@ -13,6 +13,7 @@ export const ru: ITranslations = {
     csvErrors: {
         tooFewLines: 'Файл содержит слишком мало строк',
         noData:      'Не удалось распознать данные в файле',
+        missingColumns: 'Нет обязательных колонок (SS, User name, time3)',
     },
     fileReadError:          'Не удалось прочитать файл',
 
@@ -118,6 +119,8 @@ export const ru: ITranslations = {
         + 'Учитываются только участки без SR для обоих участников',
 
     applyFilterButton:      'Применить фильтр по участникам',
+    resultsEmpty:           'Под выбранные фильтры не попал ни один участник',
+    dnf:                    'DNF',
 
     tooltipPenalty:         'Штраф',
     tooltipServicePenalty:  'Service Penalty',
@@ -150,6 +153,7 @@ export const en: ITranslations = {
     csvErrors: {
         tooFewLines: 'The file has too few lines',
         noData:      'Could not recognise any data in the file',
+        missingColumns: 'Required columns are missing (SS, User name, time3)',
     },
     fileReadError:          'Failed to read file',
 
@@ -255,6 +259,8 @@ export const en: ITranslations = {
         + 'Only stages without SR for both drivers',
 
     applyFilterButton:      'Apply Participant Filter',
+    resultsEmpty:           'No participants match the selected filters',
+    dnf:                    'DNF',
 
     tooltipPenalty:         'Penalty',
     tooltipServicePenalty:  'Service Penalty',
@@ -283,6 +289,7 @@ export const hu: ITranslations = {
     csvErrors: {
         tooFewLines: 'A fájl túl kevés sort tartalmaz',
         noData:      'Nem sikerült adatot felismerni a fájlban',
+        missingColumns: 'Hiányoznak a kötelező oszlopok (SS, User name, time3)',
     },
     fileReadError:          'A fájl olvasása sikertelen',
 
@@ -388,6 +395,8 @@ export const hu: ITranslations = {
         + 'Csak SR nélküli szakaszok mindkét versenyzőnél',
 
     applyFilterButton:      'Résztvevő szűrő alkalmazása',
+    resultsEmpty:           'Egy résztvevő sem felel meg a szűrőknek',
+    dnf:                    'DNF',
 
     tooltipPenalty:         'Büntetés',
     tooltipServicePenalty:  'Szerviz büntetés',

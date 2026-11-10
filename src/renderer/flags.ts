@@ -29,10 +29,20 @@ export function createFlag(country: string): HTMLImageElement | null {
 export function countryName(country: string): string {
     if (!country) return i18n.t().countryUnknown;
     try {
-        const name = new Intl.DisplayNames([i18n.getLanguage()], { type: 'region' }).of(country);
+        const name = regionNames().of(country);
         if (name && name !== country) return name;
     } catch { /* нестандартный код — покажем как есть */ }
     return country;
+}
+
+/** Названия стран на текущем языке; создаём заново только при смене языка. */
+let cachedNames: { lang: string; names: Intl.DisplayNames } | null = null;
+
+function regionNames(): Intl.DisplayNames {
+    const lang = i18n.getLanguage();
+    if (cachedNames?.lang !== lang)
+        cachedNames = { lang, names: new Intl.DisplayNames([lang], { type: 'region' }) };
+    return cachedNames.names;
 }
 
 /** Ставит флаг первым в элементе с именем участника. */
