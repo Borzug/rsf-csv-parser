@@ -6,6 +6,9 @@ export interface IChartComment {
     key:       string;
     name:      string;
     color:     string;
+    /** Код страны и машина участника — для подписи автора в списке на СУ. */
+    country:   string;
+    car:       string;
     stageIdx:  number;
     stageNum:  number;
     stageName: string;
@@ -58,6 +61,8 @@ export function collectComments(
                 key:       ds.driverKey,
                 name:      ds._displayName || ds.driverKey,
                 color:     ds.borderColor,
+                country:   ds._country ?? '',
+                car:       ds._car ?? '',
                 stageIdx:  si,
                 stageNum:  st.num,
                 stageName: st.name,

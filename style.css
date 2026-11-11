@@ -508,7 +508,7 @@ body {
 
 /* ── Comments on a stage, from the 💬 counter under the axis ─── */
 .stage-comments {
-    position: fixed; z-index: 600; width: min(380px, calc(100vw - 16px));
+    position: fixed; z-index: 600; width: min(440px, calc(100vw - 16px));
     display: flex; flex-direction: column; overflow: hidden;
     background: rgba(12,12,12,0.98); border: 1px solid var(--border-hi); border-radius: 8px;
     box-shadow: 0 6px 28px rgba(0,0,0,0.85);
@@ -526,7 +526,10 @@ body {
 .scp-item + .scp-item { border-top: 1px solid #1f1f1f; }
 .scp-who   { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
 .scp-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.scp-name  { font-family: var(--ff); font-size: 11px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scp-who .flag { margin-right: 0; flex-shrink: 0; }
+/* Имя важнее машины: занимает до 65% строки, машине — остаток */
+.scp-name  { font-family: var(--ff); font-size: 11px; color: var(--text-2); flex-shrink: 0; max-width: 65%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scp-car   { margin-left: auto; padding-left: 6px; font-family: var(--ff); font-size: 11px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .scp-text  { font-size: 13px; line-height: 1.45; color: var(--text); word-break: break-word; }
 
 /* ── Chart HTML tooltip ──────────────────────────────────────── */

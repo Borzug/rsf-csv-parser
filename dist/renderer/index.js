@@ -734,6 +734,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
         driverKey: drv.username,
         _displayName: dn,
         _car: drv.car,
+        _country: drv.country,
         data: pts.y,
         borderColor: color,
         borderWidth: BORDER_WIDTH,
@@ -896,6 +897,8 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
           key: ds.driverKey,
           name: ds._displayName || ds.driverKey,
           color: ds.borderColor,
+          country: ds._country ?? "",
+          car: ds._car ?? "",
           stageIdx: si,
           stageNum: st.num,
           stageName: st.name,
@@ -2363,7 +2366,19 @@ ${hit.ptIdx}` : null;
       dot.style.background = c.color;
       dot.setAttribute("aria-hidden", "true");
       who.appendChild(dot);
-      who.appendChild(createElement("span", "scp-name", c.name));
+      const flag = createFlag(c.country);
+      if (flag) {
+        flag.loading = "eager";
+        who.appendChild(flag);
+      }
+      const name = createElement("span", "scp-name", c.name);
+      name.title = c.name;
+      who.appendChild(name);
+      if (c.car) {
+        const car = createElement("span", "scp-car", c.car);
+        car.title = c.car;
+        who.appendChild(car);
+      }
       li.appendChild(who);
       li.appendChild(createElement("div", "scp-text", c.text));
       list.appendChild(li);

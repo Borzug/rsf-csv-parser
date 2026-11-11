@@ -1,5 +1,6 @@
 import { i18n } from "../../i18n/index";
 import { createElement } from "../dom";
+import { createFlag } from "../flags";
 import type { IChartComment } from "./chartComments";
 import type { IAnchor } from "./controller";
 
@@ -103,7 +104,17 @@ function render(comments: IChartComment[], pinnedOnly: boolean): void {
         dot.style.background = c.color;
         dot.setAttribute('aria-hidden', 'true');
         who.appendChild(dot);
-        who.appendChild(createElement('span', 'scp-name', c.name));
+        const flag = createFlag(c.country);
+        // Список открывается на миг при наведении — ленивая загрузка показала бы пустые рамки
+        if (flag) { flag.loading = 'eager'; who.appendChild(flag); }
+        const name = createElement('span', 'scp-name', c.name);
+        name.title = c.name;
+        who.appendChild(name);
+        if (c.car) {
+            const car = createElement('span', 'scp-car', c.car);
+            car.title = c.car;
+            who.appendChild(car);
+        }
         li.appendChild(who);
         li.appendChild(createElement('div', 'scp-text', c.text));
         list.appendChild(li);

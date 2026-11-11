@@ -8,6 +8,7 @@ export interface IChartDataset {
     driverKey:           string;
     _displayName:        string;
     _car:                string;
+    _country:            string;
     data:                (number | null)[];
     borderColor:         string;
     borderWidth:         number;
@@ -64,6 +65,7 @@ export function buildDatasets(
             driverKey:           drv.username,
             _displayName:        dn,
             _car:                drv.car,
+            _country:            drv.country,
             data:                pts.y,
             borderColor:         color,
             borderWidth:         BORDER_WIDTH,
