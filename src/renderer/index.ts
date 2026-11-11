@@ -29,9 +29,12 @@ import {
     toggleStageComments
 } from "./chart/stageCommentsPopover";
 import {
+    buildCommentsFilters,
     ensureCommentsRendered,
+    getCommentsFilterState,
     initCommentsModule,
-    invalidateComments
+    invalidateComments,
+    setOnCommentsFiltersChanged
 } from "./comments/index";
 import { qs } from "./dom";
 import {
@@ -47,7 +50,7 @@ import {
     updateFilterCounters,
     updateToggleButtonStates
 } from "./filters/chartFilters";
-import { isDriverShown } from "./filters/filterState";
+import { fullFilterState, isDriverShown } from "./filters/filterState";
 import { applyDomTranslations } from "./i18n-dom";
 import {
     buildResultsFilters,
@@ -109,13 +112,14 @@ window.addEventListener('DOMContentLoaded', () => {
             buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap, lookups.recordMap);
             afterFilterChange();
             buildResultsFilters(rankMap);
+            buildCommentsFilters(rankMap);
             if (sidebar) sidebar.scrollTop = scrollTop;
             updateHeaderStats();
             // Скрытые вкладки перестроятся при открытии
             invalidateResults();
             invalidateComments();
             if (currentTab === 'results')  ensureResultsRendered();
-            if (currentTab === 'comments') ensureCommentsRendered(data);
+            if (currentTab === 'comments') ensureCommentsRendered();
             chartCtrl.refreshLabels();
             onPinsChanged(chartCtrl.getPinnedKeys());
         }
@@ -157,6 +161,7 @@ window.addEventListener('DOMContentLoaded', () => {
         onStageBandClick:     handleStageBandClick,
     });
     setOnResultsFiltersChanged(writeUrlState);
+    setOnCommentsFiltersChanged(writeUrlState);
     initLegendSearch({
         onPreview: key => chartCtrl.setHoveredKey(key),
         onToggle:  key => chartCtrl.togglePin(key, true),
@@ -248,7 +253,7 @@ async function loadFile(file: File): Promise<void> {
         const byTime = [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
         const places = rankSorted(byTime, s => s.totalTime);
         rankMap = new Map(byTime.map((s, i) => [s.username, places[i]]));
-        initCommentsModule(rankMap, allStats);
+        initCommentsModule(data, lookups.recordMap, rankMap, allStats);
         // Цвет линии берётся по индексу участника. Упорядочив участников по итоговому месту,
         // получаем у соседей по таблице (а значит, и по графику) заведомо разные цвета палитры
         const order = (k: string) => rankMap.get(k) ?? Number.MAX_SAFE_INTEGER;
@@ -323,12 +328,7 @@ function updateResumeButton(): void {
 function showChart(): void {
     if (!data) return;
 
-    chartState.activeStageNums   = new Set(data.stages.map(s => s.num));
-    chartState.activeDriverKeys  = new Set(data.drivers.map(d => d.username));
-    chartState.activeGroups      = new Set(data.groups);
-    chartState.activeCars        = new Set(data.cars);
-    chartState.activeCountries   = new Set(data.countries);
-    chartState.visibleDriverKeys = new Set(data.drivers.map(d => d.username));
+    Object.assign(chartState, fullFilterState(data));
     prevStageFilter  = null;
     legendExpanded   = false;
 
@@ -339,6 +339,7 @@ function showChart(): void {
         if (urlState) {
             applyUrlFilters(chartState, urlState.chart);
             applyUrlFilters(getResultsFilterState(), urlState.results);
+            applyUrlFilters(getCommentsFilterState(), urlState.comments);
         }
 
         document.getElementById('screen-welcome')!.style.display  = 'none';
@@ -348,6 +349,7 @@ function showChart(): void {
         applyDomTranslations();
         buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap, lookups.recordMap);
         buildResultsFilters(rankMap);
+        buildCommentsFilters(rankMap);
         switchTab('chart');
         if (urlState) applyUrlView(urlState);
         // Режим оси переживает смену файла, но «от выбранного» без закреплённых теряет смысл
@@ -365,7 +367,7 @@ function showChart(): void {
 //
 // Сами данные в ссылку не попадают — это локальный файл. Ссылка восстанавливает вид
 // после загрузки того же CSV (номер ралли сверяется, чтобы не применить чужие настройки).
-// Фильтры результатов — те же ключи с префиксом «res-».
+// Фильтры результатов и комментариев — те же ключи с префиксами «res-» и «cmt-».
 
 interface IUrlFilters {
     stages:    number[] | null;
@@ -377,12 +379,14 @@ interface IUrlState {
     tab:     TTab | null;
     yMode:   TYMode | null;
     chart:   IUrlFilters;
-    results: IUrlFilters;
+    results:  IUrlFilters;
+    comments: IUrlFilters;
     pins:    string[];
 }
 
 const LIST_SEP = '|';
-const RESULTS_URL_PREFIX = 'res-';
+const RESULTS_URL_PREFIX  = 'res-';
+const COMMENTS_URL_PREFIX = 'cmt-';
 /** Пустой код страны в ссылке: пустой элемент в списке не уложить. */
 const NO_COUNTRY = '-';
 
@@ -425,6 +429,7 @@ function readUrlState(): IUrlState | null {
         yMode:   y === 'abs' || y === 'leader' || y === 'position' || y === 'pinned' ? y : null,
         chart:   filters(''),
         results: filters(RESULTS_URL_PREFIX),
+        comments: filters(COMMENTS_URL_PREFIX),
         pins:    splitList(p.get('pin')) ?? [],
     };
 }
@@ -482,6 +487,7 @@ function writeUrlState(): void {
     const pins = chartCtrl.getPinnedKeys();
     if (pins.length) p.set('pin', joinList(pins));
     writeUrlFilters(p, getResultsFilterState(), RESULTS_URL_PREFIX);
+    writeUrlFilters(p, getCommentsFilterState(), COMMENTS_URL_PREFIX);
 
     const hash = p.toString();
     history.replaceState(null, '', hash ? `#${hash}` : location.pathname + location.search);
@@ -556,7 +562,7 @@ function switchTab(tab: TTab): void {
     if (tab === 'chart' && !chartCtrl.getChart()) rebuildChart();
     if (tab === 'chart' && chartCtrl.getChart())  refreshLegend();
     if (tab === 'results')  ensureResultsRendered();
-    if (tab === 'comments') ensureCommentsRendered(data!);
+    if (tab === 'comments') ensureCommentsRendered();
     writeUrlState();
 }
 

@@ -282,7 +282,6 @@
     tooltipServicePenalty: "Service Penalty",
     tooltipSuperRally: "Super Rally",
     commentsEmpty: "\u041D\u0435\u0442 \u043A\u043E\u043C\u043C\u0435\u043D\u0442\u0430\u0440\u0438\u0435\u0432 \u0432 \u044D\u0442\u043E\u0439 \u0433\u043E\u043D\u043A\u0435",
-    commentsSearchLabel: "\u041F\u043E\u0438\u0441\u043A \u0443\u0447\u0430\u0441\u0442\u043D\u0438\u043A\u0430",
     commentsSearchPlaceholder: "\u0418\u043C\u044F \u0438\u043B\u0438 \u043D\u0438\u043A\u043D\u0435\u0439\u043C\u2026",
     commentsLeader: "\u{1F947} \u043B\u0438\u0434\u0435\u0440",
     commentsGap: (time) => `\u041E\u0442\u0441\u0442\u0430\u0432\u0430\u043D\u0438\u0435: +${time}`,
@@ -402,7 +401,6 @@ Only stages without SR for both drivers`,
     tooltipServicePenalty: "Service Penalty",
     tooltipSuperRally: "Super Rally",
     commentsEmpty: "No comments in this race",
-    commentsSearchLabel: "Search participant",
     commentsSearchPlaceholder: "Name or username\u2026",
     commentsLeader: "\u{1F947} leader",
     commentsGap: (time) => `Gap: +${time}`,
@@ -517,7 +515,6 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     tooltipServicePenalty: "Szerviz b\xFCntet\xE9s",
     tooltipSuperRally: "Super Rally",
     commentsEmpty: "Nincsenek megjegyz\xE9sek ebben a versenyen",
-    commentsSearchLabel: "R\xE9sztvev\u0151 keres\xE9se",
     commentsSearchPlaceholder: "N\xE9v vagy felhaszn\xE1l\xF3n\xE9v\u2026",
     commentsLeader: "\u{1F947} vezet\u0151",
     commentsGap: (time) => `H\xE1tr\xE1ny: +${time}`,
@@ -726,10 +723,10 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
   var DASH_ON = 6;
   var DASH_OFF = 4;
   var COMMENT_POINT_FILL = "#fff";
-  function buildDatasets(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, isShown) {
+  function buildDatasets(data2, stages, recordMap2, cumPenMap, cumSPMap, cumSRMap, isShown) {
     return data2.drivers.map((drv, gi) => {
       const color = driverColor(gi);
-      const pts = buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color);
+      const pts = buildDriverPoints(drv, stages, recordMap2, cumPenMap, cumSPMap, cumSRMap, color);
       const dnfCommentPtIdx = pts.dnfCommentPtIdx;
       const dn = driverDisplayName(drv);
       return {
@@ -765,7 +762,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
       };
     });
   }
-  function buildDriverPoints(drv, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, color) {
+  function buildDriverPoints(drv, stages, recordMap2, cumPenMap, cumSPMap, cumSRMap, color) {
     const y = [0];
     const pointStyles = ["circle"];
     const pointRadii = [0];
@@ -780,7 +777,7 @@ Csak SR n\xE9lk\xFCli szakaszok mindk\xE9t versenyz\u0151n\xE9l`,
     let lastValidPtIdx = 0;
     let dnfCommentPtIdx = null;
     let dnfCmtStageIdx = null;
-    const recs = recordMap.get(drv.username);
+    const recs = recordMap2.get(drv.username);
     for (let si = 0; si < stages.length; si++) {
       const st = stages[si];
       const rec = recs?.get(st.num) ?? null;
@@ -1359,13 +1356,13 @@ ${hit.ptIdx}` : null;
     let mousemoveHandler = null;
     let mouseleaveHandler = null;
     let onPinChange = null;
-    let renderQueued = false;
+    let renderQueued2 = false;
     let commentCounts = null;
     function scheduleRender() {
-      if (renderQueued) return;
-      renderQueued = true;
+      if (renderQueued2) return;
+      renderQueued2 = true;
       requestAnimationFrame(() => {
-        renderQueued = false;
+        renderQueued2 = false;
         chart?.render();
       });
     }
@@ -1568,7 +1565,7 @@ ${hit.ptIdx}` : null;
         applyYMode();
         chart.update("none");
       },
-      build(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, isShown) {
+      build(data2, stages, recordMap2, cumPenMap, cumSPMap, cumSRMap, isShown) {
         activeStages = stages;
         commentCounts = null;
         const useRot45 = stages.length > ROTATE_45_AT && stages.length <= ROTATE_90_AT;
@@ -1576,7 +1573,7 @@ ${hit.ptIdx}` : null;
         currentBotPad = useRot90 ? BOT_PAD_90 : useRot45 ? BOT_PAD_45 : BOT_PAD_NORMAL;
         const nPts = pointCount(stages.length);
         const labels = new Array(nPts).fill("");
-        const datasets = buildDatasets(data2, stages, recordMap, cumPenMap, cumSPMap, cumSRMap, isShown);
+        const datasets = buildDatasets(data2, stages, recordMap2, cumPenMap, cumSPMap, cumSRMap, isShown);
         datasets.forEach((ds) => {
           ds._abs = ds.data.slice();
         });
@@ -1907,11 +1904,11 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/chart/legendPanel.ts
-  function updateLegendPanel(data2, chart, activeStages, recordMap, isExpanded, pinnedKeys, leaderFirst, callbacks3) {
+  function updateLegendPanel(data2, chart, activeStages, recordMap2, isExpanded, pinnedKeys, leaderFirst, callbacks3) {
     const panel = document.getElementById("legend-panel");
     const itemsEl = document.getElementById("legend-items");
     const expandBtn = document.getElementById("legend-expand-btn");
-    const visibleWithTime = buildSortedVisibleDrivers(data2, chart, activeStages, recordMap);
+    const visibleWithTime = buildSortedVisibleDrivers(data2, chart, activeStages, recordMap2);
     if (leaderFirst) visibleWithTime.reverse();
     currentCallbacks = callbacks3;
     bindLegendEvents(itemsEl);
@@ -1931,7 +1928,7 @@ ${hit.ptIdx}` : null;
       expandBtn.style.display = overflows || isExpanded ? "" : "none";
     });
   }
-  function buildSortedVisibleDrivers(data2, chart, activeStages, recordMap) {
+  function buildSortedVisibleDrivers(data2, chart, activeStages, recordMap2) {
     const dsByKey = /* @__PURE__ */ new Map();
     for (const ds of chart?.data.datasets ?? []) dsByKey.set(ds.driverKey, ds);
     const visibleDrvs = data2.drivers.filter((drv) => {
@@ -1941,7 +1938,7 @@ ${hit.ptIdx}` : null;
     const withTime = visibleDrvs.map((drv) => {
       let cum = 0;
       for (const st of activeStages) {
-        const r = recordMap.get(drv.username)?.get(st.num);
+        const r = recordMap2.get(drv.username)?.get(st.num);
         if (!r || r.time3 === null) {
           cum = null;
           break;
@@ -2034,13 +2031,13 @@ ${hit.ptIdx}` : null;
 
   // src/renderer/chart/lookups.ts
   function buildRallyLookups(data2) {
-    const recordMap = /* @__PURE__ */ new Map();
+    const recordMap2 = /* @__PURE__ */ new Map();
     const cumPenMap = /* @__PURE__ */ new Map();
     const cumSPMap = /* @__PURE__ */ new Map();
     const cumSRMap = /* @__PURE__ */ new Map();
     for (const r of data2.records) {
-      if (!recordMap.has(r.username)) recordMap.set(r.username, /* @__PURE__ */ new Map());
-      recordMap.get(r.username).set(r.stageNum, r);
+      if (!recordMap2.has(r.username)) recordMap2.set(r.username, /* @__PURE__ */ new Map());
+      recordMap2.get(r.username).set(r.stageNum, r);
     }
     const sorted = [...data2.stages].sort((a, b) => a.num - b.num);
     for (const drv of data2.drivers) {
@@ -2052,7 +2049,7 @@ ${hit.ptIdx}` : null;
         pm.set(st.num, cp);
         sm.set(st.num, cs);
         rm.set(st.num, cr);
-        const r = recordMap.get(drv.username)?.get(st.num);
+        const r = recordMap2.get(drv.username)?.get(st.num);
         if (r) {
           cp += r.penalty ?? 0;
           cs += r.servicePenalty ?? 0;
@@ -2063,7 +2060,7 @@ ${hit.ptIdx}` : null;
       cumSPMap.set(drv.username, sm);
       cumSRMap.set(drv.username, rm);
     }
-    return { recordMap, cumPenMap, cumSPMap, cumSRMap };
+    return { recordMap: recordMap2, cumPenMap, cumSPMap, cumSRMap };
   }
 
   // src/renderer/chart/legendSearch.ts
@@ -2394,303 +2391,6 @@ ${hit.ptIdx}` : null;
     closeTimer = void 0;
   }
 
-  // src/renderer/comments/index.ts
-  var rankMap = /* @__PURE__ */ new Map();
-  var totalTimes = /* @__PURE__ */ new Map();
-  var renderedFor = null;
-  var lastData = null;
-  function initCommentsModule(ranks, allStats) {
-    rankMap = ranks;
-    totalTimes = new Map(allStats.map((s) => [s.username, s.totalTime]));
-  }
-  function ensureCommentsRendered(data2) {
-    if (renderedFor !== data2) renderCommentsView(data2);
-  }
-  function invalidateComments() {
-    renderedFor = null;
-  }
-  function renderCommentsView(data2) {
-    const isNewData = data2 !== lastData;
-    renderedFor = lastData = data2;
-    renderSidebarSearch();
-    const container = document.getElementById("view-comments");
-    const drivers = buildCommentsData(data2);
-    container.innerHTML = "";
-    if (drivers.length === 0) {
-      const empty = document.createElement("div");
-      empty.className = "cmt-empty";
-      empty.textContent = i18n.t().commentsEmpty;
-      container.appendChild(empty);
-      return;
-    }
-    const list = document.createElement("div");
-    list.className = "cmt-list";
-    list.id = "cmt-list";
-    for (const driver of drivers) {
-      list.appendChild(buildDriverRow(driver));
-    }
-    container.appendChild(list);
-    if (isNewData) container.scrollTop = 0;
-  }
-  function renderSidebarSearch() {
-    const target = document.getElementById("filter-comments-search");
-    if (!target) return;
-    const existing = document.getElementById("cmt-search-wrap");
-    if (existing) {
-      updateSidebarSearchLabels(existing);
-      return;
-    }
-    const wrap = document.createElement("div");
-    wrap.id = "cmt-search-wrap";
-    wrap.className = "cmt-search-wrap";
-    const label = document.createElement("div");
-    label.id = "cmt-search-label";
-    label.className = "filter-group-title";
-    label.textContent = i18n.t().commentsSearchLabel;
-    const input = document.createElement("input");
-    input.id = "cmt-search-input";
-    input.type = "text";
-    input.className = "cmt-search-input";
-    input.placeholder = i18n.t().commentsSearchPlaceholder;
-    input.addEventListener("input", () => scrollToDriverMatch(input.value.trim()));
-    wrap.appendChild(label);
-    wrap.appendChild(input);
-    target.appendChild(wrap);
-  }
-  function updateSidebarSearchLabels(wrap) {
-    const label = wrap.querySelector("#cmt-search-label");
-    const input = wrap.querySelector("#cmt-search-input");
-    if (label) label.textContent = i18n.t().commentsSearchLabel;
-    if (input) input.placeholder = i18n.t().commentsSearchPlaceholder;
-  }
-  function scrollToDriverMatch(query) {
-    const list = document.getElementById("cmt-list");
-    const container = document.getElementById("view-comments");
-    if (!list || !container) return;
-    const rows = list.querySelectorAll(".cmt-row");
-    rows.forEach((r) => r.classList.remove("cmt-row--highlighted"));
-    if (!query) return;
-    const q = query.toLowerCase();
-    for (const row of rows) {
-      const username = row.dataset["username"] ?? "";
-      const realName = row.dataset["realname"] ?? "";
-      if (username.toLowerCase().includes(q) || realName.toLowerCase().includes(q)) {
-        row.classList.add("cmt-row--highlighted");
-        row.scrollIntoView({ behavior: "smooth", block: "start" });
-        break;
-      }
-    }
-  }
-  function buildCommentsData(data2) {
-    const leaderTimes = buildLeaderTimes(data2.records);
-    const result = [];
-    const commented = /* @__PURE__ */ new Map();
-    for (const r of data2.records) {
-      if (!r.comment.trim()) continue;
-      const list = commented.get(r.username);
-      if (list) list.push(r);
-      else commented.set(r.username, [r]);
-    }
-    for (const driver of data2.drivers) {
-      const entries = (commented.get(driver.username) ?? []).sort((a, b) => a.stageNum - b.stageNum).map((r) => ({
-        stageNum: r.stageNum,
-        stageName: r.stageName,
-        time3: r.time3,
-        gapToLeader: r.time3 !== null && leaderTimes.has(r.stageNum) ? r.time3 - leaderTimes.get(r.stageNum) : null,
-        penalty: r.penalty,
-        servicePenalty: r.servicePenalty,
-        superRally: r.superRally,
-        comment: r.comment.trim()
-      }));
-      if (entries.length > 0) {
-        result.push({
-          username: driver.username,
-          realName: driver.realName,
-          country: driver.country,
-          car: driver.car,
-          group: driver.group,
-          position: rankMap.get(driver.username) ?? null,
-          totalTime: totalTimes.get(driver.username) ?? null,
-          entries
-        });
-      }
-    }
-    result.sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
-    return result;
-  }
-  function buildLeaderTimes(records) {
-    const map = /* @__PURE__ */ new Map();
-    for (const r of records) {
-      if (r.time3 === null) continue;
-      const cur = map.get(r.stageNum);
-      if (cur === void 0 || r.time3 < cur) map.set(r.stageNum, r.time3);
-    }
-    return map;
-  }
-  function buildDriverRow(driver) {
-    const row = document.createElement("div");
-    row.className = "cmt-row";
-    row.dataset["username"] = driver.username;
-    row.dataset["realname"] = driver.realName ?? "";
-    row.appendChild(buildPositionBlock(driver.position));
-    row.appendChild(buildDriverCol(driver));
-    row.appendChild(buildCardsCol(driver.entries));
-    return row;
-  }
-  function buildPositionBlock(position2) {
-    const el = document.createElement("div");
-    el.className = position2 === null ? "cmt-pos pos-dnf" : resolvePositionClass(position2);
-    el.textContent = position2 === null ? i18n.t().dnf : String(position2);
-    return el;
-  }
-  function resolvePositionClass(position2) {
-    if (position2 === 1) return "cmt-pos cmt-pos--gold";
-    if (position2 === 2) return "cmt-pos cmt-pos--silver";
-    if (position2 === 3) return "cmt-pos cmt-pos--bronze";
-    return "cmt-pos";
-  }
-  function buildDriverCol(driver) {
-    const col = document.createElement("div");
-    col.className = "cmt-driver";
-    const username = document.createElement("div");
-    username.className = "cmt-drv-username";
-    username.textContent = driver.username;
-    prependFlag(username, driver.country);
-    col.appendChild(username);
-    if (hasRealName(driver)) {
-      const realName = document.createElement("div");
-      realName.className = "cmt-drv-realname";
-      realName.textContent = driver.realName;
-      col.appendChild(realName);
-    }
-    if (driver.car) {
-      const car = document.createElement("div");
-      car.className = "cmt-drv-car";
-      car.textContent = driver.car;
-      col.appendChild(car);
-    }
-    const count = document.createElement("div");
-    count.className = "cmt-drv-count";
-    count.textContent = i18n.t().commentsCount(driver.entries.length);
-    col.appendChild(count);
-    return col;
-  }
-  function buildCardsCol(entries) {
-    const col = document.createElement("div");
-    col.className = "cmt-cards";
-    for (const entry of entries) {
-      col.appendChild(buildCommentCard(entry));
-    }
-    return col;
-  }
-  function buildCommentCard(entry) {
-    const card = document.createElement("div");
-    card.className = "cmt-card";
-    card.appendChild(buildCardHeader(entry));
-    card.appendChild(buildCardMeta(entry));
-    if (entry.superRally || entry.penalty > 0 || entry.servicePenalty > 0) {
-      card.appendChild(buildCardBadges(entry));
-    }
-    const text = document.createElement("div");
-    text.className = "cmt-card-text";
-    text.textContent = entry.comment;
-    card.appendChild(text);
-    return card;
-  }
-  function buildCardHeader(entry) {
-    const header = document.createElement("div");
-    header.className = "cmt-card-header";
-    const badge = document.createElement("span");
-    badge.className = "cmt-badge";
-    badge.textContent = `SS${entry.stageNum}`;
-    const stageName = document.createElement("span");
-    stageName.className = "cmt-stage-name";
-    stageName.textContent = entry.stageName;
-    stageName.title = entry.stageName;
-    header.appendChild(badge);
-    header.appendChild(stageName);
-    return header;
-  }
-  function buildCardMeta(entry) {
-    const meta = document.createElement("div");
-    meta.className = "cmt-card-meta";
-    if (entry.time3 !== null) {
-      const time = document.createElement("span");
-      time.className = "cmt-time";
-      time.textContent = formatTime(entry.time3);
-      meta.appendChild(time);
-    }
-    if (entry.gapToLeader === 0) {
-      const gap = document.createElement("span");
-      gap.className = "cmt-gap cmt-gap--leader";
-      gap.textContent = i18n.t().commentsLeader;
-      meta.appendChild(gap);
-    } else if (entry.gapToLeader !== null && entry.gapToLeader > 0) {
-      const gap = document.createElement("span");
-      gap.className = "cmt-gap";
-      gap.textContent = i18n.t().commentsGap(formatTime(entry.gapToLeader));
-      meta.appendChild(gap);
-    }
-    return meta;
-  }
-  function buildCardBadges(entry) {
-    const badges = document.createElement("div");
-    badges.className = "cmt-card-badges";
-    if (entry.superRally) {
-      const sr = document.createElement("span");
-      sr.className = "cmt-badge-sr";
-      sr.textContent = i18n.t().tooltipSuperRally;
-      badges.appendChild(sr);
-    }
-    if (entry.penalty > 0) {
-      const pen = document.createElement("span");
-      pen.className = "cmt-badge-penalty";
-      pen.textContent = i18n.t().commentsPenalty(formatTime(entry.penalty));
-      badges.appendChild(pen);
-    }
-    if (entry.servicePenalty > 0) {
-      const sp = document.createElement("span");
-      sp.className = "cmt-badge-penalty";
-      sp.textContent = i18n.t().commentsServicePenalty(formatTime(entry.servicePenalty));
-      badges.appendChild(sp);
-    }
-    return badges;
-  }
-
-  // src/renderer/rallyName.ts
-  var RALLY_NAME_ENDPOINT = "https://script.google.com/macros/s/AKfycbwv4wdJpWe-Zpuwm9_CW34_r4002VgWxB_u3yxm2LgEbR-KvFNhWhwPQwuJ3T9plpY7pQ/exec";
-  var STORAGE_PREFIX = "rsf-rally-name:";
-  var TIMEOUT_MS = 8e3;
-  var MAX_NAME_LEN = 120;
-  function getCachedRallyName(rallyId) {
-    try {
-      return localStorage.getItem(STORAGE_PREFIX + rallyId);
-    } catch {
-      return null;
-    }
-  }
-  async function fetchRallyName(rallyId) {
-    if (!RALLY_NAME_ENDPOINT || !/^\d{1,9}$/.test(rallyId)) return null;
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
-    try {
-      const res = await fetch(`${RALLY_NAME_ENDPOINT}?rally=${rallyId}`, { signal: ctrl.signal });
-      if (!res.ok) return null;
-      const body = await res.json();
-      const name = typeof body.name === "string" ? body.name.trim().slice(0, MAX_NAME_LEN) : "";
-      if (!name) return null;
-      try {
-        localStorage.setItem(STORAGE_PREFIX + rallyId, name);
-      } catch {
-      }
-      return name;
-    } catch {
-      return null;
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
   // src/renderer/filters/filterState.ts
   function passesAttrFilters(data2, state, drv) {
     const grpOk = !data2.groups.length || !drv.group || state.activeGroups.has(drv.group);
@@ -2698,18 +2398,29 @@ ${hit.ptIdx}` : null;
     const ctyOk = !data2.countries.length || state.activeCountries.has(drv.country);
     return grpOk && carOk && ctyOk;
   }
-  function ranSelectedStages(data2, state, recordMap, username) {
+  function ranSelectedStages(data2, state, recordMap2, username) {
     if (state.activeStageNums.size === data2.stages.length) return true;
-    const recs = recordMap.get(username);
+    const recs = recordMap2.get(username);
     if (!recs) return false;
     for (const sn of state.activeStageNums) if (recs.has(sn)) return true;
     return false;
   }
-  function passesFilters(data2, state, recordMap, drv) {
-    return passesAttrFilters(data2, state, drv) && ranSelectedStages(data2, state, recordMap, drv.username);
+  function passesFilters(data2, state, recordMap2, drv) {
+    return passesAttrFilters(data2, state, drv) && ranSelectedStages(data2, state, recordMap2, drv.username);
   }
-  function isDriverShown(data2, state, recordMap, drv) {
-    return state.activeDriverKeys.has(drv.username) && passesFilters(data2, state, recordMap, drv);
+  function isDriverShown(data2, state, recordMap2, drv) {
+    return state.activeDriverKeys.has(drv.username) && passesFilters(data2, state, recordMap2, drv);
+  }
+  function fullFilterState(data2) {
+    const keys = data2?.drivers.map((d) => d.username) ?? [];
+    return {
+      activeStageNums: new Set(data2?.stages.map((s) => s.num) ?? []),
+      activeDriverKeys: new Set(keys),
+      activeGroups: new Set(data2?.groups ?? []),
+      activeCars: new Set(data2?.cars ?? []),
+      activeCountries: new Set(data2?.countries ?? []),
+      visibleDriverKeys: new Set(keys)
+    };
   }
   function filterId(prefix, name) {
     return `${prefix}${name}`;
@@ -3075,11 +2786,11 @@ ${hit.ptIdx}` : null;
       decorate: prependFlag
     }, onChange, prefix);
   }
-  function refilterDriverList(data2, state, recordMap, prefix) {
+  function refilterDriverList(data2, state, recordMap2, prefix) {
     const body = driverListBody(prefix);
     if (!body) return;
     qsa(".filter-item[data-driver-key]", body).forEach((item) => {
-      const ok = passesFilters(data2, state, recordMap, {
+      const ok = passesFilters(data2, state, recordMap2, {
         username: item.dataset["driverKey"],
         group: item.dataset["group"] ?? "",
         car: item.dataset["car"] ?? "",
@@ -3095,8 +2806,8 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/filters/chartFilters.ts
-  function buildChartFilterPanel(data2, state, callbacks3, rankMap3, recordMap, prefix = "") {
-    const refilter = () => refilterDriverList(data2, state, recordMap, prefix);
+  function buildChartFilterPanel(data2, state, callbacks3, rankMap3, recordMap2, prefix = "") {
+    const refilter = () => refilterDriverList(data2, state, recordMap2, prefix);
     buildStageFilterUI(data2.stages, state, {
       ...callbacks3,
       onStagesChanged: () => {
@@ -3110,6 +2821,309 @@ ${hit.ptIdx}` : null;
       callbacks3.onDriversChanged();
     }, prefix);
     refilter();
+  }
+
+  // src/renderer/comments/index.ts
+  var PREFIX = "cmt-";
+  var rankMap = /* @__PURE__ */ new Map();
+  var totalTimes = /* @__PURE__ */ new Map();
+  var recordMap = /* @__PURE__ */ new Map();
+  var fileData = null;
+  var allComments = [];
+  var filterState = fullFilterState(null);
+  var onFiltersChanged = () => {
+  };
+  var renderQueued = false;
+  var dirty = true;
+  var lastData = null;
+  function initCommentsModule(data2, records, ranks, allStats) {
+    fileData = data2;
+    recordMap = records;
+    rankMap = ranks;
+    totalTimes = new Map(allStats.map((s) => [s.username, s.totalTime]));
+    allComments = buildCommentsData(data2);
+    filterState = fullFilterState(data2);
+    dirty = true;
+  }
+  function getCommentsFilterState() {
+    return filterState;
+  }
+  function setOnCommentsFiltersChanged(cb) {
+    onFiltersChanged = cb;
+  }
+  function buildCommentsFilters(ranks) {
+    if (!fileData) return;
+    const callbacks3 = {
+      onStagesChanged: afterFilterChange,
+      onDriversChanged: afterFilterChange,
+      onDriverHover: () => {
+      }
+    };
+    buildChartFilterPanel(fileData, filterState, callbacks3, ranks, recordMap, PREFIX);
+    updateFilterControls();
+  }
+  function ensureCommentsRendered() {
+    if (dirty) renderCommentsView();
+  }
+  function invalidateComments() {
+    dirty = true;
+  }
+  function updateFilterControls() {
+    if (!fileData) return;
+    updateFilterCounters(fileData, filterState, PREFIX);
+    updateToggleButtonStates(fileData, filterState, PREFIX);
+  }
+  function afterFilterChange() {
+    updateFilterControls();
+    onFiltersChanged();
+    if (renderQueued) return;
+    renderQueued = true;
+    queueMicrotask(() => {
+      renderQueued = false;
+      renderCommentsView();
+    });
+  }
+  function filteredComments(data2) {
+    const result = [];
+    for (const driver of allComments) {
+      if (!isDriverShown(data2, filterState, recordMap, driver)) continue;
+      const entries = driver.entries.filter((e) => filterState.activeStageNums.has(e.stageNum));
+      if (entries.length) result.push(entries.length === driver.entries.length ? driver : { ...driver, entries });
+    }
+    return result;
+  }
+  function renderCommentsView() {
+    const data2 = fileData;
+    if (!data2) return;
+    const isNewData = data2 !== lastData;
+    lastData = data2;
+    dirty = false;
+    const container = document.getElementById("view-comments");
+    const drivers = filteredComments(data2);
+    container.innerHTML = "";
+    if (isNewData) container.scrollTop = 0;
+    if (drivers.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "cmt-empty";
+      empty.textContent = allComments.length ? i18n.t().resultsEmpty : i18n.t().commentsEmpty;
+      container.appendChild(empty);
+      return;
+    }
+    const list = document.createElement("div");
+    list.className = "cmt-list";
+    list.id = "cmt-list";
+    for (const driver of drivers) {
+      list.appendChild(buildDriverRow(driver));
+    }
+    container.appendChild(list);
+  }
+  function buildCommentsData(data2) {
+    const leaderTimes = buildLeaderTimes(data2.records);
+    const result = [];
+    const commented = /* @__PURE__ */ new Map();
+    for (const r of data2.records) {
+      if (!r.comment.trim()) continue;
+      const list = commented.get(r.username);
+      if (list) list.push(r);
+      else commented.set(r.username, [r]);
+    }
+    for (const driver of data2.drivers) {
+      const entries = (commented.get(driver.username) ?? []).sort((a, b) => a.stageNum - b.stageNum).map((r) => ({
+        stageNum: r.stageNum,
+        stageName: r.stageName,
+        time3: r.time3,
+        gapToLeader: r.time3 !== null && leaderTimes.has(r.stageNum) ? r.time3 - leaderTimes.get(r.stageNum) : null,
+        penalty: r.penalty,
+        servicePenalty: r.servicePenalty,
+        superRally: r.superRally,
+        comment: r.comment.trim()
+      }));
+      if (entries.length > 0) {
+        result.push({
+          username: driver.username,
+          realName: driver.realName,
+          country: driver.country,
+          car: driver.car,
+          group: driver.group,
+          position: rankMap.get(driver.username) ?? null,
+          totalTime: totalTimes.get(driver.username) ?? null,
+          entries
+        });
+      }
+    }
+    result.sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
+    return result;
+  }
+  function buildLeaderTimes(records) {
+    const map = /* @__PURE__ */ new Map();
+    for (const r of records) {
+      if (r.time3 === null) continue;
+      const cur = map.get(r.stageNum);
+      if (cur === void 0 || r.time3 < cur) map.set(r.stageNum, r.time3);
+    }
+    return map;
+  }
+  function buildDriverRow(driver) {
+    const row = document.createElement("div");
+    row.className = "cmt-row";
+    row.dataset["username"] = driver.username;
+    row.appendChild(buildPositionBlock(driver.position));
+    row.appendChild(buildDriverCol(driver));
+    row.appendChild(buildCardsCol(driver.entries));
+    return row;
+  }
+  function buildPositionBlock(position2) {
+    const el = document.createElement("div");
+    el.className = position2 === null ? "cmt-pos pos-dnf" : resolvePositionClass(position2);
+    el.textContent = position2 === null ? i18n.t().dnf : String(position2);
+    return el;
+  }
+  function resolvePositionClass(position2) {
+    if (position2 === 1) return "cmt-pos cmt-pos--gold";
+    if (position2 === 2) return "cmt-pos cmt-pos--silver";
+    if (position2 === 3) return "cmt-pos cmt-pos--bronze";
+    return "cmt-pos";
+  }
+  function buildDriverCol(driver) {
+    const col = document.createElement("div");
+    col.className = "cmt-driver";
+    const username = document.createElement("div");
+    username.className = "cmt-drv-username";
+    username.textContent = driver.username;
+    prependFlag(username, driver.country);
+    col.appendChild(username);
+    if (hasRealName(driver)) {
+      const realName = document.createElement("div");
+      realName.className = "cmt-drv-realname";
+      realName.textContent = driver.realName;
+      col.appendChild(realName);
+    }
+    if (driver.car) {
+      const car = document.createElement("div");
+      car.className = "cmt-drv-car";
+      car.textContent = driver.car;
+      col.appendChild(car);
+    }
+    const count = document.createElement("div");
+    count.className = "cmt-drv-count";
+    count.textContent = i18n.t().commentsCount(driver.entries.length);
+    col.appendChild(count);
+    return col;
+  }
+  function buildCardsCol(entries) {
+    const col = document.createElement("div");
+    col.className = "cmt-cards";
+    for (const entry of entries) {
+      col.appendChild(buildCommentCard(entry));
+    }
+    return col;
+  }
+  function buildCommentCard(entry) {
+    const card = document.createElement("div");
+    card.className = "cmt-card";
+    card.appendChild(buildCardHeader(entry));
+    card.appendChild(buildCardMeta(entry));
+    if (entry.superRally || entry.penalty > 0 || entry.servicePenalty > 0) {
+      card.appendChild(buildCardBadges(entry));
+    }
+    const text = document.createElement("div");
+    text.className = "cmt-card-text";
+    text.textContent = entry.comment;
+    card.appendChild(text);
+    return card;
+  }
+  function buildCardHeader(entry) {
+    const header = document.createElement("div");
+    header.className = "cmt-card-header";
+    const badge = document.createElement("span");
+    badge.className = "cmt-badge";
+    badge.textContent = `SS${entry.stageNum}`;
+    const stageName = document.createElement("span");
+    stageName.className = "cmt-stage-name";
+    stageName.textContent = entry.stageName;
+    stageName.title = entry.stageName;
+    header.appendChild(badge);
+    header.appendChild(stageName);
+    return header;
+  }
+  function buildCardMeta(entry) {
+    const meta = document.createElement("div");
+    meta.className = "cmt-card-meta";
+    if (entry.time3 !== null) {
+      const time = document.createElement("span");
+      time.className = "cmt-time";
+      time.textContent = formatTime(entry.time3);
+      meta.appendChild(time);
+    }
+    if (entry.gapToLeader === 0) {
+      const gap = document.createElement("span");
+      gap.className = "cmt-gap cmt-gap--leader";
+      gap.textContent = i18n.t().commentsLeader;
+      meta.appendChild(gap);
+    } else if (entry.gapToLeader !== null && entry.gapToLeader > 0) {
+      const gap = document.createElement("span");
+      gap.className = "cmt-gap";
+      gap.textContent = i18n.t().commentsGap(formatTime(entry.gapToLeader));
+      meta.appendChild(gap);
+    }
+    return meta;
+  }
+  function buildCardBadges(entry) {
+    const badges = document.createElement("div");
+    badges.className = "cmt-card-badges";
+    if (entry.superRally) {
+      const sr = document.createElement("span");
+      sr.className = "cmt-badge-sr";
+      sr.textContent = i18n.t().tooltipSuperRally;
+      badges.appendChild(sr);
+    }
+    if (entry.penalty > 0) {
+      const pen = document.createElement("span");
+      pen.className = "cmt-badge-penalty";
+      pen.textContent = i18n.t().commentsPenalty(formatTime(entry.penalty));
+      badges.appendChild(pen);
+    }
+    if (entry.servicePenalty > 0) {
+      const sp = document.createElement("span");
+      sp.className = "cmt-badge-penalty";
+      sp.textContent = i18n.t().commentsServicePenalty(formatTime(entry.servicePenalty));
+      badges.appendChild(sp);
+    }
+    return badges;
+  }
+
+  // src/renderer/rallyName.ts
+  var RALLY_NAME_ENDPOINT = "https://script.google.com/macros/s/AKfycbwv4wdJpWe-Zpuwm9_CW34_r4002VgWxB_u3yxm2LgEbR-KvFNhWhwPQwuJ3T9plpY7pQ/exec";
+  var STORAGE_PREFIX = "rsf-rally-name:";
+  var TIMEOUT_MS = 8e3;
+  var MAX_NAME_LEN = 120;
+  function getCachedRallyName(rallyId) {
+    try {
+      return localStorage.getItem(STORAGE_PREFIX + rallyId);
+    } catch {
+      return null;
+    }
+  }
+  async function fetchRallyName(rallyId) {
+    if (!RALLY_NAME_ENDPOINT || !/^\d{1,9}$/.test(rallyId)) return null;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+    try {
+      const res = await fetch(`${RALLY_NAME_ENDPOINT}?rally=${rallyId}`, { signal: ctrl.signal });
+      if (!res.ok) return null;
+      const body = await res.json();
+      const name = typeof body.name === "string" ? body.name.trim().slice(0, MAX_NAME_LEN) : "";
+      if (!name) return null;
+      try {
+        localStorage.setItem(STORAGE_PREFIX + rallyId, name);
+      } catch {
+      }
+      return name;
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   // src/renderer/i18n-dom.ts
@@ -3169,12 +3183,12 @@ ${hit.ptIdx}` : null;
   }
 
   // src/renderer/results/compute.ts
-  function summarizeStages(username, stageNums, recordMap) {
+  function summarizeStages(username, stageNums, recordMap2) {
     const snaps = [];
     let total = 0;
     let sr = 0;
     let totalPen = 0;
-    const recs = recordMap.get(username);
+    const recs = recordMap2.get(username);
     for (const sn of stageNums) {
       const r = recs?.get(sn);
       const t3 = r?.time3 ?? null;
@@ -3189,7 +3203,7 @@ ${hit.ptIdx}` : null;
     }
     return { totalTime: total, totalPenalty: totalPen, srCount: sr, snaps };
   }
-  function computeAllDriverStats(data2, recordMap) {
+  function computeAllDriverStats(data2, recordMap2) {
     const stageNums = data2.stages.map((s) => s.num).sort((a, b) => a - b);
     return data2.drivers.map((drv) => ({
       username: drv.username,
@@ -3197,12 +3211,12 @@ ${hit.ptIdx}` : null;
       country: drv.country,
       car: drv.car,
       group: drv.group,
-      ...summarizeStages(drv.username, stageNums, recordMap)
+      ...summarizeStages(drv.username, stageNums, recordMap2)
     }));
   }
-  function recalculateStatsForStages(stats, stageNums, totalStages, recordMap) {
+  function recalculateStatsForStages(stats, stageNums, totalStages, recordMap2) {
     if (stageNums.length === totalStages) return stats;
-    return { ...stats, ...summarizeStages(stats.username, stageNums, recordMap) };
+    return { ...stats, ...summarizeStages(stats.username, stageNums, recordMap2) };
   }
   function computeDriverResults(stats, stageKm = null) {
     const n = stats[0]?.snaps.length ?? 0;
@@ -4024,31 +4038,20 @@ ${hit.ptIdx}` : null;
   var _searchActive = false;
   var _dirty = true;
   var _resetScroll = true;
-  var PREFIX = "res-";
+  var PREFIX2 = "res-";
   var _filterState = fullFilterState(null);
   var _onFiltersChanged = () => {
   };
   var _renderQueued = false;
-  function fullFilterState(data2) {
-    const drivers = data2?.drivers ?? [];
-    return {
-      activeStageNums: new Set(data2?.stages.map((s) => s.num) ?? []),
-      activeDriverKeys: new Set(drivers.map((d) => d.username)),
-      activeGroups: new Set(data2?.groups ?? []),
-      activeCars: new Set(data2?.cars ?? []),
-      activeCountries: new Set(data2?.countries ?? []),
-      visibleDriverKeys: new Set(drivers.map((d) => d.username))
-    };
-  }
   function getResultsFilterState() {
     return _filterState;
   }
   function setOnResultsFiltersChanged(cb) {
     _onFiltersChanged = cb;
   }
-  function initResultsModule(data2, recordMap, allStats) {
+  function initResultsModule(data2, recordMap2, allStats) {
     _data = data2;
-    _recordMap = recordMap;
+    _recordMap = recordMap2;
     _allStats = allStats;
     _selectedRows = /* @__PURE__ */ new Set();
     _searchActive = false;
@@ -4060,13 +4063,13 @@ ${hit.ptIdx}` : null;
   function buildResultsFilters(rankMap3) {
     if (!_data) return;
     const callbacks3 = {
-      onStagesChanged: afterFilterChange,
-      onDriversChanged: afterFilterChange,
+      onStagesChanged: afterFilterChange2,
+      onDriversChanged: afterFilterChange2,
       onDriverHover: () => {
       }
     };
-    buildChartFilterPanel(_data, _filterState, callbacks3, rankMap3, _recordMap, PREFIX);
-    updateFilterControls();
+    buildChartFilterPanel(_data, _filterState, callbacks3, rankMap3, _recordMap, PREFIX2);
+    updateFilterControls2();
     wireApplyButton();
   }
   function ensureResultsRendered() {
@@ -4127,8 +4130,8 @@ ${hit.ptIdx}` : null;
     for (const u of _selectedRows) if (!shown.has(u)) _selectedRows.delete(u);
     updateApplyBar();
   }
-  function afterFilterChange() {
-    updateFilterControls();
+  function afterFilterChange2() {
+    updateFilterControls2();
     _onFiltersChanged();
     if (_renderQueued) return;
     _renderQueued = true;
@@ -4137,10 +4140,10 @@ ${hit.ptIdx}` : null;
       renderResultsTable();
     });
   }
-  function updateFilterControls() {
+  function updateFilterControls2() {
     if (!_data) return;
-    updateFilterCounters(_data, _filterState, PREFIX);
-    updateToggleButtonStates(_data, _filterState, PREFIX);
+    updateFilterCounters(_data, _filterState, PREFIX2);
+    updateToggleButtonStates(_data, _filterState, PREFIX2);
   }
   function wireApplyButton() {
     const btn = document.getElementById("btn-apply-filter");
@@ -4176,11 +4179,11 @@ ${hit.ptIdx}` : null;
     _filterState.activeDriverKeys = selected.size > 0 ? new Set(selected) : new Set(_data.drivers.map((d) => d.username));
     _selectedRows = /* @__PURE__ */ new Set();
     updateApplyBar();
-    qsa(`#${PREFIX}filter-drivers-wrap .filter-item[data-driver-key]`).forEach((item) => {
+    qsa(`#${PREFIX2}filter-drivers-wrap .filter-item[data-driver-key]`).forEach((item) => {
       const cb = item.querySelector('input[type="checkbox"]');
       if (cb) cb.checked = _filterState.activeDriverKeys.has(item.dataset["driverKey"]);
     });
-    afterFilterChange();
+    afterFilterChange2();
   }
   function activateParticipantSearch(th) {
     if (_searchActive) return;
@@ -4256,14 +4259,15 @@ ${hit.ptIdx}` : null;
         const sidebar = document.querySelector("#sidebar .sidebar-body");
         const scrollTop = sidebar?.scrollTop ?? 0;
         buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap2, lookups.recordMap);
-        afterFilterChange2();
+        afterFilterChange3();
         buildResultsFilters(rankMap2);
+        buildCommentsFilters(rankMap2);
         if (sidebar) sidebar.scrollTop = scrollTop;
         updateHeaderStats();
         invalidateResults();
         invalidateComments();
         if (currentTab === "results") ensureResultsRendered();
-        if (currentTab === "comments") ensureCommentsRendered(data);
+        if (currentTab === "comments") ensureCommentsRendered();
         chartCtrl.refreshLabels();
         onPinsChanged(chartCtrl.getPinnedKeys());
       }
@@ -4301,6 +4305,7 @@ ${hit.ptIdx}` : null;
       onStageBandClick: handleStageBandClick
     });
     setOnResultsFiltersChanged(writeUrlState);
+    setOnCommentsFiltersChanged(writeUrlState);
     initLegendSearch({
       onPreview: (key) => chartCtrl.setHoveredKey(key),
       onToggle: (key) => chartCtrl.togglePin(key, true)
@@ -4378,7 +4383,7 @@ ${hit.ptIdx}` : null;
       const byTime = [...allStats].sort((a, b) => nullableCompare(a.totalTime, b.totalTime));
       const places = rankSorted(byTime, (s) => s.totalTime);
       rankMap2 = new Map(byTime.map((s, i) => [s.username, places[i]]));
-      initCommentsModule(rankMap2, allStats);
+      initCommentsModule(data, lookups.recordMap, rankMap2, allStats);
       const order = (k) => rankMap2.get(k) ?? Number.MAX_SAFE_INTEGER;
       data.drivers.sort((a, b) => order(a.username) - order(b.username));
       eventName = qs("#inp-event-name").value.trim();
@@ -4437,12 +4442,7 @@ ${hit.ptIdx}` : null;
   }
   function showChart() {
     if (!data) return;
-    chartState.activeStageNums = new Set(data.stages.map((s) => s.num));
-    chartState.activeDriverKeys = new Set(data.drivers.map((d) => d.username));
-    chartState.activeGroups = new Set(data.groups);
-    chartState.activeCars = new Set(data.cars);
-    chartState.activeCountries = new Set(data.countries);
-    chartState.visibleDriverKeys = new Set(data.drivers.map((d) => d.username));
+    Object.assign(chartState, fullFilterState(data));
     prevStageFilter = null;
     legendExpanded = false;
     const urlState = readUrlState();
@@ -4451,6 +4451,7 @@ ${hit.ptIdx}` : null;
       if (urlState) {
         applyUrlFilters(chartState, urlState.chart);
         applyUrlFilters(getResultsFilterState(), urlState.results);
+        applyUrlFilters(getCommentsFilterState(), urlState.comments);
       }
       document.getElementById("screen-welcome").style.display = "none";
       document.getElementById("screen-chart").style.display = "flex";
@@ -4458,6 +4459,7 @@ ${hit.ptIdx}` : null;
       applyDomTranslations();
       buildChartFilterPanel(data, chartState, makeFilterCallbacks(), rankMap2, lookups.recordMap);
       buildResultsFilters(rankMap2);
+      buildCommentsFilters(rankMap2);
       switchTab("chart");
       if (urlState) applyUrlView(urlState);
       if (chartCtrl.getYMode() === "pinned" && !chartCtrl.getPinnedKeys().length) chartCtrl.setYMode("leader");
@@ -4471,6 +4473,7 @@ ${hit.ptIdx}` : null;
   }
   var LIST_SEP = "|";
   var RESULTS_URL_PREFIX = "res-";
+  var COMMENTS_URL_PREFIX = "cmt-";
   var NO_COUNTRY = "-";
   function joinList(items2) {
     return items2.map((s) => s.replace(/%/g, "%25").replace(/\|/g, "%7C")).join(LIST_SEP);
@@ -4506,6 +4509,7 @@ ${hit.ptIdx}` : null;
       yMode: y === "abs" || y === "leader" || y === "position" || y === "pinned" ? y : null,
       chart: filters(""),
       results: filters(RESULTS_URL_PREFIX),
+      comments: filters(COMMENTS_URL_PREFIX),
       pins: splitList(p.get("pin")) ?? []
     };
   }
@@ -4552,6 +4556,7 @@ ${hit.ptIdx}` : null;
     const pins = chartCtrl.getPinnedKeys();
     if (pins.length) p.set("pin", joinList(pins));
     writeUrlFilters(p, getResultsFilterState(), RESULTS_URL_PREFIX);
+    writeUrlFilters(p, getCommentsFilterState(), COMMENTS_URL_PREFIX);
     const hash = p.toString();
     history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
   }
@@ -4603,7 +4608,7 @@ ${hit.ptIdx}` : null;
     if (tab === "chart" && !chartCtrl.getChart()) rebuildChart();
     if (tab === "chart" && chartCtrl.getChart()) refreshLegend();
     if (tab === "results") ensureResultsRendered();
-    if (tab === "comments") ensureCommentsRendered(data);
+    if (tab === "comments") ensureCommentsRendered();
     writeUrlState();
   }
   function setHeavyViewShown(id, shown) {
@@ -4619,7 +4624,7 @@ ${hit.ptIdx}` : null;
       },
       onDriversChanged: () => {
         syncDatasetVisibility();
-        afterFilterChange2();
+        afterFilterChange3();
       },
       onDriverHover: (key) => {
         chartCtrl.setHoveredKey(key);
@@ -4637,7 +4642,7 @@ ${hit.ptIdx}` : null;
     closeStageComments();
     renderCommentStrip(chartCtrl.getPinnedComments(), chartCtrl.getPinnedKeys().length);
   }
-  function afterFilterChange2() {
+  function afterFilterChange3() {
     if (!data) return;
     updateFilterCounters(data, chartState);
     updateToggleButtonStates(data, chartState);
@@ -4701,7 +4706,7 @@ ${hit.ptIdx}` : null;
     updatePinnedBar(data, chartCtrl.getPinnedKeys(), (key) => chartCtrl.togglePin(key, true));
     syncYModeSwitch();
     refreshComments();
-    afterFilterChange2();
+    afterFilterChange3();
   }
   function toggleLegendExpand() {
     legendExpanded = !legendExpanded;

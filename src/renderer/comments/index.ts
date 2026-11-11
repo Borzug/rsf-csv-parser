@@ -1,4 +1,4 @@
-import type { IParsedRallyData, ILapRecord } from '../../shared/types';
+import type { IParsedRallyData, ILapRecord, TRecordMap } from '../../shared/types';
 import type { IDriverStats } from '../results/types';
 import type { ICommentEntry, IDriverComments } from './types';
 import { i18n } from "../../i18n/index";
@@ -8,45 +8,128 @@ import {
 } from "../utils";
 import { prependFlag } from "../flags";
 import { hasRealName } from "../../shared/driverName";
+import {
+    buildChartFilterPanel,
+    updateFilterCounters,
+    updateToggleButtonStates,
+    type IChartFilterCallbacks,
+    type IChartFilterState,
+} from "../filters/chartFilters";
+import { fullFilterState, isDriverShown } from "../filters/filterState";
+
+/** Префикс id панели фильтров комментариев — та же панель, что у графика и результатов. */
+const PREFIX = 'cmt-';
 
 /** Итоговые места и время — считаются один раз при загрузке файла (см. initCommentsModule). */
 let rankMap    = new Map<string, number | null>();
 let totalTimes = new Map<string, number | null>();
+let recordMap: TRecordMap = new Map();
+let fileData:  IParsedRallyData | null = null;
+/** Все комментарии файла по участникам — фильтры только отбирают из них. */
+let allComments: IDriverComments[] = [];
 
-/** Данные, для которых построен текущий вид; null — вид устарел (смена языка). */
-let renderedFor: IParsedRallyData | null = null;
-let lastData:    IParsedRallyData | null = null;
+/** Фильтры вкладки — независимы от графика и результатов. */
+let filterState: IChartFilterState = fullFilterState(null);
+/** Сообщает о смене фильтров (их пишет в ссылку index.ts). */
+let onFiltersChanged: () => void = () => {};
+let renderQueued = false;
+
+/** Вид устарел (смена языка или фильтров) и будет перестроен при открытии вкладки. */
+let dirty = true;
+/** Данные, для которых построен текущий вид: прокрутку сбрасываем только для другого файла. */
+let lastData: IParsedRallyData | null = null;
 
 /** Места и итоговое время берём из общих расчётов, а не считаем заново. */
-export function initCommentsModule(ranks: Map<string, number | null>, allStats: IDriverStats[]): void {
-    rankMap    = ranks;
-    totalTimes = new Map(allStats.map(s => [s.username, s.totalTime]));
+export function initCommentsModule(
+    data:     IParsedRallyData,
+    records:  TRecordMap,
+    ranks:    Map<string, number | null>,
+    allStats: IDriverStats[],
+): void {
+    fileData    = data;
+    recordMap   = records;
+    rankMap     = ranks;
+    totalTimes  = new Map(allStats.map(s => [s.username, s.totalTime]));
+    allComments = buildCommentsData(data);
+    filterState = fullFilterState(data);
+    dirty       = true;
 }
 
-/** Перестраивает вид, только если он устарел (другой файл или смена языка). */
-export function ensureCommentsRendered(data: IParsedRallyData): void {
-    if (renderedFor !== data) renderCommentsView(data);
+/** Фильтры комментариев — общий объект: index.ts восстанавливает их из ссылки до построения панели. */
+export function getCommentsFilterState(): IChartFilterState {
+    return filterState;
+}
+
+export function setOnCommentsFiltersChanged(cb: () => void): void {
+    onFiltersChanged = cb;
+}
+
+/** Панель фильтров вкладки; rankMap — итоговые места для порядка списка участников. */
+export function buildCommentsFilters(ranks: Map<string, number | null>): void {
+    if (!fileData) return;
+    const callbacks: IChartFilterCallbacks = {
+        onStagesChanged:  afterFilterChange,
+        onDriversChanged: afterFilterChange,
+        onDriverHover:    () => {},
+    };
+    buildChartFilterPanel(fileData, filterState, callbacks, ranks, recordMap, PREFIX);
+    updateFilterControls();
+}
+
+/** Перестраивает вид, только если он устарел (другой файл, язык или фильтры). */
+export function ensureCommentsRendered(): void {
+    if (dirty) renderCommentsView();
 }
 
 export function invalidateComments(): void {
-    renderedFor = null;
+    dirty = true;
 }
 
-export function renderCommentsView(data: IParsedRallyData): void {
+function updateFilterControls(): void {
+    if (!fileData) return;
+    updateFilterCounters(fileData, filterState, PREFIX);
+    updateToggleButtonStates(fileData, filterState, PREFIX);
+}
+
+/** Несколько изменений подряд («Все» с пересчётом списка) — одна перестройка вида. */
+function afterFilterChange(): void {
+    updateFilterControls();
+    onFiltersChanged();
+    if (renderQueued) return;
+    renderQueued = true;
+    queueMicrotask(() => { renderQueued = false; renderCommentsView(); });
+}
+
+/** Участники, прошедшие фильтры, и только их комментарии на выбранных СУ. */
+function filteredComments(data: IParsedRallyData): IDriverComments[] {
+    const result: IDriverComments[] = [];
+    for (const driver of allComments) {
+        if (!isDriverShown(data, filterState, recordMap, driver)) continue;
+        const entries = driver.entries.filter(e => filterState.activeStageNums.has(e.stageNum));
+        if (entries.length) result.push(entries.length === driver.entries.length ? driver : { ...driver, entries });
+    }
+    return result;
+}
+
+function renderCommentsView(): void {
+    const data = fileData;
+    if (!data) return;
     // Вкладка сохраняет прокрутку между переходами; для другого файла начинаем сверху
     const isNewData = data !== lastData;
-    renderedFor = lastData = data;
-    renderSidebarSearch();
+    lastData = data;
+    dirty    = false;
 
     const container = document.getElementById('view-comments')!;
-    const drivers   = buildCommentsData(data);
+    const drivers   = filteredComments(data);
 
     container.innerHTML = '';
+    if (isNewData) container.scrollTop = 0;
 
     if (drivers.length === 0) {
         const empty = document.createElement('div');
         empty.className   = 'cmt-empty';
-        empty.textContent = i18n.t().commentsEmpty;
+        // В файле нет комментариев вовсе — или их отсекли фильтры
+        empty.textContent = allComments.length ? i18n.t().resultsEmpty : i18n.t().commentsEmpty;
         container.appendChild(empty);
         return;
     }
@@ -60,70 +143,6 @@ export function renderCommentsView(data: IParsedRallyData): void {
     }
 
     container.appendChild(list);
-    if (isNewData) container.scrollTop = 0;
-}
-
-// ── Sidebar search ────────────────────────────────────────────────────────────
-
-function renderSidebarSearch(): void {
-    const target = document.getElementById('filter-comments-search');
-    if (!target) return;
-
-    const existing = document.getElementById('cmt-search-wrap');
-    if (existing) {
-        updateSidebarSearchLabels(existing);
-        return;
-    }
-
-    const wrap = document.createElement('div');
-    wrap.id        = 'cmt-search-wrap';
-    wrap.className = 'cmt-search-wrap';
-
-    const label = document.createElement('div');
-    label.id          = 'cmt-search-label';
-    label.className   = 'filter-group-title';
-    label.textContent = i18n.t().commentsSearchLabel;
-
-    const input = document.createElement('input');
-    input.id          = 'cmt-search-input';
-    input.type        = 'text';
-    input.className   = 'cmt-search-input';
-    input.placeholder = i18n.t().commentsSearchPlaceholder;
-
-    input.addEventListener('input', () => scrollToDriverMatch(input.value.trim()));
-
-    wrap.appendChild(label);
-    wrap.appendChild(input);
-    target.appendChild(wrap);
-}
-
-function updateSidebarSearchLabels(wrap: HTMLElement): void {
-    const label = wrap.querySelector<HTMLElement>('#cmt-search-label');
-    const input = wrap.querySelector<HTMLInputElement>('#cmt-search-input');
-    if (label) label.textContent = i18n.t().commentsSearchLabel;
-    if (input) input.placeholder = i18n.t().commentsSearchPlaceholder;
-}
-
-function scrollToDriverMatch(query: string): void {
-    const list      = document.getElementById('cmt-list');
-    const container = document.getElementById('view-comments');
-    if (!list || !container) return;
-
-    const rows = list.querySelectorAll<HTMLElement>('.cmt-row');
-    rows.forEach(r => r.classList.remove('cmt-row--highlighted'));
-
-    if (!query) return;
-
-    const q = query.toLowerCase();
-    for (const row of rows) {
-        const username = row.dataset['username'] ?? '';
-        const realName = row.dataset['realname'] ?? '';
-        if (username.toLowerCase().includes(q) || realName.toLowerCase().includes(q)) {
-            row.classList.add('cmt-row--highlighted');
-            row.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            break;
-        }
-    }
 }
 
 // ── Data building ─────────────────────────────────────────────────────────────
@@ -190,7 +209,6 @@ function buildDriverRow(driver: IDriverComments): HTMLElement {
     const row = document.createElement('div');
     row.className           = 'cmt-row';
     row.dataset['username'] = driver.username;
-    row.dataset['realname'] = driver.realName ?? '';
 
     row.appendChild(buildPositionBlock(driver.position));
     row.appendChild(buildDriverCol(driver));
@@ -347,5 +365,3 @@ function buildCardBadges(entry: ICommentEntry): HTMLElement {
 
     return badges;
 }
-
-// ── Helpers ───────────────────────────────────────────────────────────────────

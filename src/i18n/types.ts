@@ -149,7 +149,6 @@ export interface ITranslations {
 
     // Экран комментариев
     commentsEmpty:          string;
-    commentsSearchLabel:    string;
     commentsSearchPlaceholder: string;
     commentsLeader:         string;
     commentsGap:            (time: string) => string;

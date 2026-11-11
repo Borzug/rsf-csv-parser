@@ -127,7 +127,6 @@ export const ru: ITranslations = {
     tooltipSuperRally:      'Super Rally',
 
     commentsEmpty:          'Нет комментариев в этой гонке',
-    commentsSearchLabel:    'Поиск участника',
     commentsSearchPlaceholder: 'Имя или никнейм…',
     commentsLeader:         '🥇 лидер',
     commentsGap:            (time) => `Отставание: +${time}`,
@@ -267,7 +266,6 @@ export const en: ITranslations = {
     tooltipSuperRally:      'Super Rally',
 
     commentsEmpty:          'No comments in this race',
-    commentsSearchLabel:    'Search participant',
     commentsSearchPlaceholder: 'Name or username…',
     commentsLeader:         '🥇 leader',
     commentsGap:            (time) => `Gap: +${time}`,
@@ -403,7 +401,6 @@ export const hu: ITranslations = {
     tooltipSuperRally:      'Super Rally',
 
     commentsEmpty:          'Nincsenek megjegyzések ebben a versenyen',
-    commentsSearchLabel:    'Résztvevő keresése',
     commentsSearchPlaceholder: 'Név vagy felhasználónév…',
     commentsLeader:         '🥇 vezető',
     commentsGap:            (time) => `Hátrány: +${time}`,

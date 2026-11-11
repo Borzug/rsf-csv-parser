@@ -12,7 +12,7 @@ import {
     type IChartFilterCallbacks,
     type IChartFilterState,
 } from "../filters/chartFilters";
-import { isDriverShown } from "../filters/filterState";
+import { fullFilterState, isDriverShown } from "../filters/filterState";
 import { qsa } from "../dom";
 import { debounce, rankSorted, SEARCH_DEBOUNCE_MS } from "../utils";
 import {
@@ -42,19 +42,6 @@ let _filterState: IChartFilterState = fullFilterState(null);
 /** Сообщает о смене фильтров результатов (их пишет в ссылку index.ts). */
 let _onFiltersChanged: () => void = () => {};
 let _renderQueued = false;
-
-/** Состояние «выбрано всё» для данных (или пустое без данных). */
-function fullFilterState(data: IParsedRallyData | null): IChartFilterState {
-    const drivers = data?.drivers ?? [];
-    return {
-        activeStageNums:   new Set(data?.stages.map(s => s.num) ?? []),
-        activeDriverKeys:  new Set(drivers.map(d => d.username)),
-        activeGroups:      new Set(data?.groups ?? []),
-        activeCars:        new Set(data?.cars ?? []),
-        activeCountries:   new Set(data?.countries ?? []),
-        visibleDriverKeys: new Set(drivers.map(d => d.username)),
-    };
-}
 
 /** Фильтры результатов — общий объект: index.ts восстанавливает их из ссылки до построения панели. */
 export function getResultsFilterState(): IChartFilterState {

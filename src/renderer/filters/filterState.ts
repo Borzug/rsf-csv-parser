@@ -75,6 +75,19 @@ export function isDriverShown(
     return state.activeDriverKeys.has(drv.username) && passesFilters(data, state, recordMap, drv);
 }
 
+/** Состояние «выбрано всё» для данных (или пустое без данных) — так открывается каждая панель. */
+export function fullFilterState(data: IParsedRallyData | null): IChartFilterState {
+    const keys = data?.drivers.map(d => d.username) ?? [];
+    return {
+        activeStageNums:   new Set(data?.stages.map(s => s.num) ?? []),
+        activeDriverKeys:  new Set(keys),
+        activeGroups:      new Set(data?.groups ?? []),
+        activeCars:        new Set(data?.cars ?? []),
+        activeCountries:   new Set(data?.countries ?? []),
+        visibleDriverKeys: new Set(keys),
+    };
+}
+
 /** id элемента панели фильтров: prefix '' — график, 'res-' — результаты. */
 export function filterId(prefix: string, name: string): string {
     return `${prefix}${name}`;
