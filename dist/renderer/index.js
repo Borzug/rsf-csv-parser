@@ -3241,6 +3241,7 @@ ${hit.ptIdx}` : null;
     return sorted.map((cur, i) => {
       const leader = sorted[0];
       const prev = i > 0 ? sorted[i - 1] : null;
+      const hasLeader = leader.totalTime !== null;
       const totalGap = cur.totalTime !== null && leader.totalTime !== null ? cur.totalTime - leader.totalTime : null;
       const gl = new PaceAcc();
       const pp = new PaceAcc();
@@ -3250,7 +3251,7 @@ ${hit.ptIdx}` : null;
         const w = weight(s);
         const ct = cur.snaps[s].time3;
         const lt = leader.snaps[s].time3;
-        if (ct !== null && lt !== null) {
+        if (hasLeader && ct !== null && lt !== null) {
           gl.add(ct - lt, w);
           if (!cur.snaps[s].hasSR && !leader.snaps[s].hasSR) cl.add(ct - lt, w);
         }
@@ -3377,7 +3378,9 @@ ${hit.ptIdx}` : null;
     if (selectedRows.has(r.stats.username)) row.classList.add("row-selected");
     row.setAttribute("aria-selected", String(selectedRows.has(r.stats.username)));
     const t = paceText(km);
-    const noPace = r.position === 1 || r.stats.totalTime === null;
+    const isDnf = r.stats.totalTime === null;
+    const isLeader = r.position === 1 && !isDnf;
+    const noPace = isLeader || isDnf;
     row.appendChild(buildPositionCell(r.stats.totalTime !== null ? r.position : null));
     row.appendChild(buildNameCell(r.stats));
     row.appendChild(buildGroupCell(r.stats.group));
@@ -3400,8 +3403,8 @@ ${hit.ptIdx}` : null;
       "prev"
     ));
     row.appendChild(buildCleanGapCell(
-      noPace ? null : r.cleanGapFromLeader,
-      noPace ? 0 : r.cleanCountLeader,
+      isLeader ? null : r.cleanGapFromLeader,
+      isLeader ? 0 : r.cleanCountLeader,
       r.totalStageCount,
       "leader",
       km

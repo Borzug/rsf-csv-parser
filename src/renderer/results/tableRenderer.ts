@@ -135,8 +135,11 @@ function buildResultRow(
     row.setAttribute('aria-selected', String(selectedRows.has(r.stats.username)));
 
     const t = paceText(km);
-    // Темп сошедших считается по неполному набору СУ и вводит в заблуждение
-    const noPace = r.position === 1 || r.stats.totalTime === null;
+    // Сошедшим — только чистый темп к лидеру: по общим с ним СУ без SR, их число — в подсказке.
+    // Темп с SR у сошедших искажён, а «предыдущий» — случайный сосед по порядку файла
+    const isDnf    = r.stats.totalTime === null;
+    const isLeader = r.position === 1 && !isDnf;
+    const noPace   = isLeader || isDnf;
 
     row.appendChild(buildPositionCell(r.stats.totalTime !== null ? r.position : null));
     row.appendChild(buildNameCell(r.stats));
@@ -158,8 +161,8 @@ function buildResultRow(
         'prev',
     ));
     row.appendChild(buildCleanGapCell(
-        noPace ? null : r.cleanGapFromLeader,
-        noPace ? 0 : r.cleanCountLeader,
+        isLeader ? null : r.cleanGapFromLeader,
+        isLeader ? 0 : r.cleanCountLeader,
         r.totalStageCount,
         'leader',
         km,

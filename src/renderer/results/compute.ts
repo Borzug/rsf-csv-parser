@@ -69,6 +69,8 @@ export function computeDriverResults(stats: IDriverStats[], stageKm: number[] | 
     return sorted.map((cur, i) => {
         const leader = sorted[0];
         const prev   = i > 0 ? sorted[i - 1] : null;
+        // Лидер без итогового времени (не финишировал никто) — сравнивать не с кем
+        const hasLeader = leader.totalTime !== null;
         const totalGap = cur.totalTime !== null && leader.totalTime !== null
             ? cur.totalTime - leader.totalTime
             : null;
@@ -82,7 +84,7 @@ export function computeDriverResults(stats: IDriverStats[], stageKm: number[] | 
             const w  = weight(s);
             const ct = cur.snaps[s].time3;
             const lt = leader.snaps[s].time3;
-            if (ct !== null && lt !== null) {
+            if (hasLeader && ct !== null && lt !== null) {
                 gl.add(ct - lt, w);
                 if (!cur.snaps[s].hasSR && !leader.snaps[s].hasSR) cl.add(ct - lt, w);
             }
